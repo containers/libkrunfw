@@ -1,0 +1,84 @@
+From d55bae2df0c3bf679cbbd146d221ef1bf1a6db16 Mon Sep 17 00:00:00 2001
+From: Stefano Garzarella <sgarzare@redhat.com>
+Date: Tue, 9 Jun 2020 18:13:27 +0200
+Subject: [PATCH 4/4] libkrun: get remote peer address on wrapped socket
+
+Use VIRTIO_VSOCK_OP_REQUEST_EX with connection from host,
+transporting the remote peer address.
+
+Signed-off-by: Stefano Garzarella <sgarzare@redhat.com>
+---
+ net/vmw_vsock/af_vsock.c                |  8 +-------
+ net/vmw_vsock/virtio_transport_common.c | 16 +++++++++++++++-
+ 2 files changed, 16 insertions(+), 8 deletions(-)
+
+diff --git a/net/vmw_vsock/af_vsock.c b/net/vmw_vsock/af_vsock.c
+index f0fa81866..e342c68fd 100644
+--- a/net/vmw_vsock/af_vsock.c
++++ b/net/vmw_vsock/af_vsock.c
+@@ -589,7 +589,6 @@ static void vsock_pending_work(struct work_struct *work)
+ 
+ static int vsock_wrap_listen(struct socket *vsock, struct socket *sock)
+ {
+-	struct sockaddr_in * local_addr;
+ 	struct sockaddr_storage addr;
+ 	struct vsock_sock *vsk;
+ 	struct sock *sk;
+@@ -615,12 +614,7 @@ static int vsock_wrap_listen(struct socket *vsock, struct socket *sock)
+ 	}
+ 
+ 	vsk->wr_sa_family = addr.ss_family;
+-	memcpy(&vsk->wr_remote_addr, &addr, addr_len);
+-
+-	local_addr = (struct sockaddr_in *) &vsk->wr_local_addr;
+-	local_addr->sin_family = AF_INET;
+-	local_addr->sin_port = htons(1234);
+-	local_addr->sin_addr.s_addr = htonl(INADDR_LOOPBACK);
++	memcpy(&vsk->wr_local_addr, &addr, addr_len);
+ 
+ 	err = transport_g2h->control_listen(vsk, (struct sockaddr *) &addr, addr_len);
+ 	if (err < 0)
+diff --git a/net/vmw_vsock/virtio_transport_common.c b/net/vmw_vsock/virtio_transport_common.c
+index 51150b7c1..ce6144f10 100644
+--- a/net/vmw_vsock/virtio_transport_common.c
++++ b/net/vmw_vsock/virtio_transport_common.c
+@@ -171,6 +171,7 @@ static struct sk_buff *virtio_transport_build_skb(void *opaque)
+ 
+ 	switch (le16_to_cpu(pkt->hdr.op)) {
+ 	case VIRTIO_VSOCK_OP_REQUEST:
++	case VIRTIO_VSOCK_OP_REQUEST_EX:
+ 	case VIRTIO_VSOCK_OP_RESPONSE:
+ 		hdr->op = cpu_to_le16(AF_VSOCK_OP_CONNECT);
+ 		break;
+@@ -1163,7 +1164,8 @@ virtio_transport_recv_listen(struct sock *sk, struct virtio_vsock_pkt *pkt,
+ 	struct sock *child;
+ 	int ret;
+ 
+-	if (le16_to_cpu(pkt->hdr.op) != VIRTIO_VSOCK_OP_REQUEST) {
++	if (le16_to_cpu(pkt->hdr.op) != VIRTIO_VSOCK_OP_REQUEST &&
++	    le16_to_cpu(pkt->hdr.op) != VIRTIO_VSOCK_OP_REQUEST_EX) {
+ 		virtio_transport_reset_no_sock(t, pkt);
+ 		return -EINVAL;
+ 	}
+@@ -1202,6 +1204,18 @@ virtio_transport_recv_listen(struct sock *sk, struct virtio_vsock_pkt *pkt,
+ 		return ret;
+ 	}
+ 
++	if (le16_to_cpu(pkt->hdr.op) == VIRTIO_VSOCK_OP_REQUEST_EX) {
++		size_t len = pkt->len;
++
++		if (len > sizeof(vchild->wr_remote_addr))
++			len = sizeof(vchild->wr_remote_addr);
++
++		memcpy(&vchild->wr_remote_addr, pkt->buf, pkt->len);
++		memcpy(&vchild->wr_local_addr, &vsk->wr_local_addr,
++		       sizeof(vchild->wr_remote_addr));
++		vchild->wr_sa_family = vchild->wr_remote_addr.ss_family;
++	}
++
+ 	if (virtio_transport_space_update(child, pkt))
+ 		child->sk_write_space(child);
+ 
+-- 
+2.26.2
+
