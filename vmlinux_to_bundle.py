@@ -2,11 +2,16 @@ from elftools.elf.elffile import ELFFile
 import sys
 
 footer = """
-char * get_kernel_bundle(size_t *load_addr, size_t *size)
+char * krunfw_get_kernel(size_t *load_addr, size_t *size)
 {
     *load_addr = KERNEL_LOAD_ADDR;
     *size = KERNEL_SIZE;
     return &KERNEL_BUNDLE[0];
+}
+
+int krunfw_get_version()
+{
+    return 1;
 }
 """
 
