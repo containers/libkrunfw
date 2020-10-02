@@ -1,0 +1,85 @@
+From 88ece5f24c4ac0ee66d572b6fceafe1c6bbc6e88 Mon Sep 17 00:00:00 2001
+From: Sergio Lopez <slp@redhat.com>
+Date: Fri, 2 Oct 2020 10:24:05 +0200
+Subject: [PATCH 1/3] krun: Don't re-wrap socket on listen()
+
+If the socket already has another wrapped socket, don't create a new
+one.
+
+This fixes a bug where would break s2vi when userspace calls to listen()
+on an already listening socket to change its attributes.
+
+Signed-off-by: Sergio Lopez <slp@redhat.com>
+---
+ net/socket.c | 48 ++++++++++++++++++++++++------------------------
+ 1 file changed, 24 insertions(+), 24 deletions(-)
+
+diff --git a/net/socket.c b/net/socket.c
+index 621763b2b9ae..298fadcb0fce 100644
+--- a/net/socket.c
++++ b/net/socket.c
+@@ -1699,37 +1699,37 @@ static void libkip_listen(struct socket *sock, int backlog)
+ 		return;
+ 	}
+ 
+-	sock->sk->sk_vsock = NULL;
++	if (sock->sk->sk_vsock == NULL) {
++		if (!(address.ss_family == AF_UNIX || address.ss_family == AF_INET))
++			return;
+ 
+-	if (!(address.ss_family == AF_UNIX || address.ss_family == AF_INET))
+-		return;
+-
+-	printk("listen: attempting to impersonate with a VSOCK\n");
++		printk("listen: attempting to impersonate with a VSOCK\n");
+ 
+-	err = sock_create(AF_VSOCK, SOCK_STREAM, 0, &vsock);
+-	if (err < 0)
+-		return;
++		err = sock_create(AF_VSOCK, SOCK_STREAM, 0, &vsock);
++		if (err < 0)
++			return;
+ 
+-	addr_vsock.svm_family = AF_VSOCK;
+-	addr_vsock.svm_cid = VMADDR_CID_ANY;
+-	addr_vsock.svm_port = VMADDR_PORT_ANY;
++		addr_vsock.svm_family = AF_VSOCK;
++		addr_vsock.svm_cid = VMADDR_CID_ANY;
++		addr_vsock.svm_port = VMADDR_PORT_ANY;
+ 
+-	err = vsock->ops->bind(vsock, (struct sockaddr *)&addr_vsock,
+-			      sizeof(addr_vsock));
+-	if (err < 0)
+-		goto out;
++		err = vsock->ops->bind(vsock, (struct sockaddr *)&addr_vsock,
++				       sizeof(addr_vsock));
++		if (err < 0)
++			goto out;
+ 
+-	err = vsock->ops->listen(vsock, backlog);
+-	if (err < 0)
+-		goto out;
++		err = vsock->ops->listen(vsock, backlog);
++		if (err < 0)
++			goto out;
+ 
+-	/* HACK */
+-	err = vsock->ops->socketpair(vsock, sock);
+-	if (err < 0)
+-		goto out;
++		/* HACK */
++		err = vsock->ops->socketpair(vsock, sock);
++		if (err < 0)
++			goto out;
+ 
+-	sock->sk->sk_vsock = vsock;
+-	printk("listen: VSOCK impersonation done!\n");
++		sock->sk->sk_vsock = vsock;
++		printk("listen: VSOCK impersonation done!\n");
++	}
+ 
+ 	return;
+ out:
+-- 
+2.26.2
+
