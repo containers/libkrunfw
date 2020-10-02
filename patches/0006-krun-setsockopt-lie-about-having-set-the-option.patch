@@ -1,0 +1,32 @@
+From 836d4c6fe729595523ff964b092f90f89fa9c67e Mon Sep 17 00:00:00 2001
+From: Sergio Lopez <slp@redhat.com>
+Date: Fri, 2 Oct 2020 10:50:40 +0200
+Subject: [PATCH 2/3] krun: setsockopt: lie about having set the option
+
+Eventually we should inform the VMM so it can set the option on the
+external context socket.
+
+Signed-off-by: Sergio Lopez <slp@redhat.com>
+---
+ net/vmw_vsock/af_vsock.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/net/vmw_vsock/af_vsock.c b/net/vmw_vsock/af_vsock.c
+index 3f9a6fcd63dd..31bb672fec23 100644
+--- a/net/vmw_vsock/af_vsock.c
++++ b/net/vmw_vsock/af_vsock.c
+@@ -1660,7 +1660,10 @@ static int vsock_stream_setsockopt(struct socket *sock,
+ 	const struct vsock_transport *transport;
+ 	u64 val;
+ 
+-	if (level != AF_VSOCK)
++	if (level == SOL_TCP) {
++		/* libkrun: lie about having set the option. */
++		return 0;
++	} else if (level != AF_VSOCK)
+ 		return -ENOPROTOOPT;
+ 
+ #define COPY_IN(_v)                                       \
+-- 
+2.26.2
+
