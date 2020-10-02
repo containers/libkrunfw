@@ -1,0 +1,32 @@
+From 283a5457be7575ceef73ef65edb87fe21dc3b4f4 Mon Sep 17 00:00:00 2001
+From: Sergio Lopez <slp@redhat.com>
+Date: Fri, 2 Oct 2020 11:01:20 +0200
+Subject: [PATCH 3/3] krun: Ignore run_cmd on orderly reboot
+
+We don't really support restarting the conventional way, so ignore
+"run_cmd" so we can fall back to an emergency sync and reboot.
+
+Signed-off-by: Sergio Lopez <slp@redhat.com>
+---
+ kernel/reboot.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/kernel/reboot.c b/kernel/reboot.c
+index 8e8dcdc72e11..7586ea386f5d 100644
+--- a/kernel/reboot.c
++++ b/kernel/reboot.c
+@@ -447,7 +447,11 @@ static int __orderly_reboot(void)
+ {
+ 	int ret;
+ 
++#ifdef VERBOSE_LIBKRUN
+ 	ret = run_cmd(reboot_cmd);
++#else
++	ret = 1;
++#endif
+ 
+ 	if (ret) {
+ 		pr_warn("Failed to start orderly reboot: forcing the issue\n");
+-- 
+2.26.2
+
