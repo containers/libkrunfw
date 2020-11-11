@@ -1,7 +1,7 @@
-From 52efea860dc2fee2ada84e58b85b8c0e917811d7 Mon Sep 17 00:00:00 2001
-From: Stefano Garzarella <sgarzare@redhat.com>
-Date: Fri, 5 Jun 2020 12:29:07 +0200
-Subject: [PATCH 3/4] libkrun: add listen support on wrapped socket
+From 1003123cb17c58e444462f9443e883e6d160e9c6 Mon Sep 17 00:00:00 2001
+From: Sergio Lopez <slp@redhat.com>
+Date: Wed, 11 Nov 2020 06:57:17 +0100
+Subject: [PATCH 3/9] krunfw: add listen support on wrapped socket
 
 Add control_listen() and control_close() callbacks to vsock transports.
 Linked listener socket to a vsock listener socket exposed to the host.
@@ -20,7 +20,7 @@ Signed-off-by: Stefano Garzarella <sgarzare@redhat.com>
  8 files changed, 281 insertions(+), 8 deletions(-)
 
 diff --git a/include/linux/virtio_vsock.h b/include/linux/virtio_vsock.h
-index 0b07cfb05..6a7e34227 100644
+index 0b07cfb05cf7..6a7e3422783d 100644
 --- a/include/linux/virtio_vsock.h
 +++ b/include/linux/virtio_vsock.h
 @@ -160,5 +160,8 @@ void virtio_transport_deliver_tap_pkt(struct virtio_vsock_pkt *pkt);
@@ -33,7 +33,7 @@ index 0b07cfb05..6a7e34227 100644
  
  #endif /* _LINUX_VIRTIO_VSOCK_H */
 diff --git a/include/net/af_vsock.h b/include/net/af_vsock.h
-index 20496229b..9a094eea6 100644
+index 20496229bd38..9a094eea6cba 100644
 --- a/include/net/af_vsock.h
 +++ b/include/net/af_vsock.h
 @@ -68,6 +68,7 @@ struct vsock_sock {
@@ -55,7 +55,7 @@ index 20496229b..9a094eea6 100644
  
  /**** CORE ****/
 diff --git a/include/net/sock.h b/include/net/sock.h
-index 1183507df..f823f72e5 100644
+index 1183507df95b..f823f72e532b 100644
 --- a/include/net/sock.h
 +++ b/include/net/sock.h
 @@ -519,6 +519,7 @@ struct sock {
@@ -67,7 +67,7 @@ index 1183507df..f823f72e5 100644
  
  enum sk_pacing {
 diff --git a/include/uapi/linux/virtio_vsock.h b/include/uapi/linux/virtio_vsock.h
-index 76bf2d5a8..788c1f57a 100644
+index 76bf2d5a8544..788c1f57a09d 100644
 --- a/include/uapi/linux/virtio_vsock.h
 +++ b/include/uapi/linux/virtio_vsock.h
 @@ -86,6 +86,12 @@ enum virtio_vsock_op {
@@ -84,7 +84,7 @@ index 76bf2d5a8..788c1f57a 100644
  
  /* VIRTIO_VSOCK_OP_SHUTDOWN flags values */
 diff --git a/net/socket.c b/net/socket.c
-index b8f962a40..e934e2699 100644
+index b8f962a40b7e..e934e2699714 100644
 --- a/net/socket.c
 +++ b/net/socket.c
 @@ -95,6 +95,7 @@
@@ -304,7 +304,7 @@ index b8f962a40..e934e2699 100644
  		}
  	}
 diff --git a/net/vmw_vsock/af_vsock.c b/net/vmw_vsock/af_vsock.c
-index 8b1612459..f0fa81866 100644
+index 8b16124590ed..f0fa81866439 100644
 --- a/net/vmw_vsock/af_vsock.c
 +++ b/net/vmw_vsock/af_vsock.c
 @@ -587,6 +587,59 @@ static void vsock_pending_work(struct work_struct *work)
@@ -400,7 +400,7 @@ index 8b1612459..f0fa81866 100644
  	.getname = vsock_getname,
  	.poll = vsock_poll,
 diff --git a/net/vmw_vsock/virtio_transport.c b/net/vmw_vsock/virtio_transport.c
-index cdc763993..3e06bc621 100644
+index cdc7639939e2..3e06bc621031 100644
 --- a/net/vmw_vsock/virtio_transport.c
 +++ b/net/vmw_vsock/virtio_transport.c
 @@ -443,6 +443,10 @@ static void virtio_vsock_rx_done(struct virtqueue *vq)
@@ -462,7 +462,7 @@ index cdc763993..3e06bc621 100644
  {
  	struct virtio_vsock *vsock =
 diff --git a/net/vmw_vsock/virtio_transport_common.c b/net/vmw_vsock/virtio_transport_common.c
-index cbd44c47d..51150b7c1 100644
+index cbd44c47d772..51150b7c15a1 100644
 --- a/net/vmw_vsock/virtio_transport_common.c
 +++ b/net/vmw_vsock/virtio_transport_common.c
 @@ -263,6 +263,27 @@ static int virtio_transport_send_pkt_info(struct vsock_sock *vsk,
@@ -525,5 +525,5 @@ index cbd44c47d..51150b7c1 100644
  }
  
 -- 
-2.26.2
+2.28.0
 

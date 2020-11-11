@@ -1,22 +1,13 @@
-From e5a93c08fd3e3ced2ee52db9ea24455e8adc668a Mon Sep 17 00:00:00 2001
+From 66eb0a84d2e31150a5393f02aa21d789a4ff00a4 Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@redhat.com>
-Date: Fri, 22 May 2020 06:56:18 -0400
-Subject: [PATCH 2/4] libkrun: Initial socket-to-vsock impersonation
+Date: Wed, 11 Nov 2020 06:56:42 +0100
+Subject: [PATCH 2/9] krunfw: add listen support on wrapped socket
 
-This an initial, basic implementation of network connectivity using
-socket-to-vsock impersonation.
+Add control_listen() and control_close() callbacks to vsock transports.
+Linked listener socket to a vsock listener socket exposed to the host.
+(HACK: used socketpair() callback to do the link)
 
-With this technique, when userspace requests a connection, the kernel
-first attempts to find the endpoint in the usual way and, if it fails,
-asks the VMM (Virtual Machine Monitor) if it can connect to such
-endpoint from its own context. If the VMM answers positively, the
-original socket is silently replaced with a vsock.
-
-This initial implementation only supports the impersonation of TCP
-IPv4 and UNIX connections, and even for those connections only
-conventional send/recv operations are supported.
-
-Signed-off-by: Sergio Lopez <slp@redhat.com>
+Signed-off-by: Stefano Garzarella <sgarzare@redhat.com>
 ---
  include/linux/virtio_vsock.h            |  15 ++++
  include/net/af_vsock.h                  |   8 ++
@@ -28,7 +19,7 @@ Signed-off-by: Sergio Lopez <slp@redhat.com>
  7 files changed, 253 insertions(+), 9 deletions(-)
 
 diff --git a/include/linux/virtio_vsock.h b/include/linux/virtio_vsock.h
-index dc636b727..0b07cfb05 100644
+index dc636b727179..0b07cfb05cf7 100644
 --- a/include/linux/virtio_vsock.h
 +++ b/include/linux/virtio_vsock.h
 @@ -62,6 +62,17 @@ struct virtio_vsock_pkt_info {
@@ -59,7 +50,7 @@ index dc636b727..0b07cfb05 100644
 +
  #endif /* _LINUX_VIRTIO_VSOCK_H */
 diff --git a/include/net/af_vsock.h b/include/net/af_vsock.h
-index b1c717286..20496229b 100644
+index b1c717286993..20496229bd38 100644
 --- a/include/net/af_vsock.h
 +++ b/include/net/af_vsock.h
 @@ -30,6 +30,10 @@ struct vsock_sock {
@@ -85,7 +76,7 @@ index b1c717286..20496229b 100644
  
  /**** CORE ****/
 diff --git a/include/uapi/linux/virtio_vsock.h b/include/uapi/linux/virtio_vsock.h
-index 1d57ed3d8..76bf2d5a8 100644
+index 1d57ed3d84d2..76bf2d5a8544 100644
 --- a/include/uapi/linux/virtio_vsock.h
 +++ b/include/uapi/linux/virtio_vsock.h
 @@ -83,6 +83,9 @@ enum virtio_vsock_op {
@@ -99,7 +90,7 @@ index 1d57ed3d8..76bf2d5a8 100644
  
  /* VIRTIO_VSOCK_OP_SHUTDOWN flags values */
 diff --git a/net/socket.c b/net/socket.c
-index 976426d03..b8f962a40 100644
+index 976426d03f09..b8f962a40b7e 100644
 --- a/net/socket.c
 +++ b/net/socket.c
 @@ -104,6 +104,7 @@
@@ -151,7 +142,7 @@ index 976426d03..b8f962a40 100644
  	return err;
  }
 diff --git a/net/vmw_vsock/af_vsock.c b/net/vmw_vsock/af_vsock.c
-index 626bf9044..8b1612459 100644
+index 626bf9044418..8b16124590ed 100644
 --- a/net/vmw_vsock/af_vsock.c
 +++ b/net/vmw_vsock/af_vsock.c
 @@ -107,6 +107,8 @@
@@ -302,7 +293,7 @@ index 626bf9044..8b1612459 100644
  			goto out;
  
 diff --git a/net/vmw_vsock/virtio_transport.c b/net/vmw_vsock/virtio_transport.c
-index 2700a63ab..cdc763993 100644
+index 2700a63ab095..cdc7639939e2 100644
 --- a/net/vmw_vsock/virtio_transport.c
 +++ b/net/vmw_vsock/virtio_transport.c
 @@ -480,6 +480,8 @@ static struct virtio_transport virtio_transport = {
@@ -315,7 +306,7 @@ index 2700a63ab..cdc763993 100644
  
  	.send_pkt = virtio_transport_send_pkt,
 diff --git a/net/vmw_vsock/virtio_transport_common.c b/net/vmw_vsock/virtio_transport_common.c
-index 0edda1edf..cbd44c47d 100644
+index 0edda1edf988..cbd44c47d772 100644
 --- a/net/vmw_vsock/virtio_transport_common.c
 +++ b/net/vmw_vsock/virtio_transport_common.c
 @@ -92,6 +92,50 @@ virtio_transport_alloc_pkt(struct virtio_vsock_pkt_info *info,
@@ -446,5 +437,5 @@ index 0edda1edf..cbd44c47d 100644
  {
  	struct virtio_vsock_pkt_info info = {
 -- 
-2.26.2
+2.28.0
 
