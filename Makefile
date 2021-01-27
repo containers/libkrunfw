@@ -13,6 +13,8 @@ KERNEL_BINARY_x86_64 = $(KERNEL_SOURCES)/vmlinux
 KERNEL_BINARY_aarch64 = $(KERNEL_SOURCES)/arch/arm64/boot/Image
 KRUNFW_BINARY_Linux = libkrunfw.so
 KRUNFW_BINARY_Darwin = libkrunfw.dylib
+LIBDIR_Linux = lib64
+LIBDIR_Darwin = lib
 
 ifeq ($(PREFIX),)
     PREFIX := /usr/local
@@ -43,8 +45,8 @@ $(KRUNFW_BINARY_$(OS)): $(KERNEL_C_BUNDLE)
 	gcc -fPIC -shared -o $@ $(KERNEL_C_BUNDLE)
 
 install: $(KRUNFW_BINARY_$(OS))
-	install -d $(DESTDIR)$(PREFIX)/lib64/
-	install -m 755 $(KRUNFW_BINARY_$(OS)) $(DESTDIR)$(PREFIX)/lib64/
+	install -d $(DESTDIR)$(PREFIX)/$(LIBDIR_$(OS))/
+	install -m 755 $(KRUNFW_BINARY_$(OS)) $(DESTDIR)$(PREFIX)/$(LIBDIR_$(OS))/
 
 clean:
 	rm -fr $(KERNEL_SOURCES) $(KERNEL_C_BUNDLE) $(KRUNFW_BINARY_$(OS))
