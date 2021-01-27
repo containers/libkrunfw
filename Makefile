@@ -6,10 +6,13 @@ KERNEL_PATCHES = $(shell find patches/ -name "0*.patch" | sort)
 KERNEL_C_BUNDLE = kernel.c
 
 ARCH = $(shell uname -m)
+OS = $(shell uname -s)
 BUNDLE_SCRIPT_x86_64 = vmlinux_to_bundle.py
 BUNDLE_SCRIPT_aarch64 = Image_to_bundle.py
 KERNEL_BINARY_x86_64 = $(KERNEL_SOURCES)/vmlinux
 KERNEL_BINARY_aarch64 = $(KERNEL_SOURCES)/arch/arm64/boot/Image
+KRUNFW_BINARY_Linux = libkrunfw.so
+KRUNFW_BINARY_Darwin = libkrunfw.dylib
 
 ifeq ($(PREFIX),)
     PREFIX := /usr/local
@@ -17,7 +20,7 @@ endif
 
 .PHONY: all install clean
 
-all: libkrunfw.so
+all: $(KRUNFW_BINARY_$(OS))
 
 $(KERNEL_TARBALL):
 	@mkdir -p tarballs
@@ -36,12 +39,12 @@ $(KERNEL_C_BUNDLE): $(KERNEL_BINARY_$(ARCH))
 	@echo "Generating $(KERNEL_C_BUNDLE) from $(KERNEL_BINARY_$(ARCH))..."
 	@python3 $(BUNDLE_SCRIPT_$(ARCH)) $(KERNEL_BINARY_$(ARCH))
 
-libkrunfw.so: $(KERNEL_C_BUNDLE)
+$(KRUNFW_BINARY_$(OS)): $(KERNEL_C_BUNDLE)
 	gcc -fPIC -shared -o $@ $(KERNEL_C_BUNDLE)
 
-install: libkrunfw.so
+install: $(KRUNFW_BINARY_$(OS))
 	install -d $(DESTDIR)$(PREFIX)/lib64/
-	install -m 755 libkrunfw.so $(DESTDIR)$(PREFIX)/lib64/
+	install -m 755 $(KRUNFW_BINARY_$(OS)) $(DESTDIR)$(PREFIX)/lib64/
 
 clean:
-	rm -fr $(KERNEL_SOURCES) $(KERNEL_C_BUNDLE) libkrunfw.so
+	rm -fr $(KERNEL_SOURCES) $(KERNEL_C_BUNDLE) $(KRUNFW_BINARY_$(OS))
