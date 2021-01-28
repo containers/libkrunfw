@@ -845,6 +845,7 @@ CONFIG_HAVE_NET_DSA=y
 # CONFIG_IEEE802154 is not set
 # CONFIG_NET_SCHED is not set
 # CONFIG_DCB is not set
+# CONFIG_DNS_RESOLVER is not set
 # CONFIG_BATMAN_ADV is not set
 # CONFIG_OPENVSWITCH is not set
 CONFIG_VSOCKETS=y
@@ -1858,10 +1859,12 @@ CONFIG_CRYPTO_LIB_POLY1305_RSIZE=11
 # CONFIG_CRYPTO_LIB_CHACHA20POLY1305 is not set
 CONFIG_CRYPTO_LIB_SHA256=y
 # CONFIG_CRYPTO_HW is not set
+# CONFIG_ASYMMETRIC_KEY_TYPE is not set
 
 #
 # Certificates for signature checking
 #
+# CONFIG_SYSTEM_BLACKLIST_KEYRING is not set
 # end of Certificates for signature checking
 
 #
