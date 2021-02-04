@@ -6,15 +6,31 @@ By having the kernel bundled in a dynamic library, ```libkrun``` can leave to th
 
 ## Building
 
-### Requirements
+### Linux
+
+#### Requirements
 * The toolchain your distribution needs to build a Linux kernel.
 * Python 3
 * ```pyelftools``` (package ```python3-pyelftools``` in Fedora and Ubuntu)
 
-### Building and installing the library
+#### Building and installing the library
 ```
 make
 sudo make install
+```
+
+### macOS
+
+#### Requirements
+
+Compiling a Linux kernel natively on macOS is not an easy feat. For this reason, the recommended way for building ```libkrunfw``` in this platform is by already having installed a binary version of [krunvm](https://github.com/slp/krunvm) and its dependencies ([libkrun](https://github.com/containers/libkrun), and ```libkrunfw``` itself), such as the one available in the [krunvm Homebrew repo](https://github.com/slp/homebrew-krun), and then executing the [build_on_krunvm.sh](build_on_krunvm.sh) script found in this repository.
+
+This will create a lightweight Linux VM using ```krunvm``` with the current working directory mapped inside it, and build the kernel on it.
+
+#### Building the library using krunvm
+```
+./build_on_krunvm.sh
+make
 ```
 
 ## License
