@@ -1,0 +1,100 @@
+[PATCH v2] x86/entry: build thunk_$(BITS) only if CONFIG_PREEMPTION=y
+
+With CONFIG_PREEMPTION disabled, arch/x86/entry/thunk_64.o is just an
+empty object file.
+
+With the newer binutils (tested with 2.35.90.20210113-1ubuntu1) the GNU
+assembler doesn't generate a symbol table for empty object files and
+objtool fails with the following error when a valid symbol table cannot
+be found:
+
+  arch/x86/entry/thunk_64.o: warning: objtool: missing symbol table
+
+To prevent this from happening, build thunk_$(BITS).o only if
+CONFIG_PREEMPTION is enabled.
+
+BugLink: https://bugs.launchpad.net/bugs/1911359
+Fixes: 320100a5ffe5 ("x86/entry: Remove the TRACE_IRQS cruft")
+Signed-off-by: Andrea Righi <andrea.righi@canonical.com>
+---
+ arch/x86/entry/Makefile   | 3 ++-
+ arch/x86/entry/thunk_32.S | 2 --
+ arch/x86/entry/thunk_64.S | 4 ----
+ arch/x86/um/Makefile      | 3 ++-
+ 4 files changed, 4 insertions(+), 8 deletions(-)
+
+ChangeLog (v1 -> v2):
+ - do not break UML build
+
+diff --git a/arch/x86/entry/Makefile b/arch/x86/entry/Makefile
+index 08bf95dbc911..83c98dae74a6 100644
+--- a/arch/x86/entry/Makefile
++++ b/arch/x86/entry/Makefile
+@@ -21,12 +21,13 @@ CFLAGS_syscall_64.o		+= $(call cc-option,-Wno-override-init,)
+ CFLAGS_syscall_32.o		+= $(call cc-option,-Wno-override-init,)
+ CFLAGS_syscall_x32.o		+= $(call cc-option,-Wno-override-init,)
+ 
+-obj-y				:= entry_$(BITS).o thunk_$(BITS).o syscall_$(BITS).o
++obj-y				:= entry_$(BITS).o syscall_$(BITS).o
+ obj-y				+= common.o
+ 
+ obj-y				+= vdso/
+ obj-y				+= vsyscall/
+ 
++obj-$(CONFIG_PREEMPTION)	+= thunk_$(BITS).o
+ obj-$(CONFIG_IA32_EMULATION)	+= entry_64_compat.o syscall_32.o
+ obj-$(CONFIG_X86_X32_ABI)	+= syscall_x32.o
+ 
+diff --git a/arch/x86/entry/thunk_32.S b/arch/x86/entry/thunk_32.S
+index f1f96d4d8cd6..5997ec0b4b17 100644
+--- a/arch/x86/entry/thunk_32.S
++++ b/arch/x86/entry/thunk_32.S
+@@ -29,10 +29,8 @@ SYM_CODE_START_NOALIGN(\name)
+ SYM_CODE_END(\name)
+ 	.endm
+ 
+-#ifdef CONFIG_PREEMPTION
+ 	THUNK preempt_schedule_thunk, preempt_schedule
+ 	THUNK preempt_schedule_notrace_thunk, preempt_schedule_notrace
+ 	EXPORT_SYMBOL(preempt_schedule_thunk)
+ 	EXPORT_SYMBOL(preempt_schedule_notrace_thunk)
+-#endif
+ 
+diff --git a/arch/x86/entry/thunk_64.S b/arch/x86/entry/thunk_64.S
+index ccd32877a3c4..c7cf79be7231 100644
+--- a/arch/x86/entry/thunk_64.S
++++ b/arch/x86/entry/thunk_64.S
+@@ -36,14 +36,11 @@ SYM_FUNC_END(\name)
+ 	_ASM_NOKPROBE(\name)
+ 	.endm
+ 
+-#ifdef CONFIG_PREEMPTION
+ 	THUNK preempt_schedule_thunk, preempt_schedule
+ 	THUNK preempt_schedule_notrace_thunk, preempt_schedule_notrace
+ 	EXPORT_SYMBOL(preempt_schedule_thunk)
+ 	EXPORT_SYMBOL(preempt_schedule_notrace_thunk)
+-#endif
+ 
+-#ifdef CONFIG_PREEMPTION
+ SYM_CODE_START_LOCAL_NOALIGN(.L_restore)
+ 	popq %r11
+ 	popq %r10
+@@ -58,4 +55,3 @@ SYM_CODE_START_LOCAL_NOALIGN(.L_restore)
+ 	ret
+ 	_ASM_NOKPROBE(.L_restore)
+ SYM_CODE_END(.L_restore)
+-#endif
+diff --git a/arch/x86/um/Makefile b/arch/x86/um/Makefile
+index 77f70b969d14..3113800da63a 100644
+--- a/arch/x86/um/Makefile
++++ b/arch/x86/um/Makefile
+@@ -27,7 +27,8 @@ else
+ 
+ obj-y += syscalls_64.o vdso/
+ 
+-subarch-y = ../lib/csum-partial_64.o ../lib/memcpy_64.o ../entry/thunk_64.o
++subarch-y = ../lib/csum-partial_64.o ../lib/memcpy_64.o
++subarch-$(CONFIG_PREEMPTION) += ../entry/thunk_64.o
+ 
+ endif
+ 
