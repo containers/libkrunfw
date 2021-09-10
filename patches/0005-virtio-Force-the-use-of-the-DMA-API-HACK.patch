@@ -1,0 +1,33 @@
+From 856f8181799a895f113c1bc65b62b71f61e96369 Mon Sep 17 00:00:00 2001
+From: Sergio Lopez <slp@sinrega.org>
+Date: Fri, 10 Sep 2021 13:05:01 +0200
+Subject: [PATCH] virtio: Force the use of the DMA API (HACK)
+
+For running under SEV, we need to instruct virtio-mmio to use bounce
+buffers through the DMA API, but there's currently no way of
+signalling this using the device properties.
+
+Force the use of the DMA API until there's a proper way to do this.
+
+Signed-off-by: Sergio Lopez <slp@redhat.com>
+---
+ drivers/virtio/virtio_ring.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/drivers/virtio/virtio_ring.c b/drivers/virtio/virtio_ring.c
+index 71e16b53e..71a40b45b 100644
+--- a/drivers/virtio/virtio_ring.c
++++ b/drivers/virtio/virtio_ring.c
+@@ -240,6 +240,9 @@ static inline bool virtqueue_use_indirect(struct virtqueue *_vq,
+ 
+ static bool vring_use_dma_api(struct virtio_device *vdev)
+ {
++        // Hack for libkrun-SEV
++        return true;
++
+ 	if (!virtio_has_dma_quirk(vdev))
+ 		return true;
+ 
+-- 
+2.27.0
+
