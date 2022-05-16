@@ -1,7 +1,7 @@
-From aeb8125893ca1c22f5f56730cc72061211db8d2e Mon Sep 17 00:00:00 2001
+From 0c84a14fee4eacf228443bdc80ba47e80dfce6da Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@redhat.com>
-Date: Wed, 27 Jan 2021 09:31:12 +0100
-Subject: [PATCH] Implement TSI (WIP)
+Date: Mon, 16 May 2022 16:16:30 +0200
+Subject: [PATCH 3/4] Implement TSI (WIP)
 
 ---
  include/linux/socket.h                  |   4 +-
@@ -23,7 +23,7 @@ Subject: [PATCH] Implement TSI (WIP)
  create mode 100644 net/tsi/af_tsi.c
 
 diff --git a/include/linux/socket.h b/include/linux/socket.h
-index e9cb30d8c..d6fde599d 100644
+index 9aa530d497da..81780c27db71 100644
 --- a/include/linux/socket.h
 +++ b/include/linux/socket.h
 @@ -223,8 +223,9 @@ struct ucred {
@@ -46,7 +46,7 @@ index e9cb30d8c..d6fde599d 100644
  
  /* Maximum queue length specifiable by listen.  */
 diff --git a/include/linux/virtio_vsock.h b/include/linux/virtio_vsock.h
-index dc636b727..6a7e34227 100644
+index dc636b727179..6a7e3422783d 100644
 --- a/include/linux/virtio_vsock.h
 +++ b/include/linux/virtio_vsock.h
 @@ -62,6 +62,17 @@ struct virtio_vsock_pkt_info {
@@ -80,7 +80,7 @@ index dc636b727..6a7e34227 100644
 +
  #endif /* _LINUX_VIRTIO_VSOCK_H */
 diff --git a/include/net/af_vsock.h b/include/net/af_vsock.h
-index b1c717286..edf88902b 100644
+index 4d8589244dc7..27b5a8bb0b83 100644
 --- a/include/net/af_vsock.h
 +++ b/include/net/af_vsock.h
 @@ -30,6 +30,10 @@ struct vsock_sock {
@@ -108,7 +108,7 @@ index b1c717286..edf88902b 100644
  };
  
  /**** CORE ****/
-@@ -214,4 +225,10 @@ int vsock_add_tap(struct vsock_tap *vt);
+@@ -215,4 +226,10 @@ int vsock_add_tap(struct vsock_tap *vt);
  int vsock_remove_tap(struct vsock_tap *vt);
  void vsock_deliver_tap(struct sk_buff *build_skb(void *opaque), void *opaque);
  
@@ -120,7 +120,7 @@ index b1c717286..edf88902b 100644
 +
  #endif /* __AF_VSOCK_H__ */
 diff --git a/include/uapi/linux/virtio_vsock.h b/include/uapi/linux/virtio_vsock.h
-index 1d57ed3d8..17efe190c 100644
+index 1d57ed3d84d2..17efe190cb50 100644
 --- a/include/uapi/linux/virtio_vsock.h
 +++ b/include/uapi/linux/virtio_vsock.h
 @@ -83,6 +83,17 @@ enum virtio_vsock_op {
@@ -142,7 +142,7 @@ index 1d57ed3d8..17efe190c 100644
  
  /* VIRTIO_VSOCK_OP_SHUTDOWN flags values */
 diff --git a/net/Kconfig b/net/Kconfig
-index d6567162c..fb66994fc 100644
+index d6567162c1cf..fb66994fc953 100644
 --- a/net/Kconfig
 +++ b/net/Kconfig
 @@ -244,6 +244,7 @@ source "net/switchdev/Kconfig"
@@ -154,7 +154,7 @@ index d6567162c..fb66994fc 100644
  config RPS
  	bool
 diff --git a/net/Makefile b/net/Makefile
-index 5744bf199..ab53bca31 100644
+index 5744bf1997fd..ab53bca3163f 100644
 --- a/net/Makefile
 +++ b/net/Makefile
 @@ -88,3 +88,4 @@ obj-$(CONFIG_QRTR)		+= qrtr/
@@ -163,10 +163,10 @@ index 5744bf199..ab53bca31 100644
  obj-$(CONFIG_MPTCP)		+= mptcp/
 +obj-$(CONFIG_TSI)		+= tsi/
 diff --git a/net/socket.c b/net/socket.c
-index 6e6cccc21..58577bdbc 100644
+index d52c265ad449..665c87630c6d 100644
 --- a/net/socket.c
 +++ b/net/socket.c
-@@ -1408,6 +1408,11 @@ int __sock_create(struct net *net, int family, int type, int protocol,
+@@ -1397,6 +1397,11 @@ int __sock_create(struct net *net, int family, int type, int protocol,
  		request_module("net-pf-%d", family);
  #endif
  
@@ -180,7 +180,7 @@ index 6e6cccc21..58577bdbc 100644
  	err = -EAFNOSUPPORT;
 diff --git a/net/tsi/Kconfig b/net/tsi/Kconfig
 new file mode 100644
-index 000000000..0f52ac6c9
+index 000000000000..0f52ac6c9fa1
 --- /dev/null
 +++ b/net/tsi/Kconfig
 @@ -0,0 +1,7 @@
@@ -193,7 +193,7 @@ index 000000000..0f52ac6c9
 +	  TSI (Transparent Socket Impersonation).
 diff --git a/net/tsi/Makefile b/net/tsi/Makefile
 new file mode 100644
-index 000000000..8b3cf7411
+index 000000000000..8b3cf74116a5
 --- /dev/null
 +++ b/net/tsi/Makefile
 @@ -0,0 +1,4 @@
@@ -203,7 +203,7 @@ index 000000000..8b3cf7411
 +tsi-y := af_tsi.o
 diff --git a/net/tsi/af_tsi.c b/net/tsi/af_tsi.c
 new file mode 100644
-index 000000000..2ad83e99c
+index 000000000000..2ad83e99c6be
 --- /dev/null
 +++ b/net/tsi/af_tsi.c
 @@ -0,0 +1,565 @@
@@ -773,7 +773,7 @@ index 000000000..2ad83e99c
 +MODULE_VERSION("0.0.1");
 +MODULE_LICENSE("GPL v2");
 diff --git a/net/vmw_vsock/af_vsock.c b/net/vmw_vsock/af_vsock.c
-index d10916ab4..7c580634c 100644
+index c59806253a65..9fa23a16f03f 100644
 --- a/net/vmw_vsock/af_vsock.c
 +++ b/net/vmw_vsock/af_vsock.c
 @@ -107,6 +107,8 @@
@@ -785,7 +785,7 @@ index d10916ab4..7c580634c 100644
  #include <net/sock.h>
  #include <net/af_vsock.h>
  
-@@ -766,6 +768,10 @@ static void __vsock_release(struct sock *sk, int level)
+@@ -772,6 +774,10 @@ static void __vsock_release(struct sock *sk, int level)
  		 */
  		lock_sock_nested(sk, level);
  
@@ -796,7 +796,7 @@ index d10916ab4..7c580634c 100644
  		if (vsk->transport)
  			vsk->transport->release(vsk);
  		else if (sk->sk_type == SOCK_STREAM)
-@@ -860,6 +866,31 @@ vsock_bind(struct socket *sock, struct sockaddr *addr, int addr_len)
+@@ -866,6 +872,31 @@ vsock_bind(struct socket *sock, struct sockaddr *addr, int addr_len)
  	return err;
  }
  
@@ -828,7 +828,7 @@ index d10916ab4..7c580634c 100644
  static int vsock_getname(struct socket *sock,
  			 struct sockaddr *addr, int peer)
  {
-@@ -874,6 +905,11 @@ static int vsock_getname(struct socket *sock,
+@@ -880,6 +911,11 @@ static int vsock_getname(struct socket *sock,
  
  	lock_sock(sk);
  
@@ -840,7 +840,7 @@ index d10916ab4..7c580634c 100644
  	if (peer) {
  		if (sock->state != SS_CONNECTED) {
  			err = -ENOTCONN;
-@@ -1999,6 +2035,165 @@ static const struct proto_ops vsock_stream_ops = {
+@@ -2014,6 +2050,165 @@ static const struct proto_ops vsock_stream_ops = {
  	.sendpage = sock_no_sendpage,
  };
  
@@ -1007,10 +1007,10 @@ index d10916ab4..7c580634c 100644
  			int protocol, int kern)
  {
 diff --git a/net/vmw_vsock/virtio_transport.c b/net/vmw_vsock/virtio_transport.c
-index 2700a63ab..9e547390a 100644
+index e131121533ad..bb1fa73dd54f 100644
 --- a/net/vmw_vsock/virtio_transport.c
 +++ b/net/vmw_vsock/virtio_transport.c
-@@ -443,6 +443,11 @@ static void virtio_vsock_rx_done(struct virtqueue *vq)
+@@ -448,6 +448,11 @@ static void virtio_vsock_rx_done(struct virtqueue *vq)
  	queue_work(virtio_vsock_workqueue, &vsock->rx_work);
  }
  
@@ -1022,7 +1022,7 @@ index 2700a63ab..9e547390a 100644
  static struct virtio_transport virtio_transport = {
  	.transport = {
  		.module                   = THIS_MODULE,
-@@ -480,11 +485,49 @@ static struct virtio_transport virtio_transport = {
+@@ -485,11 +490,49 @@ static struct virtio_transport virtio_transport = {
  		.notify_send_pre_enqueue  = virtio_transport_notify_send_pre_enqueue,
  		.notify_send_post_enqueue = virtio_transport_notify_send_post_enqueue,
  		.notify_buffer_size       = virtio_transport_notify_buffer_size,
@@ -1073,7 +1073,7 @@ index 2700a63ab..9e547390a 100644
  {
  	struct virtio_vsock *vsock =
 diff --git a/net/vmw_vsock/virtio_transport_common.c b/net/vmw_vsock/virtio_transport_common.c
-index 5956939ee..b14f841cc 100644
+index d6d3a05c008a..0e320553b6b7 100644
 --- a/net/vmw_vsock/virtio_transport_common.c
 +++ b/net/vmw_vsock/virtio_transport_common.c
 @@ -92,6 +92,50 @@ virtio_transport_alloc_pkt(struct virtio_vsock_pkt_info *info,
@@ -1253,7 +1253,7 @@ index 5956939ee..b14f841cc 100644
  static int virtio_transport_reset(struct vsock_sock *vsk,
  				  struct virtio_vsock_pkt *pkt)
  {
-@@ -856,8 +1005,21 @@ virtio_transport_recv_connecting(struct sock *sk,
+@@ -866,8 +1015,21 @@ virtio_transport_recv_connecting(struct sock *sk,
  	int err;
  	int skerr;
  
@@ -1275,7 +1275,7 @@ index 5956939ee..b14f841cc 100644
  		sk->sk_state = TCP_ESTABLISHED;
  		sk->sk_socket->state = SS_CONNECTED;
  		vsock_insert_connected(vsk);
-@@ -1034,7 +1196,8 @@ virtio_transport_recv_listen(struct sock *sk, struct virtio_vsock_pkt *pkt,
+@@ -1044,7 +1206,8 @@ virtio_transport_recv_listen(struct sock *sk, struct virtio_vsock_pkt *pkt,
  	struct sock *child;
  	int ret;
  
@@ -1285,7 +1285,7 @@ index 5956939ee..b14f841cc 100644
  		virtio_transport_reset_no_sock(t, pkt);
  		return -EINVAL;
  	}
-@@ -1073,6 +1236,17 @@ virtio_transport_recv_listen(struct sock *sk, struct virtio_vsock_pkt *pkt,
+@@ -1083,6 +1246,17 @@ virtio_transport_recv_listen(struct sock *sk, struct virtio_vsock_pkt *pkt,
  		return ret;
  	}
  
@@ -1303,7 +1303,7 @@ index 5956939ee..b14f841cc 100644
  	if (virtio_transport_space_update(child, pkt))
  		child->sk_write_space(child);
  
-@@ -1097,6 +1271,8 @@ void virtio_transport_recv_pkt(struct virtio_transport *t,
+@@ -1107,6 +1281,8 @@ void virtio_transport_recv_pkt(struct virtio_transport *t,
  	struct sock *sk;
  	bool space_available;
  
@@ -1313,5 +1313,5 @@ index 5956939ee..b14f841cc 100644
  			le32_to_cpu(pkt->hdr.src_port));
  	vsock_addr_init(&dst, le64_to_cpu(pkt->hdr.dst_cid),
 -- 
-2.26.2
+2.36.0
 
