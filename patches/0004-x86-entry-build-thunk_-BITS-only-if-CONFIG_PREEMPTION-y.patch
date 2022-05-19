@@ -61,7 +61,7 @@ index f1f96d4d8cd6..5997ec0b4b17 100644
 -#endif
  
 diff --git a/arch/x86/entry/thunk_64.S b/arch/x86/entry/thunk_64.S
-index ccd32877a3c4..c7cf79be7231 100644
+index c9a9fbf1655f..20ae90fa3f6b 100644
 --- a/arch/x86/entry/thunk_64.S
 +++ b/arch/x86/entry/thunk_64.S
 @@ -36,14 +36,11 @@ SYM_FUNC_END(\name)
@@ -76,13 +76,13 @@ index ccd32877a3c4..c7cf79be7231 100644
 -#endif
  
 -#ifdef CONFIG_PREEMPTION
- SYM_CODE_START_LOCAL_NOALIGN(.L_restore)
+ SYM_CODE_START_LOCAL_NOALIGN(__thunk_restore)
  	popq %r11
  	popq %r10
-@@ -58,4 +55,3 @@ SYM_CODE_START_LOCAL_NOALIGN(.L_restore)
+@@ -58,4 +55,3 @@ SYM_CODE_START_LOCAL_NOALIGN(__thunk_restore)
  	ret
- 	_ASM_NOKPROBE(.L_restore)
- SYM_CODE_END(.L_restore)
+ 	_ASM_NOKPROBE(__thunk_restore)
+ SYM_CODE_END(__thunk_restore)
 -#endif
 diff --git a/arch/x86/um/Makefile b/arch/x86/um/Makefile
 index 77f70b969d14..3113800da63a 100644
@@ -98,3 +98,6 @@ index 77f70b969d14..3113800da63a 100644
  
  endif
  
+-- 
+2.36.1
+

@@ -1,4 +1,4 @@
-KERNEL_VERSION = linux-5.10.10
+KERNEL_VERSION = linux-5.10.116
 KERNEL_REMOTE = https://cdn.kernel.org/pub/linux/kernel/v5.x/$(KERNEL_VERSION).tar.xz
 KERNEL_TARBALL = tarballs/$(KERNEL_VERSION).tar.xz
 KERNEL_SOURCES = $(KERNEL_VERSION)
