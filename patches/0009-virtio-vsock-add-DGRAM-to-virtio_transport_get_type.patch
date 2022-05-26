@@ -1,0 +1,31 @@
+From 599f4dbb789ae536b6764d0fac1f8abfcb9fe679 Mon Sep 17 00:00:00 2001
+From: Sergio Lopez <slp@redhat.com>
+Date: Thu, 19 May 2022 22:34:49 +0200
+Subject: [PATCH 09/11] virtio/vsock: add DGRAM to virtio_transport_get_type
+
+Add missing DGRAM to virtio_transport_get_type.
+
+Signed-off-by: Sergio Lopez <slp@redhat.com>
+---
+ net/vmw_vsock/virtio_transport_common.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/net/vmw_vsock/virtio_transport_common.c b/net/vmw_vsock/virtio_transport_common.c
+index 7b62b6f6cc23..0ad2f3c31786 100644
+--- a/net/vmw_vsock/virtio_transport_common.c
++++ b/net/vmw_vsock/virtio_transport_common.c
+@@ -179,8 +179,10 @@ static u16 virtio_transport_get_type(struct sock *sk)
+ {
+ 	if (sk->sk_type == SOCK_STREAM)
+ 		return VIRTIO_VSOCK_TYPE_STREAM;
+-	else
++	else if (sk->sk_type == SOCK_SEQPACKET)
+ 		return VIRTIO_VSOCK_TYPE_SEQPACKET;
++	else
++		return VIRTIO_VSOCK_TYPE_DGRAM;
+ }
+ 
+ /* This function can only be used on connecting/connected sockets,
+-- 
+2.36.1
+
