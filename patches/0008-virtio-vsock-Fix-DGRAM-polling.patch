@@ -1,0 +1,53 @@
+From 53be0f8ae1474cfab23ef97fd1c9d18ab1a0e8df Mon Sep 17 00:00:00 2001
+From: Sergio Lopez <slp@redhat.com>
+Date: Thu, 19 May 2022 22:31:03 +0200
+Subject: [PATCH 08/11] virtio/vsock: Fix DGRAM polling
+
+Fix DGRAM polling.
+
+Signed-off-by: Sergio Lopez <slp@redhat.com>
+---
+ net/vmw_vsock/af_vsock.c | 26 +++++++++++++++++++++-----
+ 1 file changed, 21 insertions(+), 5 deletions(-)
+
+diff --git a/net/vmw_vsock/af_vsock.c b/net/vmw_vsock/af_vsock.c
+index 4805e7b23d07..9ee5c1ce64ce 100644
+--- a/net/vmw_vsock/af_vsock.c
++++ b/net/vmw_vsock/af_vsock.c
+@@ -1047,12 +1047,28 @@ static __poll_t vsock_poll(struct file *file, struct socket *sock,
+ 	}
+ 
+ 	if (sock->type == SOCK_DGRAM) {
+-		/* For datagram sockets we can read if there is something in
+-		 * the queue and write as long as the socket isn't shutdown for
+-		 * sending.
++		bool data_ready_now = false;
++		const struct vsock_transport *transport;
++
++		lock_sock(sk);
++		transport = vsk->transport;
++
++		/* If there is something in the queue then we can read. */
++		if (transport) {
++			int ret = transport->notify_poll_in(
++						vsk, 1, &data_ready_now);
++
++			if (ret < 0) {
++				mask |= EPOLLERR;
++			}
++		}
++		release_sock(sk);
++
++		/* Sockets whose connections have been closed, reset, or
++		 * terminated should also be considered read, and we check the
++		 * shutdown flag for that.
+ 		 */
+-		if (!skb_queue_empty_lockless(&sk->sk_receive_queue) ||
+-		    (sk->sk_shutdown & RCV_SHUTDOWN)) {
++		if (data_ready_now || (sk->sk_shutdown & RCV_SHUTDOWN)) {
+ 			mask |= EPOLLIN | EPOLLRDNORM;
+ 		}
+ 
+-- 
+2.36.1
+

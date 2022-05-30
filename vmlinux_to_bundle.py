@@ -11,11 +11,11 @@ char * krunfw_get_kernel(size_t *load_addr, size_t *size)
 
 int krunfw_get_version()
 {
-    return 1;
+    return 2;
 }
 """
 
-load_segments = [ ]    
+load_segments = [ ]
 
 if len(sys.argv) != 2:
     print('Invalid arguments')
@@ -59,9 +59,9 @@ for segment in load_segments:
             col = 0
         else:
             col = col + 1
-            
+
     pos = pos + segment['p_filesz']
-        
+
 kc.write('";\n')
 kc.write('size_t KERNEL_SIZE = 0x%s;\n' % format(pos, 'x'))
 kc.write('size_t KERNEL_LOAD_ADDR = 0x%s;\n' % format(entry, 'x'))
