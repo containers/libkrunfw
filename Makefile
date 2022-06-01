@@ -1,4 +1,4 @@
-KERNEL_VERSION = linux-5.15.43
+KERNEL_VERSION = linux-5.15.44
 KERNEL_REMOTE = https://cdn.kernel.org/pub/linux/kernel/v5.x/$(KERNEL_VERSION).tar.xz
 KERNEL_TARBALL = tarballs/$(KERNEL_VERSION).tar.xz
 KERNEL_SOURCES = $(KERNEL_VERSION)
@@ -32,7 +32,7 @@ $(KERNEL_SOURCES): $(KERNEL_TARBALL)
 	tar xf $(KERNEL_TARBALL)
 	for patch in $(KERNEL_PATCHES); do patch -p1 -d $(KERNEL_SOURCES) < "$$patch"; done
 	cp config-libkrunfw_$(ARCH) $(KERNEL_SOURCES)/.config
-	cd $(KERNEL_SOURCES) ; $(MAKE) oldconfig
+	cd $(KERNEL_SOURCES) ; $(MAKE) olddefconfig
 
 $(KERNEL_BINARY_$(ARCH)): $(KERNEL_SOURCES)
 	cd $(KERNEL_SOURCES) ; $(MAKE) $(MAKEFLAGS)
