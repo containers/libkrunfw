@@ -1,7 +1,7 @@
-From d4e48fed0a031fb11181fb454989a5ab3412e758 Mon Sep 17 00:00:00 2001
+From 9b0266c0c65d5edfe34c9abc4db6abafdfcfdc03 Mon Sep 17 00:00:00 2001
 From: Jiang Wang <jiang.wang@bytedance.com>
 Date: Fri, 9 Apr 2021 18:32:20 +0000
-Subject: [PATCH 06/11] vsock_test: add tests for vsock dgram
+Subject: [PATCH 06/13] vsock_test: add tests for vsock dgram
 
 Added test cases for vsock dgram types.
 

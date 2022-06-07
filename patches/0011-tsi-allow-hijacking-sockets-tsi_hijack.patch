@@ -1,7 +1,7 @@
-From 44d3828f38659961d43c308a0a163196cb164f95 Mon Sep 17 00:00:00 2001
+From 94a44060014a6a4b4a865e9651a6e804a4293a7c Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@redhat.com>
 Date: Thu, 19 May 2022 22:42:01 +0200
-Subject: [PATCH 11/11] tsi: allow hijacking sockets (tsi_hijack)
+Subject: [PATCH 11/13] tsi: allow hijacking sockets (tsi_hijack)
 
 Add a kernel command line option (tsi_hijack) enabling users to
 request the kernel to hijack AF_INET(SOCK_STREAM || SOCK_DGRAM)
