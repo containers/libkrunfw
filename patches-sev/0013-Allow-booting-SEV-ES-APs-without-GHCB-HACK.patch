@@ -1,0 +1,92 @@
+From 3f966f0b658e68989ddd9b9d986fc3ca8c0e3c8c Mon Sep 17 00:00:00 2001
+From: Sergio Lopez <slp@sinrega.org>
+Date: Fri, 24 Sep 2021 17:50:39 +0200
+Subject: [PATCH 13/13] Allow booting SEV-ES APs without GHCB (HACK)
+
+Allow booting APs with SEV-ES enabled, by setting the trampoline at a
+well-known location, and moving sev_es_trampoline_start to the
+beginning of realmode's .text.
+
+Signed-off-by: Sergio Lopez <slp@redhat.com>
+---
+ arch/x86/realmode/init.c             |  5 ++++
+ arch/x86/realmode/rm/trampoline_64.S | 38 ++++++++++++++--------------
+ 2 files changed, 24 insertions(+), 19 deletions(-)
+
+diff --git a/arch/x86/realmode/init.c b/arch/x86/realmode/init.c
+index 1d20ed4b2872..27252a2d1703 100644
+--- a/arch/x86/realmode/init.c
++++ b/arch/x86/realmode/init.c
+@@ -53,8 +53,13 @@ void __init reserve_real_mode(void)
+ 
+ 	WARN_ON(slab_is_available());
+ 
++#if 0
+ 	/* Has to be under 1M so we can execute real-mode AP code. */
+ 	mem = memblock_phys_alloc_range(size, PAGE_SIZE, 0, 1<<20);
++#else
++	/* HACK: ensure the trampoline is at a well-known location. */
++	mem = 0x90000;
++#endif
+ 	if (!mem)
+ 		pr_info("No sub-1M memory is available for the trampoline\n");
+ 	else
+diff --git a/arch/x86/realmode/rm/trampoline_64.S b/arch/x86/realmode/rm/trampoline_64.S
+index cc8391f86cdb..3470382c8784 100644
+--- a/arch/x86/realmode/rm/trampoline_64.S
++++ b/arch/x86/realmode/rm/trampoline_64.S
+@@ -37,6 +37,25 @@
+ 	.text
+ 	.code16
+ 
++#ifdef CONFIG_AMD_MEM_ENCRYPT
++/* SEV-ES supports non-zero IP for entry points - no alignment needed */
++SYM_CODE_START(sev_es_trampoline_start)
++	cli			# We should be safe anyway
++
++	LJMPW_RM(1f)
++1:
++	mov	%cs, %ax	# Code and data in the same place
++	mov	%ax, %ds
++	mov	%ax, %es
++	mov	%ax, %ss
++
++	# Setup stack
++	movl	$rm_stack_end, %esp
++
++	jmp	.Lswitch_to_protected
++SYM_CODE_END(sev_es_trampoline_start)
++#endif	/* CONFIG_AMD_MEM_ENCRYPT */
++
+ 	.balign	PAGE_SIZE
+ SYM_CODE_START(trampoline_start)
+ 	cli			# We should be safe anyway
+@@ -81,25 +100,6 @@ no_longmode:
+ 	jmp no_longmode
+ SYM_CODE_END(trampoline_start)
+ 
+-#ifdef CONFIG_AMD_MEM_ENCRYPT
+-/* SEV-ES supports non-zero IP for entry points - no alignment needed */
+-SYM_CODE_START(sev_es_trampoline_start)
+-	cli			# We should be safe anyway
+-
+-	LJMPW_RM(1f)
+-1:
+-	mov	%cs, %ax	# Code and data in the same place
+-	mov	%ax, %ds
+-	mov	%ax, %es
+-	mov	%ax, %ss
+-
+-	# Setup stack
+-	movl	$rm_stack_end, %esp
+-
+-	jmp	.Lswitch_to_protected
+-SYM_CODE_END(sev_es_trampoline_start)
+-#endif	/* CONFIG_AMD_MEM_ENCRYPT */
+-
+ #include "../kernel/verify_cpu.S"
+ 
+ 	.section ".text32","ax"
+-- 
+2.36.1
+
