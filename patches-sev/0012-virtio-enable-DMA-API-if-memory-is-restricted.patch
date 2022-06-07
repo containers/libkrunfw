@@ -1,4 +1,4 @@
-From f1df8200225c7b705bbae89a9ef5140c44843d18 Mon Sep 17 00:00:00 2001
+From f608095cb2f9465f8ac5ae5dce65cfe74e6abdd6 Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@sinrega.org>
 Date: Fri, 10 Sep 2021 13:05:01 +0200
 Subject: [PATCH 12/13] virtio: enable DMA API if memory is restricted

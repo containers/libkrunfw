@@ -1,7 +1,7 @@
-From f16ed04df0389ea3de0d1d3710c39a1115a4fe58 Mon Sep 17 00:00:00 2001
+From fa83e491f26b519b328abce24ee91e06d05ec1e3 Mon Sep 17 00:00:00 2001
 From: Jiang Wang <jiang.wang@bytedance.com>
 Date: Tue, 6 Apr 2021 23:22:06 +0000
-Subject: [PATCH 03/11] virtio/vsock: add VIRTIO_VSOCK_F_DGRAM feature bit
+Subject: [PATCH 03/13] virtio/vsock: add VIRTIO_VSOCK_F_DGRAM feature bit
 
 When this feature is enabled, allocate 5 queues,
 otherwise, allocate 3 queues to be compatible with

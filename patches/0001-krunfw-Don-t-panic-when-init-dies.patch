@@ -1,7 +1,7 @@
-From d300a869e21233f3d2706f31065b9139f9d0c9e1 Mon Sep 17 00:00:00 2001
+From 425d8b110b21bd1cfd8499a06f44dec20071bf86 Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@redhat.com>
 Date: Mon, 16 May 2022 15:47:50 +0200
-Subject: [PATCH 01/11] krunfw: Don't panic when init dies
+Subject: [PATCH 01/13] krunfw: Don't panic when init dies
 
 In libkrun, the isolated process runs as PID 1. When it exits,
 trigger an orderly reboot instead of panic'ing.

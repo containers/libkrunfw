@@ -1,7 +1,7 @@
-From 53be0f8ae1474cfab23ef97fd1c9d18ab1a0e8df Mon Sep 17 00:00:00 2001
+From 041d4cf74bf2da4e3dab348274efe632a91ebafb Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@redhat.com>
 Date: Thu, 19 May 2022 22:31:03 +0200
-Subject: [PATCH 08/11] virtio/vsock: Fix DGRAM polling
+Subject: [PATCH 08/13] virtio/vsock: Fix DGRAM polling
 
 Fix DGRAM polling.
 
