@@ -11,7 +11,7 @@ char * krunfw_get_kernel(size_t *load_addr, size_t *size)
 
 int krunfw_get_version()
 {
-    return 2;
+    return ABI_VERSION;
 }
 """
 
