@@ -1,4 +1,4 @@
-From fa83e491f26b519b328abce24ee91e06d05ec1e3 Mon Sep 17 00:00:00 2001
+From 58b3e04e93a59e6dbef7eda51d0bbf616acbfa0f Mon Sep 17 00:00:00 2001
 From: Jiang Wang <jiang.wang@bytedance.com>
 Date: Tue, 6 Apr 2021 23:22:06 +0000
 Subject: [PATCH 03/13] virtio/vsock: add VIRTIO_VSOCK_F_DGRAM feature bit
@@ -222,5 +222,5 @@ index c5f936fbf876..e70e78d6fd19 100644
  
  static struct virtio_driver virtio_vsock_driver = {
 -- 
-2.36.1
+2.35.1
 

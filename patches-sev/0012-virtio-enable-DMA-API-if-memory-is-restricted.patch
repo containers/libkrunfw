@@ -1,4 +1,4 @@
-From f608095cb2f9465f8ac5ae5dce65cfe74e6abdd6 Mon Sep 17 00:00:00 2001
+From f378e1606aec9d6314a0b123affe9235a86ee252 Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@sinrega.org>
 Date: Fri, 10 Sep 2021 13:05:01 +0200
 Subject: [PATCH 12/13] virtio: enable DMA API if memory is restricted
@@ -46,5 +46,5 @@ index 603a6f4345ef..ebe01291bf37 100644
  	/*
  	 * In theory, it's possible to have a buggy QEMU-supposed
 -- 
-2.36.1
+2.35.1
 
