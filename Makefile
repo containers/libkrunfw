@@ -1,12 +1,12 @@
-KERNEL_VERSION = linux-5.15.45
+KERNEL_VERSION = linux-5.15.47
 KERNEL_REMOTE = https://cdn.kernel.org/pub/linux/kernel/v5.x/$(KERNEL_VERSION).tar.xz
 KERNEL_TARBALL = tarballs/$(KERNEL_VERSION).tar.xz
 KERNEL_SOURCES = $(KERNEL_VERSION)
 KERNEL_PATCHES = $(shell find patches/ -name "0*.patch" | sort)
 KERNEL_C_BUNDLE = kernel.c
 
-ABI_VERSION=2
-FULL_VERSION=2.2.0
+ABI_VERSION=3
+FULL_VERSION=3.0.0
 
 ifeq ($(SEV),1)
     VARIANT = -sev
@@ -78,7 +78,7 @@ $(INITRD_C_BUNDLE): $(INITRD_BINARY)
 endif
 
 $(KRUNFW_BINARY_$(OS)): $(KERNEL_C_BUNDLE) $(QBOOT_C_BUNDLE) $(INITRD_C_BUNDLE)
-	gcc -fPIC -shared $(SONAME_$(OS)) -o $@ $(KERNEL_C_BUNDLE) $(QBOOT_C_BUNDLE) $(INITRD_C_BUNDLE)
+	gcc -fPIC -DABI_VERSION=$(ABI_VERSION) -shared $(SONAME_$(OS)) -o $@ $(KERNEL_C_BUNDLE) $(QBOOT_C_BUNDLE) $(INITRD_C_BUNDLE)
 ifeq ($(OS),Linux)
 	strip $(KRUNFW_BINARY_$(OS))
 endif
