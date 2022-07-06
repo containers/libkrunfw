@@ -1,4 +1,4 @@
-From a80cccc76accab3b7806ee9d8fc8d7f26eb61d1e Mon Sep 17 00:00:00 2001
+From cc8d37420062b28485032abbdfd27f0c1cd0fb81 Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@sinrega.org>
 Date: Fri, 24 Sep 2021 17:50:39 +0200
 Subject: [PATCH 13/13] Allow booting SEV-ES APs without GHCB (HACK)
@@ -88,5 +88,5 @@ index cc8391f86cdb..3470382c8784 100644
  
  	.section ".text32","ax"
 -- 
-2.35.1
+2.36.1
 
