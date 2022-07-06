@@ -1,4 +1,4 @@
-From 19de84dcfe67d79934caf6fa0bf73d727a633112 Mon Sep 17 00:00:00 2001
+From cc5cf77b723753eb604decb47bb46ea5d87b81ba Mon Sep 17 00:00:00 2001
 From: Jiang Wang <jiang.wang@bytedance.com>
 Date: Thu, 26 May 2022 18:43:37 +0200
 Subject: [PATCH 04/13] virtio/vsock: add support for virtio datagram
@@ -986,5 +986,5 @@ index ec2c2afbf0d0..7b62b6f6cc23 100644
  
  	/* Release refcnt obtained when we fetched this socket out of the
 -- 
-2.35.1
+2.36.1
 

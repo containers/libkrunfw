@@ -1,4 +1,4 @@
-From 09e3109778ea116412a1510295a08a7f48a16972 Mon Sep 17 00:00:00 2001
+From 195b2c089caefd801215b96e3c851c441a29bf30 Mon Sep 17 00:00:00 2001
 From: Jiang Wang <jiang.wang@bytedance.com>
 Date: Fri, 10 Dec 2021 12:42:16 +0100
 Subject: [PATCH 05/13] vhost/vsock: add support for vhost dgram.
@@ -439,5 +439,5 @@ index 4436c2fd5095..2b9b354b4d56 100644
  		return ret;
  	return misc_register(&vhost_vsock_misc);
 -- 
-2.35.1
+2.36.1
 
