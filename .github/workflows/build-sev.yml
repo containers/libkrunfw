@@ -1,0 +1,23 @@
+name: Build SEV kernel
+on: [pull_request, create]
+
+jobs:
+  build:
+    if: github.event_name == 'pull_request'
+    name: Build SEV kernel
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        rust:
+          - stable
+        target:
+          - x86_64-unknown-linux-gnu
+    steps:
+      - name: Code checkout
+        uses: actions/checkout@v2
+
+      - name: Install dependencies
+        run: sudo apt-get install -y make gcc bc bison flex elfutils python3-pyelftools curl patch libelf-dev
+
+      - name: Build SEV kernel
+        run: make SEV=1
