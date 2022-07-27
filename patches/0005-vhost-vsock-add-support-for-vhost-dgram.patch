@@ -1,4 +1,4 @@
-From 195b2c089caefd801215b96e3c851c441a29bf30 Mon Sep 17 00:00:00 2001
+From 70e45733e03189199edf979e34f2b2e19ec70d32 Mon Sep 17 00:00:00 2001
 From: Jiang Wang <jiang.wang@bytedance.com>
 Date: Fri, 10 Dec 2021 12:42:16 +0100
 Subject: [PATCH 05/13] vhost/vsock: add support for vhost dgram.
