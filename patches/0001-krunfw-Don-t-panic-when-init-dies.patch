@@ -1,4 +1,4 @@
-From ab8af3d608f1dd6f51c2bb4b13cc9b4269b68273 Mon Sep 17 00:00:00 2001
+From b199934cdcf917f17b1681c963d71f902a2ac69e Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@redhat.com>
 Date: Mon, 16 May 2022 15:47:50 +0200
 Subject: [PATCH 01/13] krunfw: Don't panic when init dies
@@ -16,7 +16,7 @@ Signed-off-by: Sergio Lopez <slp@redhat.com>
  2 files changed, 7 insertions(+)
 
 diff --git a/kernel/exit.c b/kernel/exit.c
-index 91a43e57a32e..d75d95921ba5 100644
+index aefe7445508d..2a089826b711 100644
 --- a/kernel/exit.c
 +++ b/kernel/exit.c
 @@ -64,6 +64,7 @@
