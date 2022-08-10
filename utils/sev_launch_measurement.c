@@ -1,23 +1,78 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 #include <dlfcn.h>
 #include <openssl/sha.h>
 #include <unistd.h>
+#include <asm/bootparam.h>
 
 #include "vmsa.h"
 
+#define EBDA_START              0x9fc00
+#define HIMEM_START             0x100000
+#define MMIO_MEM_START          0xd0000000
+#define FIRST_ADDR_PAST_32BITS  0x100000000
 
-int SHA256_Init(SHA256_CTX *c);
-int SHA256_Update(SHA256_CTX *c, const void *data, size_t len);
-int SHA256_Final(unsigned char *md, SHA256_CTX *c);
-unsigned char *SHA256(const unsigned char *d, size_t n,
-		      unsigned char *md);
+#define KERNEL_LOADER_OTHER     0xff
+#define KERNEL_BOOT_FLAG_MAGIC  0xaa55
+#define KERNEL_HDR_MAGIC        0x53726448
+#define KERNEL_MIN_ALIGNMENT    0x01000000
+
+#define KRUN_CMDLINE_ADDR       0x20000
+#define KRUN_CMDLINE_SIZE       0x200
+
+#define KRUN_RAMDISK_ADDR       0xa00000
+#define KRUN_RAMDISK_SIZE       0x19e000
 
 char * (*krunfw_get_kernel) (size_t *load_addr, size_t *size);
 char * (*krunfw_get_initrd) (size_t *size);
 char * (*krunfw_get_qboot) (size_t *size);
 
+struct boot_params bootp;
+
+void setup_bootp(int num_cpus, int ram_mib)
+{
+	unsigned long long mem_size;
+
+	memset(&bootp, 0, sizeof(bootp));
+
+	bootp.hdr.type_of_loader = KERNEL_LOADER_OTHER;
+	bootp.hdr.boot_flag = KERNEL_BOOT_FLAG_MAGIC;
+	bootp.hdr.header = KERNEL_HDR_MAGIC;
+	bootp.hdr.kernel_alignment = KERNEL_MIN_ALIGNMENT;
+
+	bootp.hdr.cmd_line_ptr = KRUN_CMDLINE_ADDR;
+	bootp.hdr.cmdline_size = KRUN_CMDLINE_SIZE;
+
+	bootp.hdr.ramdisk_image = KRUN_RAMDISK_ADDR;
+	bootp.hdr.ramdisk_size = KRUN_RAMDISK_SIZE;
+
+	bootp.hdr.syssize = num_cpus;
+
+	bootp.e820_table[0].addr = 0;
+	bootp.e820_table[0].size = EBDA_START;
+	bootp.e820_table[0].type = 1;
+
+	mem_size = ((unsigned long long) ram_mib) * 1024 * 1024;
+	if (mem_size <= MMIO_MEM_START) {
+		bootp.e820_table[1].addr = HIMEM_START;
+		bootp.e820_table[1].size = mem_size - HIMEM_START + 1;
+		bootp.e820_table[1].type = 1;
+
+                bootp.e820_entries = 2;
+        } else {
+                bootp.e820_table[1].addr = HIMEM_START;
+                bootp.e820_table[1].size = MMIO_MEM_START - HIMEM_START;
+                bootp.e820_table[1].type = 1;
+
+                bootp.e820_table[2].addr = FIRST_ADDR_PAST_32BITS;
+                bootp.e820_table[2].size = mem_size - MMIO_MEM_START + 1;
+                bootp.e820_table[2].type = 1;
+
+                bootp.e820_entries = 3;
+        }
+}
 
 void measurement_sev_es(int num_cpus)
 {
@@ -39,14 +94,16 @@ void measurement_sev_es(int num_cpus)
 	payload_addr = krunfw_get_initrd(&payload_size);
 	SHA256_Update(&shactx, payload_addr, payload_size);
 
+	SHA256_Update(&shactx, &bootp, 4096);
+
 	SHA256_Update(&shactx, &VMSA_BP, 4096);
 	for (i = 1; i < num_cpus; i++) {
-		SHA256_Update(&shactx, &VMSA_AP, sizeof(VMSA_BP));
+		SHA256_Update(&shactx, &VMSA_AP, 4096);
 	}
 
 	SHA256_Final(&digest[0], &shactx);
 
-	printf("SEV-ES (%d CPUs): ", num_cpus);
+	printf("SEV-ES:\t");
 	for (i = 0; i < 32; ++i) {
 		printf("%02lx", digest[i] & 0xFFl);
 	}
@@ -73,9 +130,11 @@ void measurement_sev()
 	payload_addr = krunfw_get_initrd(&payload_size);
 	SHA256_Update(&shactx, payload_addr, payload_size);
 
+	SHA256_Update(&shactx, &bootp, 4096);
+
 	SHA256_Final(&digest[0], &shactx);
 
-	printf("SEV: ");
+	printf("SEV:\t");
 	for (i = 0; i < 32; ++i) {
 		printf("%02lx", digest[i] & 0xFFl);
 	}
@@ -88,22 +147,28 @@ int main(int argc, char **argv)
 	char *library;
 	int opt;
 	int num_cpus = 1;
+	int ram_mib = 2048;
 
-	while((opt = getopt(argc, argv, ":c:")) != -1)
-	{
-		switch(opt)
+	while((opt = getopt(argc, argv, ":c:m:")) != -1)
 		{
-		case 'c':
-			if ((num_cpus = atoi(optarg)) == 0) {
-				printf("Invalid number of CPUs\n");
-			}
-			break;
+			switch(opt)
+				{
+				case 'c':
+					if ((num_cpus = atoi(optarg)) == 0) {
+						printf("Invalid number of CPUs\n");
+					}
+					break;
+				case 'm':
+					if ((ram_mib = atoi(optarg)) == 0) {
+						printf("Invalid amount of RAM\n");
+					}
+					break;
+				}
 		}
-	}
 
 	library = NULL;
 	if (optind >= argc) {
-		printf("Usage: %s [-c NUM_CPUS] LIBKRUNFW_SO\n", argv[0]);
+		printf("Usage: %s [-c NUM_CPUS] [-m RAM_MIB] LIBKRUNFW_SO\n", argv[0]);
 		exit(-1);
 	} else {
 		library = argv[optind];
@@ -133,6 +198,9 @@ int main(int argc, char **argv)
 		exit(-1);
 	}
 
+	setup_bootp(num_cpus, ram_mib);
+	printf("Measurements for %d vCPU(s) and %d MB of RAM\n",
+	       num_cpus, ram_mib);
 	measurement_sev();
 	measurement_sev_es(num_cpus);
 

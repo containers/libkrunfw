@@ -1,0 +1,59 @@
+From 8065228eabb9ca16bd58cdbd2bc099fa01059490 Mon Sep 17 00:00:00 2001
+From: Sergio Lopez <slp@redhat.com>
+Date: Wed, 10 Aug 2022 13:28:06 +0200
+Subject: [PATCH 13/14] x86/sev: write AP reset vector
+
+If a jump table can't be found, write the SEV-ES trampoline location
+into the AP reset vector used by libkrun's qboot.
+
+Signed-off-by: Sergio Lopez <slp@redhat.com>
+---
+ arch/x86/kernel/sev.c | 25 ++++++++++++++++++++++++-
+ 1 file changed, 24 insertions(+), 1 deletion(-)
+
+diff --git a/arch/x86/kernel/sev.c b/arch/x86/kernel/sev.c
+index a0064cf77e56..c7a73b83856c 100644
+--- a/arch/x86/kernel/sev.c
++++ b/arch/x86/kernel/sev.c
+@@ -558,6 +558,29 @@ static u64 get_jump_table_addr(void)
+ 	return ret;
+ }
+ 
++#define KRUN_AP_RESET_VECTOR 0xfffffff4
++
++static int sev_es_setup_ap_reset_vector(struct real_mode_header *rmh)
++{
++	u16 startup_cs, startup_ip;
++	u16 __iomem *ap_reset_vector;
++
++	startup_cs = (u16)(rmh->trampoline_start >> 4);
++	startup_ip = (u16)(rmh->sev_es_trampoline_start -
++			   rmh->trampoline_start);
++
++	ap_reset_vector = ioremap_encrypted(KRUN_AP_RESET_VECTOR, 4);
++	if (!ap_reset_vector)
++		return -EIO;
++
++	writew(startup_ip, &ap_reset_vector[0]);
++	writew(startup_cs, &ap_reset_vector[1]);
++
++	iounmap(ap_reset_vector);
++
++	return 0;
++}
++
+ int sev_es_setup_ap_jump_table(struct real_mode_header *rmh)
+ {
+ 	u16 startup_cs, startup_ip;
+@@ -569,7 +592,7 @@ int sev_es_setup_ap_jump_table(struct real_mode_header *rmh)
+ 
+ 	/* On UP guests there is no jump table so this is not a failure */
+ 	if (!jump_table_addr)
+-		return 0;
++		return sev_es_setup_ap_reset_vector(rmh);
+ 
+ 	/* Check if AP Jump Table is page-aligned */
+ 	if (jump_table_addr & ~PAGE_MASK)
+-- 
+2.35.1
+
