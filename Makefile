@@ -6,7 +6,7 @@ KERNEL_PATCHES = $(shell find patches/ -name "0*.patch" | sort)
 KERNEL_C_BUNDLE = kernel.c
 
 ABI_VERSION=3
-FULL_VERSION=3.4.0
+FULL_VERSION=3.4.1
 
 ifeq ($(SEV),1)
     VARIANT = -sev
