@@ -6,7 +6,7 @@ KERNEL_PATCHES = $(shell find patches/ -name "0*.patch" | sort)
 KERNEL_C_BUNDLE = kernel.c
 
 ABI_VERSION=3
-FULL_VERSION=3.6.0
+FULL_VERSION=3.6.1
 
 ifeq ($(SEV),1)
     VARIANT = -sev
@@ -83,7 +83,7 @@ ifeq ($(OS),Linux)
 	strip $(KRUNFW_BINARY_$(OS))
 endif
 
-install: $(KRUNFW_BINARY_$(OS))
+install:
 	install -d $(DESTDIR)$(PREFIX)/$(LIBDIR_$(OS))/
 	install -m 755 $(KRUNFW_BINARY_$(OS)) $(DESTDIR)$(PREFIX)/$(LIBDIR_$(OS))/
 	cd $(DESTDIR)$(PREFIX)/$(LIBDIR_$(OS))/ ; ln -sf $(KRUNFW_BINARY_$(OS)) $(KRUNFW_SONAME_$(OS)) ; ln -sf $(KRUNFW_SONAME_$(OS)) $(KRUNFW_BASE_$(OS))
