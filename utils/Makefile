@@ -1,9 +1,9 @@
 .PHONY: clean
 
-all: sev_launch_measurement
+all: krunfw_measurement
 
-sev_launch_measurement: sev_launch_measurement.c
+krunfw_measurement: krunfw_measurement.c
 	gcc -o $@ $< -lcrypto
 
 clean:
-	rm -rf sev_launch_measurement
+	rm -rf krunfw_measurement
