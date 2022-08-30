@@ -21,8 +21,8 @@ endif
 ARCH = $(shell uname -m)
 OS = $(shell uname -s)
 
-BUNDLE_SCRIPT_x86_64 = vmlinux_to_bundle.py
-BUNDLE_SCRIPT_aarch64 = Image_to_bundle.py
+KBUNDLE_TYPE_x86_64 = vmlinux
+KBUNDLE_TYPE_aarch64 = Image
 
 KERNEL_BINARY_x86_64 = $(KERNEL_SOURCES)/vmlinux
 KERNEL_BINARY_aarch64 = $(KERNEL_SOURCES)/arch/arm64/boot/Image
@@ -70,16 +70,16 @@ $(KERNEL_BINARY_$(ARCH)): $(KERNEL_SOURCES)
 
 $(KERNEL_C_BUNDLE): $(KERNEL_BINARY_$(ARCH))
 	@echo "Generating $(KERNEL_C_BUNDLE) from $(KERNEL_BINARY_$(ARCH))..."
-	@python3 $(BUNDLE_SCRIPT_$(ARCH)) $(KERNEL_BINARY_$(ARCH))
+	@python3 bin2cbundle.py -t $(KBUNDLE_TYPE_$(ARCH)) $(KERNEL_BINARY_$(ARCH)) kernel.c
 
 ifeq ($(SEV),1)
 $(QBOOT_C_BUNDLE): $(QBOOT_BINARY)
 	@echo "Generating $(QBOOT_C_BUNDLE) from $(QBOOT_BINARY)..."
-	@python3 qboot_to_bundle.py $(QBOOT_BINARY)
+	@python3 bin2cbundle.py -t qboot $(QBOOT_BINARY) qboot.c
 
 $(INITRD_C_BUNDLE): $(INITRD_BINARY)
 	@echo "Generating $(INITRD_C_BUNDLE) from $(INITRD_BINARY)..."
-	@python3 initrd_to_bundle.py $(INITRD_BINARY)
+	@python3 bin2cbundle.py -t initrd $(INITRD_BINARY) initrd.c
 endif
 
 $(KRUNFW_BINARY_$(OS)): $(KERNEL_C_BUNDLE) $(QBOOT_C_BUNDLE) $(INITRD_C_BUNDLE)
