@@ -21,6 +21,12 @@ endif
 ARCH = $(shell uname -m)
 OS = $(shell uname -s)
 
+ifeq ($(ARCH),arm64)
+macos-build:
+	echo "Building on macOS, using ./build_on_krunvm.sh"
+	./build_on_krunvm.sh
+endif
+
 KBUNDLE_TYPE_x86_64 = vmlinux
 KBUNDLE_TYPE_aarch64 = Image
 
