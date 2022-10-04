@@ -1,4 +1,4 @@
-From 3281770261ef6ce999104913eefb193eace48081 Mon Sep 17 00:00:00 2001
+From 48fbaada182f61a8bee83a375a72ad5a871c9728 Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@redhat.com>
 Date: Mon, 16 May 2022 15:47:50 +0200
 Subject: [PATCH 01/14] krunfw: Don't panic when init dies
@@ -58,5 +58,5 @@ index f7440c0c7e43..a5733d636668 100644
  	machine_restart(cmd);
  }
 -- 
-2.37.1
+2.37.3
 

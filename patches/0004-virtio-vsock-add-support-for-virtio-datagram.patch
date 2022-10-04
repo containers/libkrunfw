@@ -1,4 +1,4 @@
-From 9eee44dc2e4390890791efa9e242ff1361dd8fda Mon Sep 17 00:00:00 2001
+From 7fe1697e47bcbd296edc3c02ee4804d9d65e0d96 Mon Sep 17 00:00:00 2001
 From: Jiang Wang <jiang.wang@bytedance.com>
 Date: Thu, 26 May 2022 18:43:37 +0200
 Subject: [PATCH 04/14] virtio/vsock: add support for virtio datagram
@@ -65,7 +65,7 @@ index bcfc76f1e030..291ffe0e1c8a 100644
  
  enum virtio_vsock_op {
 diff --git a/net/vmw_vsock/af_vsock.c b/net/vmw_vsock/af_vsock.c
-index 5df530e89e5a..4805e7b23d07 100644
+index 5d46036f3ad7..76c56ef9b07a 100644
 --- a/net/vmw_vsock/af_vsock.c
 +++ b/net/vmw_vsock/af_vsock.c
 @@ -674,6 +674,18 @@ static int __vsock_bind_connectible(struct vsock_sock *vsk,
@@ -986,5 +986,5 @@ index ec2c2afbf0d0..7b62b6f6cc23 100644
  
  	/* Release refcnt obtained when we fetched this socket out of the
 -- 
-2.37.1
+2.37.3
 
