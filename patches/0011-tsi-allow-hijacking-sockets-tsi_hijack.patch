@@ -1,4 +1,4 @@
-From 4ae01a8c0354ebcbb13f4ba9b1a801c702b3aee6 Mon Sep 17 00:00:00 2001
+From d7c82ebbd4628446b26f82af02781e61668b448e Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@redhat.com>
 Date: Thu, 19 May 2022 22:42:01 +0200
 Subject: [PATCH 11/14] tsi: allow hijacking sockets (tsi_hijack)
@@ -14,7 +14,7 @@ Signed-off-by: Sergio Lopez <slp@redhat.com>
  2 files changed, 18 insertions(+), 1 deletion(-)
 
 diff --git a/net/socket.c b/net/socket.c
-index bb3976abd269..b274930a3691 100644
+index 88a3a191b3ad..126ae49936d3 100644
 --- a/net/socket.c
 +++ b/net/socket.c
 @@ -111,6 +111,10 @@ unsigned int sysctl_net_busy_read __read_mostly;
@@ -69,5 +69,5 @@ index 724c0ea36520..bb6004dedaa2 100644
  	int err;
  
 -- 
-2.37.1
+2.37.3
 
