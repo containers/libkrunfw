@@ -1,7 +1,7 @@
-From d681e31e4288456144c1ad4ab43905d16ac5472a Mon Sep 17 00:00:00 2001
+From 8ced49e836e9298380a67189d62cb8de5f69a8d2 Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@redhat.com>
 Date: Thu, 19 May 2022 22:38:26 +0200
-Subject: [PATCH 10/14] Transparent Socket Impersonation implementation
+Subject: [PATCH 10/15] Transparent Socket Impersonation implementation
 
 Transparent Socket Impersonation (AF_TSI) is an address family that
 provides sockets presenting two simultaneous personalities, AF_INET
@@ -37,10 +37,10 @@ Signed-off-by: Sergio Lopez <slp@redhat.com>
  create mode 100644 net/tsi/af_tsi.h
 
 diff --git a/include/linux/socket.h b/include/linux/socket.h
-index 041d6032a348..4be58b24b6ab 100644
+index de3701a2a212..3412fca9a223 100644
 --- a/include/linux/socket.h
 +++ b/include/linux/socket.h
-@@ -226,8 +226,9 @@ struct ucred {
+@@ -235,8 +235,9 @@ struct ucred {
  #define AF_MCTP		45	/* Management component
  				 * transport protocol
  				 */
@@ -51,7 +51,7 @@ index 041d6032a348..4be58b24b6ab 100644
  
  /* Protocol families, same as address families. */
  #define PF_UNSPEC	AF_UNSPEC
-@@ -278,6 +279,7 @@ struct ucred {
+@@ -287,6 +288,7 @@ struct ucred {
  #define PF_SMC		AF_SMC
  #define PF_XDP		AF_XDP
  #define PF_MCTP		AF_MCTP
@@ -60,7 +60,7 @@ index 041d6032a348..4be58b24b6ab 100644
  
  /* Maximum queue length specifiable by listen.  */
 diff --git a/net/Kconfig b/net/Kconfig
-index fb13460c6dab..f16dc21554ae 100644
+index 6b78f695caa6..87042aac730f 100644
 --- a/net/Kconfig
 +++ b/net/Kconfig
 @@ -244,6 +244,7 @@ source "net/switchdev/Kconfig"
@@ -81,10 +81,10 @@ index fbfeb8a0bb37..93b06ded75ad 100644
  obj-$(CONFIG_MCTP)		+= mctp/
 +obj-$(CONFIG_TSI)		+= tsi/
 diff --git a/net/socket.c b/net/socket.c
-index 73666b878f2c..88a3a191b3ad 100644
+index 7378375d3a5b..52d9e5b070cb 100644
 --- a/net/socket.c
 +++ b/net/socket.c
-@@ -213,6 +213,7 @@ static const char * const pf_family_names[] = {
+@@ -214,6 +214,7 @@ static const char * const pf_family_names[] = {
  	[PF_SMC]	= "PF_SMC",
  	[PF_XDP]	= "PF_XDP",
  	[PF_MCTP]	= "PF_MCTP",
@@ -117,7 +117,7 @@ index 000000000000..8b3cf74116a5
 +tsi-y := af_tsi.o
 diff --git a/net/tsi/af_tsi.c b/net/tsi/af_tsi.c
 new file mode 100644
-index 000000000000..724c0ea36520
+index 000000000000..38a383634ccd
 --- /dev/null
 +++ b/net/tsi/af_tsi.c
 @@ -0,0 +1,1282 @@
@@ -327,7 +327,7 @@ index 000000000000..724c0ea36520
 +	if (err) {
 +		pr_debug("%s: error setting up vsock listener: %d\n", __func__,
 +			 err);
-+	} else if (addr_len == sizeof(struct sockaddr_in)) {
++	} else if (addr_len >= sizeof(struct sockaddr_in)) {
 +		if (!tsk->bound_addr) {
 +			tsk->bound_addr =
 +			    kmalloc(sizeof(struct sockaddr_in), GFP_KERNEL);
@@ -492,7 +492,7 @@ index 000000000000..724c0ea36520
 +			tsk->sendto_addr =
 +			    kmalloc(sizeof(struct sockaddr_in), GFP_KERNEL);
 +		}
-+		memcpy(tsk->sendto_addr, addr, addr_len);
++		memcpy(tsk->sendto_addr, addr, sizeof(struct sockaddr_in));
 +
 +		tsk->status = S_VSOCK;
 +	}

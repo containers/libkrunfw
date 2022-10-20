@@ -1,7 +1,7 @@
-From 04fa39cb4dac0613632103d55ee265ad8099b2f9 Mon Sep 17 00:00:00 2001
+From e91f40d46c2c3a97ff210916d531f3a5cc61ddf6 Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@redhat.com>
-Date: Wed, 10 Aug 2022 13:28:06 +0200
-Subject: [PATCH 13/14] x86/sev: write AP reset vector
+Date: Thu, 20 Oct 2022 10:23:16 +0200
+Subject: [PATCH 13/15] x86/sev: write AP reset vector
 
 If a jump table can't be found, write the SEV-ES trampoline location
 into the AP reset vector used by libkrun's qboot.
@@ -12,11 +12,11 @@ Signed-off-by: Sergio Lopez <slp@redhat.com>
  1 file changed, 24 insertions(+), 1 deletion(-)
 
 diff --git a/arch/x86/kernel/sev.c b/arch/x86/kernel/sev.c
-index a0064cf77e56..c7a73b83856c 100644
+index a428c62330d3..01acde3e78e5 100644
 --- a/arch/x86/kernel/sev.c
 +++ b/arch/x86/kernel/sev.c
-@@ -558,6 +558,29 @@ static u64 get_jump_table_addr(void)
- 	return ret;
+@@ -1144,6 +1144,29 @@ void snp_set_wakeup_secondary_cpu(void)
+ 	apic->wakeup_secondary_cpu = wakeup_cpu_via_vmgexit;
  }
  
 +#define KRUN_AP_RESET_VECTOR 0xfffffff4
@@ -42,10 +42,10 @@ index a0064cf77e56..c7a73b83856c 100644
 +	return 0;
 +}
 +
- int sev_es_setup_ap_jump_table(struct real_mode_header *rmh)
+ int __init sev_es_setup_ap_jump_table(struct real_mode_header *rmh)
  {
  	u16 startup_cs, startup_ip;
-@@ -569,7 +592,7 @@ int sev_es_setup_ap_jump_table(struct real_mode_header *rmh)
+@@ -1155,7 +1178,7 @@ int __init sev_es_setup_ap_jump_table(struct real_mode_header *rmh)
  
  	/* On UP guests there is no jump table so this is not a failure */
  	if (!jump_table_addr)

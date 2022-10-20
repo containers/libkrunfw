@@ -1,0 +1,145 @@
+From 188eae83bd87c54c2d35225cc63ca2e24b5a3579 Mon Sep 17 00:00:00 2001
+From: Sergio Lopez <slp@redhat.com>
+Date: Thu, 20 Oct 2022 14:26:54 +0200
+Subject: [PATCH 15/15] x86/sev: Avoid using native_cpuid
+
+In the state we get into the kernel from qboot-krunfw we can't return
+from #VC properly, so avoid calling native_cpuid in the early stages
+of the boot process.
+
+Instead, use the corresponding MSRs to determine whether SEV/SNP is
+enabled and the location of the cbit.
+
+Signed-off-by: Sergio Lopez <slp@redhat.com>
+---
+ arch/x86/mm/mem_encrypt_identity.c | 97 ++----------------------------
+ 1 file changed, 6 insertions(+), 91 deletions(-)
+
+diff --git a/arch/x86/mm/mem_encrypt_identity.c b/arch/x86/mm/mem_encrypt_identity.c
+index f415498d3175..e08ec0ca5457 100644
+--- a/arch/x86/mm/mem_encrypt_identity.c
++++ b/arch/x86/mm/mem_encrypt_identity.c
+@@ -504,114 +504,29 @@ void __init sme_encrypt_kernel(struct boot_params *bp)
+ 
+ void __init sme_enable(struct boot_params *bp)
+ {
+-	const char *cmdline_ptr, *cmdline_arg, *cmdline_on, *cmdline_off;
+-	unsigned int eax, ebx, ecx, edx;
+-	unsigned long feature_mask;
+-	bool active_by_default;
+ 	unsigned long me_mask;
+-	char buffer[16];
++	unsigned long cbit;
+ 	bool snp;
+ 	u64 msr;
+ 
+ 	snp = snp_init(bp);
+ 
+-	/* Check for the SME/SEV support leaf */
+-	eax = 0x80000000;
+-	ecx = 0;
+-	native_cpuid(&eax, &ebx, &ecx, &edx);
+-	if (eax < 0x8000001f)
+-		return;
+-
+-#define AMD_SME_BIT	BIT(0)
+-#define AMD_SEV_BIT	BIT(1)
+-
+-	/*
+-	 * Check for the SME/SEV feature:
+-	 *   CPUID Fn8000_001F[EAX]
+-	 *   - Bit 0 - Secure Memory Encryption support
+-	 *   - Bit 1 - Secure Encrypted Virtualization support
+-	 *   CPUID Fn8000_001F[EBX]
+-	 *   - Bits 5:0 - Pagetable bit position used to indicate encryption
+-	 */
+-	eax = 0x8000001f;
+-	ecx = 0;
+-	native_cpuid(&eax, &ebx, &ecx, &edx);
+-	/* Check whether SEV or SME is supported */
+-	if (!(eax & (AMD_SEV_BIT | AMD_SME_BIT)))
+-		return;
+-
+-	me_mask = 1UL << (ebx & 0x3f);
++	cbit = __rdmsr(MSR_AMD64_SEV_ES_GHCB) >> 24;
++	me_mask = 1UL << (cbit & 0x3f);
+ 
+ 	/* Check the SEV MSR whether SEV or SME is enabled */
+ 	sev_status   = __rdmsr(MSR_AMD64_SEV);
+-	feature_mask = (sev_status & MSR_AMD64_SEV_ENABLED) ? AMD_SEV_BIT : AMD_SME_BIT;
+ 
+ 	/* The SEV-SNP CC blob should never be present unless SEV-SNP is enabled. */
+ 	if (snp && !(sev_status & MSR_AMD64_SEV_SNP_ENABLED))
+ 		snp_abort();
++	
++	sme_me_mask = me_mask;
+ 
+-	/* Check if memory encryption is enabled */
+-	if (feature_mask == AMD_SME_BIT) {
+-		/*
+-		 * No SME if Hypervisor bit is set. This check is here to
+-		 * prevent a guest from trying to enable SME. For running as a
+-		 * KVM guest the MSR_AMD64_SYSCFG will be sufficient, but there
+-		 * might be other hypervisors which emulate that MSR as non-zero
+-		 * or even pass it through to the guest.
+-		 * A malicious hypervisor can still trick a guest into this
+-		 * path, but there is no way to protect against that.
+-		 */
+-		eax = 1;
+-		ecx = 0;
+-		native_cpuid(&eax, &ebx, &ecx, &edx);
+-		if (ecx & BIT(31))
+-			return;
+-
+-		/* For SME, check the SYSCFG MSR */
+-		msr = __rdmsr(MSR_AMD64_SYSCFG);
+-		if (!(msr & MSR_AMD64_SYSCFG_MEM_ENCRYPT))
+-			return;
+-	} else {
+-		/* SEV state cannot be controlled by a command line option */
+-		sme_me_mask = me_mask;
+-		goto out;
+-	}
+-
+-	/*
+-	 * Fixups have not been applied to phys_base yet and we're running
+-	 * identity mapped, so we must obtain the address to the SME command
+-	 * line argument data using rip-relative addressing.
+-	 */
+-	asm ("lea sme_cmdline_arg(%%rip), %0"
+-	     : "=r" (cmdline_arg)
+-	     : "p" (sme_cmdline_arg));
+-	asm ("lea sme_cmdline_on(%%rip), %0"
+-	     : "=r" (cmdline_on)
+-	     : "p" (sme_cmdline_on));
+-	asm ("lea sme_cmdline_off(%%rip), %0"
+-	     : "=r" (cmdline_off)
+-	     : "p" (sme_cmdline_off));
+-
+-	if (IS_ENABLED(CONFIG_AMD_MEM_ENCRYPT_ACTIVE_BY_DEFAULT))
+-		active_by_default = true;
+-	else
+-		active_by_default = false;
+-
+-	cmdline_ptr = (const char *)((u64)bp->hdr.cmd_line_ptr |
+-				     ((u64)bp->ext_cmd_line_ptr << 32));
+-
+-	cmdline_find_option(cmdline_ptr, cmdline_arg, buffer, sizeof(buffer));
+-
+-	if (!strncmp(buffer, cmdline_on, sizeof(buffer)))
+-		sme_me_mask = me_mask;
+-	else if (!strncmp(buffer, cmdline_off, sizeof(buffer)))
+-		sme_me_mask = 0;
+-	else
+-		sme_me_mask = active_by_default ? me_mask : 0;
+-out:
+ 	if (sme_me_mask) {
+ 		physical_mask &= ~sme_me_mask;
+ 		cc_set_vendor(CC_VENDOR_AMD);
+ 		cc_set_mask(sme_me_mask);
+ 	}
+ }
++
+-- 
+2.37.3
+

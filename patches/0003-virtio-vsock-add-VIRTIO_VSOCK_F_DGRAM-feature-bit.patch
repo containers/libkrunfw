@@ -1,22 +1,23 @@
-From a70635eb992814924299a2bb25af4af9ed8ce957 Mon Sep 17 00:00:00 2001
+From 5d14e90657e8be97ec14188db3f6b43f63a4d160 Mon Sep 17 00:00:00 2001
 From: Jiang Wang <jiang.wang@bytedance.com>
 Date: Tue, 6 Apr 2021 23:22:06 +0000
-Subject: [PATCH 03/14] virtio/vsock: add VIRTIO_VSOCK_F_DGRAM feature bit
+Subject: [PATCH 03/15] virtio/vsock: add VIRTIO_VSOCK_F_DGRAM feature bit
 
 When this feature is enabled, allocate 5 queues,
 otherwise, allocate 3 queues to be compatible with
 old QEMU versions.
 
 Signed-off-by: Jiang Wang <jiang.wang@bytedance.com>
+Signed-off-by: Sergio Lopez <slp@redhat.com>
 ---
  drivers/vhost/vsock.c             |  3 +-
  include/linux/virtio_vsock.h      |  9 ++++
  include/uapi/linux/virtio_vsock.h |  2 +
- net/vmw_vsock/virtio_transport.c  | 79 +++++++++++++++++++++++++++----
- 4 files changed, 82 insertions(+), 11 deletions(-)
+ net/vmw_vsock/virtio_transport.c  | 70 +++++++++++++++++++++++++++----
+ 4 files changed, 74 insertions(+), 10 deletions(-)
 
 diff --git a/drivers/vhost/vsock.c b/drivers/vhost/vsock.c
-index dcb1585819a1..4436c2fd5095 100644
+index 368330417bde..c0d477729282 100644
 --- a/drivers/vhost/vsock.c
 +++ b/drivers/vhost/vsock.c
 @@ -32,7 +32,8 @@
@@ -63,7 +64,7 @@ index 64738838bee5..bcfc76f1e030 100644
  struct virtio_vsock_config {
  	__le64 guest_cid;
 diff --git a/net/vmw_vsock/virtio_transport.c b/net/vmw_vsock/virtio_transport.c
-index c5f936fbf876..e70e78d6fd19 100644
+index ad64f403536a..3e157a62a9b1 100644
 --- a/net/vmw_vsock/virtio_transport.c
 +++ b/net/vmw_vsock/virtio_transport.c
 @@ -28,7 +28,8 @@ static struct virtio_transport virtio_transport; /* forward declaration */
@@ -146,20 +147,7 @@ index c5f936fbf876..e70e78d6fd19 100644
  static struct virtio_transport virtio_transport = {
  	.transport = {
  		.module                   = THIS_MODULE,
-@@ -573,13 +594,29 @@ static int virtio_vsock_probe(struct virtio_device *vdev)
- 		virtio_vsock_tx_done,
- 		virtio_vsock_event_done,
- 	};
-+	vq_callback_t *ex_callbacks[] = {
-+		virtio_vsock_rx_done,
-+		virtio_vsock_tx_done,
-+		virtio_vsock_dgram_rx_done,
-+		virtio_vsock_dgram_tx_done,
-+		virtio_vsock_event_done,
-+	};
-+
- 	static const char * const names[] = {
- 		"rx",
+@@ -574,15 +595,45 @@ static int virtio_vsock_vqs_init(struct virtio_vsock *vsock)
  		"tx",
  		"event",
  	};
@@ -170,20 +158,21 @@ index c5f936fbf876..e70e78d6fd19 100644
 +		"dgram_tx",
 +		"event",
 +	};
-+
- 	struct virtio_vsock *vsock = NULL;
+ 	vq_callback_t *callbacks[] = {
+ 		virtio_vsock_rx_done,
+ 		virtio_vsock_tx_done,
+ 		virtio_vsock_event_done,
+ 	};
 -	int ret;
++	vq_callback_t *ex_callbacks[] = {
++		virtio_vsock_rx_done,
++		virtio_vsock_tx_done,
++		virtio_vsock_dgram_rx_done,
++		virtio_vsock_dgram_tx_done,
++		virtio_vsock_event_done,
++	};
 +	int ret, max_vq;
- 
- 	ret = mutex_lock_interruptible(&the_virtio_vsock_mutex);
- 	if (ret)
-@@ -600,9 +637,30 @@ static int virtio_vsock_probe(struct virtio_device *vdev)
- 
- 	vsock->vdev = vdev;
- 
--	ret = virtio_find_vqs(vsock->vdev, VSOCK_VQ_MAX,
--			      vsock->vqs, callbacks, names,
--			      NULL);
++
 +	if (virtio_has_feature(vdev, VIRTIO_VSOCK_F_DGRAM))
 +		vsock->has_dgram = true;
 +
@@ -191,12 +180,6 @@ index c5f936fbf876..e70e78d6fd19 100644
 +		max_vq = VSOCK_VQ_EX_MAX;
 +	else
 +		max_vq = VSOCK_VQ_MAX;
-+
-+	vsock->vqs = kmalloc_array(max_vq, sizeof(struct virtqueue *), GFP_KERNEL);
-+	if (!vsock->vqs) {
-+		ret = -ENOMEM;
-+		goto out;
-+	}
 +
 +	if (vsock->has_dgram) {
 +		ret = virtio_find_vqs(vsock->vdev, max_vq,
@@ -207,11 +190,13 @@ index c5f936fbf876..e70e78d6fd19 100644
 +				      vsock->vqs, callbacks, names,
 +				      NULL);
 +	}
-+
- 	if (ret < 0)
- 		goto out;
  
-@@ -731,7 +789,8 @@ static struct virtio_device_id id_table[] = {
+-	ret = virtio_find_vqs(vdev, VSOCK_VQ_MAX, vsock->vqs, callbacks, names,
+-			      NULL);
+ 	if (ret < 0)
+ 		return ret;
+ 
+@@ -792,7 +843,8 @@ static struct virtio_device_id id_table[] = {
  };
  
  static unsigned int features[] = {

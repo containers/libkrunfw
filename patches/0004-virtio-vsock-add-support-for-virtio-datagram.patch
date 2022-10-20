@@ -1,7 +1,7 @@
-From 7fe1697e47bcbd296edc3c02ee4804d9d65e0d96 Mon Sep 17 00:00:00 2001
+From 042a00f01e7011d0fecf8aa30b6d30a9a59d124e Mon Sep 17 00:00:00 2001
 From: Jiang Wang <jiang.wang@bytedance.com>
 Date: Thu, 26 May 2022 18:43:37 +0200
-Subject: [PATCH 04/14] virtio/vsock: add support for virtio datagram
+Subject: [PATCH 04/15] virtio/vsock: add support for virtio datagram
 
 This patch add support for virtio dgram for the driver.
 Implemented related functions for tx and rx, enqueue
@@ -14,20 +14,21 @@ Support for the host/device side is in another
 patch.
 
 Signed-off-by: Jiang Wang <jiang.wang@bytedance.com>
+Signed-off-by: Sergio Lopez <slp@redhat.com>
 ---
  include/net/af_vsock.h                        |   1 +
  .../events/vsock_virtio_transport_common.h    |   2 +
  include/uapi/linux/virtio_vsock.h             |   1 +
  net/vmw_vsock/af_vsock.c                      |  12 +
- net/vmw_vsock/virtio_transport.c              | 345 +++++++++++++++---
- net/vmw_vsock/virtio_transport_common.c       | 181 ++++++++-
- 6 files changed, 468 insertions(+), 74 deletions(-)
+ net/vmw_vsock/virtio_transport.c              | 333 +++++++++++++++---
+ net/vmw_vsock/virtio_transport_common.c       | 181 +++++++++-
+ 6 files changed, 458 insertions(+), 72 deletions(-)
 
 diff --git a/include/net/af_vsock.h b/include/net/af_vsock.h
-index f742e50207fb..66a9b8a59bae 100644
+index 1c53c4c4d88f..86357d915dc8 100644
 --- a/include/net/af_vsock.h
 +++ b/include/net/af_vsock.h
-@@ -209,6 +209,7 @@ void vsock_for_each_connected_socket(struct vsock_transport *transport,
+@@ -210,6 +210,7 @@ void vsock_for_each_connected_socket(struct vsock_transport *transport,
  				     void (*fn)(struct sock *sk));
  int vsock_assign_transport(struct vsock_sock *vsk, struct vsock_sock *psk);
  bool vsock_find_cid(unsigned int cid);
@@ -65,10 +66,10 @@ index bcfc76f1e030..291ffe0e1c8a 100644
  
  enum virtio_vsock_op {
 diff --git a/net/vmw_vsock/af_vsock.c b/net/vmw_vsock/af_vsock.c
-index 5d46036f3ad7..76c56ef9b07a 100644
+index b4ee163154a6..cbd00ee05ff6 100644
 --- a/net/vmw_vsock/af_vsock.c
 +++ b/net/vmw_vsock/af_vsock.c
-@@ -674,6 +674,18 @@ static int __vsock_bind_connectible(struct vsock_sock *vsk,
+@@ -675,6 +675,18 @@ static int __vsock_bind_connectible(struct vsock_sock *vsk,
  	return 0;
  }
  
@@ -88,10 +89,10 @@ index 5d46036f3ad7..76c56ef9b07a 100644
  			      struct sockaddr_vm *addr)
  {
 diff --git a/net/vmw_vsock/virtio_transport.c b/net/vmw_vsock/virtio_transport.c
-index e70e78d6fd19..59b34b7a6500 100644
+index 3e157a62a9b1..abaae264453b 100644
 --- a/net/vmw_vsock/virtio_transport.c
 +++ b/net/vmw_vsock/virtio_transport.c
-@@ -20,9 +20,14 @@
+@@ -20,6 +20,10 @@
  #include <net/sock.h>
  #include <linux/mutex.h>
  #include <net/af_vsock.h>
@@ -102,11 +103,7 @@ index e70e78d6fd19..59b34b7a6500 100644
  
  static struct workqueue_struct *virtio_vsock_workqueue;
  static struct virtio_vsock __rcu *the_virtio_vsock;
-+static struct virtio_vsock __rcu *the_virtio_vsock_dgram;
- static DEFINE_MUTEX(the_virtio_vsock_mutex); /* protects the_virtio_vsock */
- static struct virtio_transport virtio_transport; /* forward declaration */
- 
-@@ -30,12 +35,16 @@ struct virtio_vsock {
+@@ -30,12 +34,16 @@ struct virtio_vsock {
  	struct virtio_device *vdev;
  	struct virtqueue **vqs;
  	bool has_dgram;
@@ -123,7 +120,7 @@ index e70e78d6fd19..59b34b7a6500 100644
  	/* The following fields are protected by tx_lock.  vqs[VSOCK_VQ_TX]
  	 * must be accessed with tx_lock held.
  	 */
-@@ -56,6 +65,22 @@ struct virtio_vsock {
+@@ -56,6 +64,22 @@ struct virtio_vsock {
  	int rx_buf_nr;
  	int rx_buf_max_nr;
  
@@ -146,7 +143,7 @@ index e70e78d6fd19..59b34b7a6500 100644
  	/* The following fields are protected by event_lock.
  	 * vqs[VSOCK_VQ_EVENT] must be accessed with event_lock held.
  	 */
-@@ -85,21 +110,12 @@ static u32 virtio_transport_get_local_cid(void)
+@@ -85,21 +109,12 @@ static u32 virtio_transport_get_local_cid(void)
  	return ret;
  }
  
@@ -172,7 +169,7 @@ index e70e78d6fd19..59b34b7a6500 100644
  
  	for (;;) {
  		struct virtio_vsock_pkt *pkt;
-@@ -107,16 +123,16 @@ virtio_transport_send_pkt_work(struct work_struct *work)
+@@ -107,16 +122,16 @@ virtio_transport_send_pkt_work(struct work_struct *work)
  		int ret, in_sg = 0, out_sg = 0;
  		bool reply;
  
@@ -194,7 +191,7 @@ index e70e78d6fd19..59b34b7a6500 100644
  
  		virtio_transport_deliver_tap_pkt(pkt);
  
-@@ -134,9 +150,9 @@ virtio_transport_send_pkt_work(struct work_struct *work)
+@@ -134,9 +149,9 @@ virtio_transport_send_pkt_work(struct work_struct *work)
  		 * the vq
  		 */
  		if (ret < 0) {
@@ -207,7 +204,7 @@ index e70e78d6fd19..59b34b7a6500 100644
  			break;
  		}
  
-@@ -148,7 +164,7 @@ virtio_transport_send_pkt_work(struct work_struct *work)
+@@ -148,7 +163,7 @@ virtio_transport_send_pkt_work(struct work_struct *work)
  
  			/* Do we now have resources to resume rx processing? */
  			if (val + 1 == virtqueue_get_vring_size(rx_vq))
@@ -216,7 +213,7 @@ index e70e78d6fd19..59b34b7a6500 100644
  		}
  
  		added = true;
-@@ -156,7 +172,55 @@ virtio_transport_send_pkt_work(struct work_struct *work)
+@@ -156,7 +171,55 @@ virtio_transport_send_pkt_work(struct work_struct *work)
  
  	if (added)
  		virtqueue_kick(vq);
@@ -259,12 +256,12 @@ index e70e78d6fd19..59b34b7a6500 100644
 +		container_of(work, struct virtio_vsock, send_pkt_work);
 +	struct virtqueue *vq;
 +	bool restart_rx = false;
-+
+ 
 +	mutex_lock(&vsock->tx_lock);
 +
 +	if (!vsock->tx_run)
 +		goto out;
- 
++
 +	vq = vsock->vqs[VSOCK_VQ_TX];
 +
 +	virtio_transport_do_send_pkt(vsock, vq, &vsock->send_pkt_list_lock,
@@ -272,7 +269,7 @@ index e70e78d6fd19..59b34b7a6500 100644
  out:
  	mutex_unlock(&vsock->tx_lock);
  
-@@ -164,12 +228,65 @@ virtio_transport_send_pkt_work(struct work_struct *work)
+@@ -164,12 +227,61 @@ virtio_transport_send_pkt_work(struct work_struct *work)
  		queue_work(virtio_vsock_workqueue, &vsock->rx_work);
  }
  
@@ -283,27 +280,25 @@ index e70e78d6fd19..59b34b7a6500 100644
 +	int len = pkt->len;
 +	struct virtqueue *vq;
 +
-+	vsock = the_virtio_vsock_dgram;
++	rcu_read_lock();
++	vsock = rcu_dereference(the_virtio_vsock);
 +
 +	if (!vsock) {
 +		virtio_transport_free_pkt(pkt);
-+		return -ENODEV;
++		len = -ENODEV;
++		goto out_rcu;
 +	}
 +
 +	if (!vsock->dgram_tx_run) {
 +		virtio_transport_free_pkt(pkt);
-+		return -ENODEV;
-+	}
-+
-+	if (!refcount_inc_not_zero(&vsock->active)) {
-+		virtio_transport_free_pkt(pkt);
-+		return -ENODEV;
++		len = -ENODEV;
++		goto out_rcu;
 +	}
 +
 +	if (le64_to_cpu(pkt->hdr.dst_cid) == vsock->guest_cid) {
 +		virtio_transport_free_pkt(pkt);
 +		len = -ENODEV;
-+		goto out_ref;
++		goto out_rcu;
 +	}
 +
 +	/* send the pkt */
@@ -319,10 +314,8 @@ index e70e78d6fd19..59b34b7a6500 100644
 +out_mutex:
 +	mutex_unlock(&vsock->dgram_tx_lock);
 +
-+out_ref:
-+	if (!refcount_dec_not_one(&vsock->active))
-+		return -EFAULT;
-+
++out_rcu:
++	rcu_read_unlock();
 +	return len;
 +}
 +
@@ -338,7 +331,7 @@ index e70e78d6fd19..59b34b7a6500 100644
  	rcu_read_lock();
  	vsock = rcu_dereference(the_virtio_vsock);
  	if (!vsock) {
-@@ -245,7 +362,7 @@ virtio_transport_cancel_pkt(struct vsock_sock *vsk)
+@@ -245,7 +357,7 @@ virtio_transport_cancel_pkt(struct vsock_sock *vsk)
  	return ret;
  }
  
@@ -347,7 +340,7 @@ index e70e78d6fd19..59b34b7a6500 100644
  {
  	int buf_len = VIRTIO_VSOCK_DEFAULT_RX_BUF_SIZE;
  	struct virtio_vsock_pkt *pkt;
-@@ -253,7 +370,10 @@ static void virtio_vsock_rx_fill(struct virtio_vsock *vsock)
+@@ -253,7 +365,10 @@ static void virtio_vsock_rx_fill(struct virtio_vsock *vsock)
  	struct virtqueue *vq;
  	int ret;
  
@@ -359,7 +352,7 @@ index e70e78d6fd19..59b34b7a6500 100644
  
  	do {
  		pkt = kzalloc(sizeof(*pkt), GFP_KERNEL);
-@@ -279,26 +399,26 @@ static void virtio_vsock_rx_fill(struct virtio_vsock *vsock)
+@@ -279,26 +394,26 @@ static void virtio_vsock_rx_fill(struct virtio_vsock *vsock)
  			virtio_transport_free_pkt(pkt);
  			break;
  		}
@@ -399,7 +392,7 @@ index e70e78d6fd19..59b34b7a6500 100644
  	do {
  		struct virtio_vsock_pkt *pkt;
  		unsigned int len;
-@@ -310,13 +430,43 @@ static void virtio_transport_tx_work(struct work_struct *work)
+@@ -310,13 +425,43 @@ static void virtio_transport_tx_work(struct work_struct *work)
  		}
  	} while (!virtqueue_enable_cb(vq));
  
@@ -444,7 +437,7 @@ index e70e78d6fd19..59b34b7a6500 100644
  /* Is there space left for replies to rx packets? */
  static bool virtio_transport_more_replies(struct virtio_vsock *vsock)
  {
-@@ -455,6 +605,11 @@ static void virtio_vsock_tx_done(struct virtqueue *vq)
+@@ -455,6 +600,11 @@ static void virtio_vsock_tx_done(struct virtqueue *vq)
  
  static void virtio_vsock_dgram_tx_done(struct virtqueue *vq)
  {
@@ -456,7 +449,7 @@ index e70e78d6fd19..59b34b7a6500 100644
  }
  
  static void virtio_vsock_rx_done(struct virtqueue *vq)
-@@ -470,8 +625,12 @@ static bool virtio_transport_seqpacket_allow(u32 remote_cid);
+@@ -470,8 +620,12 @@ static bool virtio_transport_seqpacket_allow(u32 remote_cid);
  
  static void virtio_vsock_dgram_rx_done(struct virtqueue *vq)
  {
@@ -470,7 +463,7 @@ index e70e78d6fd19..59b34b7a6500 100644
  static struct virtio_transport virtio_transport = {
  	.transport = {
  		.module                   = THIS_MODULE,
-@@ -534,19 +693,9 @@ static bool virtio_transport_seqpacket_allow(u32 remote_cid)
+@@ -534,19 +688,9 @@ static bool virtio_transport_seqpacket_allow(u32 remote_cid)
  	return seqpacket_allow;
  }
  
@@ -492,7 +485,7 @@ index e70e78d6fd19..59b34b7a6500 100644
  	do {
  		virtqueue_disable_cb(vq);
  		for (;;) {
-@@ -566,7 +715,10 @@ static void virtio_transport_rx_work(struct work_struct *work)
+@@ -566,7 +710,10 @@ static void virtio_transport_rx_work(struct work_struct *work)
  				break;
  			}
  
@@ -504,7 +497,7 @@ index e70e78d6fd19..59b34b7a6500 100644
  
  			/* Drop short/long packets */
  			if (unlikely(len < sizeof(pkt->hdr) ||
-@@ -582,11 +734,45 @@ static void virtio_transport_rx_work(struct work_struct *work)
+@@ -582,11 +729,45 @@ static void virtio_transport_rx_work(struct work_struct *work)
  	} while (!virtqueue_enable_cb(vq));
  
  out:
@@ -548,52 +541,22 @@ index e70e78d6fd19..59b34b7a6500 100644
 +	mutex_unlock(&vsock->dgram_rx_lock);
 +}
 +
- static int virtio_vsock_probe(struct virtio_device *vdev)
+ static int virtio_vsock_vqs_init(struct virtio_vsock *vsock)
  {
- 	vq_callback_t *callbacks[] = {
-@@ -594,7 +780,7 @@ static int virtio_vsock_probe(struct virtio_device *vdev)
- 		virtio_vsock_tx_done,
- 		virtio_vsock_event_done,
- 	};
--	vq_callback_t *ex_callbacks[] = {
-+	vq_callback_t *dgram_callbacks[] = {
- 		virtio_vsock_rx_done,
- 		virtio_vsock_tx_done,
- 		virtio_vsock_dgram_rx_done,
-@@ -653,7 +839,7 @@ static int virtio_vsock_probe(struct virtio_device *vdev)
+ 	struct virtio_device *vdev = vsock->vdev;
+@@ -624,6 +805,11 @@ static int virtio_vsock_vqs_init(struct virtio_vsock *vsock)
+ 	else
+ 		max_vq = VSOCK_VQ_MAX;
  
++	vsock->vqs = kmalloc_array(max_vq, sizeof(struct virtqueue *), GFP_KERNEL);
++	if (!vsock->vqs) {
++		return -ENOMEM;
++	}
++
  	if (vsock->has_dgram) {
  		ret = virtio_find_vqs(vsock->vdev, max_vq,
--				      vsock->vqs, ex_callbacks, ex_names,
-+				      vsock->vqs, dgram_callbacks, ex_names,
- 				      NULL);
- 	} else {
- 		ret = virtio_find_vqs(vsock->vdev, max_vq,
-@@ -670,8 +856,14 @@ static int virtio_vsock_probe(struct virtio_device *vdev)
- 	vsock->rx_buf_max_nr = 0;
- 	atomic_set(&vsock->queued_replies, 0);
- 
-+	vsock->dgram_rx_buf_nr = 0;
-+	vsock->dgram_rx_buf_max_nr = 0;
-+	atomic_set(&vsock->dgram_queued_replies, 0);
-+
- 	mutex_init(&vsock->tx_lock);
- 	mutex_init(&vsock->rx_lock);
-+	mutex_init(&vsock->dgram_tx_lock);
-+	mutex_init(&vsock->dgram_rx_lock);
- 	mutex_init(&vsock->event_lock);
- 	spin_lock_init(&vsock->send_pkt_list_lock);
- 	INIT_LIST_HEAD(&vsock->send_pkt_list);
-@@ -679,6 +871,8 @@ static int virtio_vsock_probe(struct virtio_device *vdev)
- 	INIT_WORK(&vsock->tx_work, virtio_transport_tx_work);
- 	INIT_WORK(&vsock->event_work, virtio_transport_event_work);
- 	INIT_WORK(&vsock->send_pkt_work, virtio_transport_send_pkt_work);
-+	INIT_WORK(&vsock->dgram_rx_work, virtio_transport_dgram_rx_work);
-+	INIT_WORK(&vsock->dgram_tx_work, virtio_transport_dgram_tx_work);
- 
- 	if (virtio_has_feature(vdev, VIRTIO_VSOCK_F_SEQPACKET))
- 		vsock->seqpacket_allow = true;
-@@ -691,11 +885,20 @@ static int virtio_vsock_probe(struct virtio_device *vdev)
+ 				      vsock->vqs, ex_callbacks, ex_names,
+@@ -645,11 +831,20 @@ static int virtio_vsock_vqs_init(struct virtio_vsock *vsock)
  	vsock->tx_run = true;
  	mutex_unlock(&vsock->tx_lock);
  
@@ -615,17 +578,7 @@ index e70e78d6fd19..59b34b7a6500 100644
  	mutex_lock(&vsock->event_lock);
  	virtio_vsock_event_fill(vsock);
  	vsock->event_run = true;
-@@ -703,6 +906,9 @@ static int virtio_vsock_probe(struct virtio_device *vdev)
- 
- 	rcu_assign_pointer(the_virtio_vsock, vsock);
- 
-+	the_virtio_vsock_dgram = vsock;
-+	refcount_set(&the_virtio_vsock_dgram->active, 1);
-+
- 	mutex_unlock(&the_virtio_vsock_mutex);
- 
- 	return 0;
-@@ -735,14 +941,27 @@ static void virtio_vsock_remove(struct virtio_device *vdev)
+@@ -674,10 +869,18 @@ static void virtio_vsock_vqs_del(struct virtio_vsock *vsock)
  	vsock->rx_run = false;
  	mutex_unlock(&vsock->rx_lock);
  
@@ -644,16 +597,7 @@ index e70e78d6fd19..59b34b7a6500 100644
  	mutex_lock(&vsock->event_lock);
  	vsock->event_run = false;
  	mutex_unlock(&vsock->event_lock);
- 
-+	while (!refcount_dec_if_one(&the_virtio_vsock_dgram->active)) {
-+		if (signal_pending(current))
-+			break;
-+	}
-+
- 	/* Flush all device writes and interrupts, device will not use any
- 	 * more buffers.
- 	 */
-@@ -753,11 +972,21 @@ static void virtio_vsock_remove(struct virtio_device *vdev)
+@@ -692,11 +895,21 @@ static void virtio_vsock_vqs_del(struct virtio_vsock *vsock)
  		virtio_transport_free_pkt(pkt);
  	mutex_unlock(&vsock->rx_lock);
  
@@ -675,7 +619,31 @@ index e70e78d6fd19..59b34b7a6500 100644
  	spin_lock_bh(&vsock->send_pkt_list_lock);
  	while (!list_empty(&vsock->send_pkt_list)) {
  		pkt = list_first_entry(&vsock->send_pkt_list,
-@@ -775,6 +1004,8 @@ static void virtio_vsock_remove(struct virtio_device *vdev)
+@@ -738,8 +951,14 @@ static int virtio_vsock_probe(struct virtio_device *vdev)
+ 	vsock->rx_buf_max_nr = 0;
+ 	atomic_set(&vsock->queued_replies, 0);
+ 
++	vsock->dgram_rx_buf_nr = 0;
++	vsock->dgram_rx_buf_max_nr = 0;
++	atomic_set(&vsock->dgram_queued_replies, 0);
++
+ 	mutex_init(&vsock->tx_lock);
+ 	mutex_init(&vsock->rx_lock);
++	mutex_init(&vsock->dgram_tx_lock);
++	mutex_init(&vsock->dgram_rx_lock);
+ 	mutex_init(&vsock->event_lock);
+ 	spin_lock_init(&vsock->send_pkt_list_lock);
+ 	INIT_LIST_HEAD(&vsock->send_pkt_list);
+@@ -747,6 +966,8 @@ static int virtio_vsock_probe(struct virtio_device *vdev)
+ 	INIT_WORK(&vsock->tx_work, virtio_transport_tx_work);
+ 	INIT_WORK(&vsock->event_work, virtio_transport_event_work);
+ 	INIT_WORK(&vsock->send_pkt_work, virtio_transport_send_pkt_work);
++	INIT_WORK(&vsock->dgram_rx_work, virtio_transport_dgram_rx_work);
++	INIT_WORK(&vsock->dgram_tx_work, virtio_transport_dgram_tx_work);
+ 
+ 	if (virtio_has_feature(vdev, VIRTIO_VSOCK_F_SEQPACKET))
+ 		vsock->seqpacket_allow = true;
+@@ -786,6 +1007,8 @@ static void virtio_vsock_remove(struct virtio_device *vdev)
  	 */
  	flush_work(&vsock->rx_work);
  	flush_work(&vsock->tx_work);
@@ -684,7 +652,7 @@ index e70e78d6fd19..59b34b7a6500 100644
  	flush_work(&vsock->event_work);
  	flush_work(&vsock->send_pkt_work);
  
-@@ -812,7 +1043,7 @@ static int __init virtio_vsock_init(void)
+@@ -870,7 +1093,7 @@ static int __init virtio_vsock_init(void)
  		return -ENOMEM;
  
  	ret = vsock_core_register(&virtio_transport.transport,

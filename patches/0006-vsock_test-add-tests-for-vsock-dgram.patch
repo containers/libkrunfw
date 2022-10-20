@@ -1,16 +1,17 @@
-From 2e5f4baa926b4d9c66728084b0328c2b535f8502 Mon Sep 17 00:00:00 2001
+From 700b6b081d3a003748585f5b325a9da4a27a50a7 Mon Sep 17 00:00:00 2001
 From: Jiang Wang <jiang.wang@bytedance.com>
 Date: Fri, 9 Apr 2021 18:32:20 +0000
-Subject: [PATCH 06/14] vsock_test: add tests for vsock dgram
+Subject: [PATCH 06/15] vsock_test: add tests for vsock dgram
 
 Added test cases for vsock dgram types.
 
 Signed-off-by: Jiang Wang <jiang.wang@bytedance.com>
+Signed-off-by: Sergio Lopez <slp@redhat.com>
 ---
  tools/testing/vsock/util.c       | 105 +++++++++++++++++
  tools/testing/vsock/util.h       |   4 +
- tools/testing/vsock/vsock_test.c | 195 +++++++++++++++++++++++++++++++
- 3 files changed, 304 insertions(+)
+ tools/testing/vsock/vsock_test.c | 194 +++++++++++++++++++++++++++++++
+ 3 files changed, 303 insertions(+)
 
 diff --git a/tools/testing/vsock/util.c b/tools/testing/vsock/util.c
 index 2acbb7703c6a..d2f5b223bf85 100644
@@ -152,10 +153,10 @@ index a3375ad2fb7f..7213f2a51c1e 100644
  	       const struct test_opts *opts);
  void list_tests(const struct test_case *test_cases);
 diff --git a/tools/testing/vsock/vsock_test.c b/tools/testing/vsock/vsock_test.c
-index 2a3638c0a008..98d9811747f4 100644
+index dc577461afc2..57b33231ad5a 100644
 --- a/tools/testing/vsock/vsock_test.c
 +++ b/tools/testing/vsock/vsock_test.c
-@@ -199,6 +199,115 @@ static void test_stream_server_close_server(const struct test_opts *opts)
+@@ -201,6 +201,115 @@ static void test_stream_server_close_server(const struct test_opts *opts)
  	close(fd);
  }
  
@@ -271,7 +272,7 @@ index 2a3638c0a008..98d9811747f4 100644
  /* With the standard socket sizes, VMCI is able to support about 100
   * concurrent stream connections.
   */
-@@ -252,6 +361,77 @@ static void test_stream_multiconn_server(const struct test_opts *opts)
+@@ -254,6 +363,77 @@ static void test_stream_multiconn_server(const struct test_opts *opts)
  		close(fds[i]);
  }
  
@@ -349,11 +350,11 @@ index 2a3638c0a008..98d9811747f4 100644
  static void test_stream_msg_peek_client(const struct test_opts *opts)
  {
  	int fd;
-@@ -431,6 +611,21 @@ static struct test_case test_cases[] = {
- 		.run_client = test_seqpacket_msg_trunc_client,
- 		.run_server = test_seqpacket_msg_trunc_server,
- 	},
-+	{
+@@ -645,6 +825,20 @@ static struct test_case test_cases[] = {
+ 		.name = "SOCK_SEQPACKET invalid receive buffer",
+ 		.run_client = test_seqpacket_invalid_rec_buffer_client,
+ 		.run_server = test_seqpacket_invalid_rec_buffer_server,
++	},
 +		.name = "SOCK_DGRAM client close",
 +		.run_client = test_dgram_sendto_client,
 +		.run_server = test_dgram_sendto_server,
@@ -367,10 +368,9 @@ index 2a3638c0a008..98d9811747f4 100644
 +		.name = "SOCK_DGRAM multiple connections",
 +		.run_client = test_dgram_multiconn_client,
 +		.run_server = test_dgram_multiconn_server,
-+	},
+ 	},
  	{},
  };
- 
 -- 
 2.37.3
 
