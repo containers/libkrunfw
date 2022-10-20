@@ -32,7 +32,7 @@ KRUNFW_SONAME_Linux = libkrunfw$(VARIANT).so.$(ABI_VERSION)
 KRUNFW_BASE_Linux = libkrunfw$(VARIANT).so
 SONAME_Linux = -Wl,-soname,$(KRUNFW_SONAME_Linux)
 
-KRUNFW_BINARY_Darwin = libkrunfw.$(FULL_VERSION).dylib
+KRUNFW_BINARY_Darwin = libkrunfw.$(ABI_VERSION).dylib
 KRUNFW_SONAME_Darwin = libkrunfw.$(ABI_VERSION).dylib
 KRUNFW_BASE_Darwin = libkrunfw.dylib
 SONAME_Darwin =
@@ -97,7 +97,11 @@ endif
 install:
 	install -d $(DESTDIR)$(PREFIX)/$(LIBDIR_$(OS))/
 	install -m 755 $(KRUNFW_BINARY_$(OS)) $(DESTDIR)$(PREFIX)/$(LIBDIR_$(OS))/
+ifeq ($(OS),Darwin)
+	cd $(DESTDIR)$(PREFIX)/$(LIBDIR_$(OS))/ ; ln -sf $(KRUNFW_BINARY_$(OS)) $(KRUNFW_BASE_$(OS))
+else
 	cd $(DESTDIR)$(PREFIX)/$(LIBDIR_$(OS))/ ; ln -sf $(KRUNFW_BINARY_$(OS)) $(KRUNFW_SONAME_$(OS)) ; ln -sf $(KRUNFW_SONAME_$(OS)) $(KRUNFW_BASE_$(OS))
+endif
 
 clean:
 	rm -fr $(KERNEL_SOURCES) $(KERNEL_C_BUNDLE) $(QBOOT_C_BUNDLE) $(INITRD_C_BUNDLE) $(KRUNFW_BINARY_$(OS))
