@@ -68,9 +68,15 @@ $(KERNEL_SOURCES): $(KERNEL_TARBALL)
 $(KERNEL_BINARY_$(ARCH)): $(KERNEL_SOURCES)
 	cd $(KERNEL_SOURCES) ; rm -f .version ; $(MAKE) $(MAKEFLAGS) $(KERNEL_FLAGS)
 
+ifeq ($(OS),Darwin)
+$(KERNEL_C_BUNDLE):
+	@echo "Building on macOS, using ./build_on_krunvm.sh"
+	./build_on_krunvm.sh
+else
 $(KERNEL_C_BUNDLE): $(KERNEL_BINARY_$(ARCH))
 	@echo "Generating $(KERNEL_C_BUNDLE) from $(KERNEL_BINARY_$(ARCH))..."
 	@python3 bin2cbundle.py -t $(KBUNDLE_TYPE_$(ARCH)) $(KERNEL_BINARY_$(ARCH)) kernel.c
+endif
 
 ifeq ($(SEV),1)
 $(QBOOT_C_BUNDLE): $(QBOOT_BINARY)

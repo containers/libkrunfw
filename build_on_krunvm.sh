@@ -9,6 +9,7 @@ if [ -z "$KRUNVM" ]; then
 	exit -1
 fi
 
+# realpath does not exist by default on macOS, use `brew install coreutils` to get it
 SCRIPTPATH=`realpath $0`
 WORKDIR=`dirname $SCRIPTPATH`
 krunvm create fedora --name libkrunfw-builder --cpus 2 --mem 2048 -v $WORKDIR:/work -w /work
@@ -37,7 +38,5 @@ if [ ! -e "kernel.c" ]; then
 	echo "There was a problem building the kernel bundle in the VM"
 	exit -1
 fi
-
-gcc -fPIC -shared -o libkrunfw.dylib kernel.c
 
 exit 0
