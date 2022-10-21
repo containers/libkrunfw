@@ -46,7 +46,6 @@ void setup_bootp(int num_cpus, int ram_mib)
 	bootp.hdr.cmdline_size = KRUN_CMDLINE_SIZE;
 
 	bootp.hdr.ramdisk_image = KRUN_RAMDISK_ADDR;
-	bootp.hdr.ramdisk_size = KRUN_RAMDISK_SIZE;
 
 	bootp.hdr.syssize = num_cpus;
 
@@ -94,6 +93,7 @@ void measurement_sev_es(int num_cpus)
 	payload_addr = krunfw_get_initrd(&payload_size);
 	SHA256_Update(&shactx, payload_addr, payload_size);
 
+	bootp.hdr.ramdisk_size = payload_size;
 	SHA256_Update(&shactx, &bootp, 4096);
 
 	SHA256_Update(&shactx, &VMSA_BP, 4096);
@@ -130,6 +130,7 @@ void measurement_sev()
 	payload_addr = krunfw_get_initrd(&payload_size);
 	SHA256_Update(&shactx, payload_addr, payload_size);
 
+	bootp.hdr.ramdisk_size = payload_size;
 	SHA256_Update(&shactx, &bootp, 4096);
 
 	SHA256_Final(&digest[0], &shactx);
