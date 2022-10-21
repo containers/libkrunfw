@@ -1,7 +1,7 @@
-From 144668419887512d908d6986d850562aa851cb03 Mon Sep 17 00:00:00 2001
+From 300a316bdad49772074e4b0fe173e957be720d64 Mon Sep 17 00:00:00 2001
 From: Jiang Wang <jiang.wang@bytedance.com>
 Date: Thu, 26 May 2022 18:46:09 +0200
-Subject: [PATCH 07/14] virtio/vsock: add sysfs for rx buf len for dgram
+Subject: [PATCH 07/15] virtio/vsock: add sysfs for rx buf len for dgram
 
 Make rx buf len configurable via sysfs
 
@@ -11,10 +11,10 @@ Signed-off-by: Jiang Wang <jiang.wang@bytedance.com>
  1 file changed, 44 insertions(+), 2 deletions(-)
 
 diff --git a/net/vmw_vsock/virtio_transport.c b/net/vmw_vsock/virtio_transport.c
-index 59b34b7a6500..c050dd570e5e 100644
+index abaae264453b..5e78e9ca3e2b 100644
 --- a/net/vmw_vsock/virtio_transport.c
 +++ b/net/vmw_vsock/virtio_transport.c
-@@ -31,6 +31,16 @@ static struct virtio_vsock __rcu *the_virtio_vsock_dgram;
+@@ -30,6 +30,16 @@ static struct virtio_vsock __rcu *the_virtio_vsock;
  static DEFINE_MUTEX(the_virtio_vsock_mutex); /* protects the_virtio_vsock */
  static struct virtio_transport virtio_transport; /* forward declaration */
  
@@ -31,7 +31,7 @@ index 59b34b7a6500..c050dd570e5e 100644
  struct virtio_vsock {
  	struct virtio_device *vdev;
  	struct virtqueue **vqs;
-@@ -364,7 +374,7 @@ virtio_transport_cancel_pkt(struct vsock_sock *vsk)
+@@ -359,7 +369,7 @@ virtio_transport_cancel_pkt(struct vsock_sock *vsk)
  
  static void virtio_vsock_rx_fill(struct virtio_vsock *vsock, bool is_dgram)
  {
@@ -40,8 +40,8 @@ index 59b34b7a6500..c050dd570e5e 100644
  	struct virtio_vsock_pkt *pkt;
  	struct scatterlist hdr, buf, *sgs[2];
  	struct virtqueue *vq;
-@@ -1034,6 +1044,23 @@ static struct virtio_driver virtio_vsock_driver = {
- 	.remove = virtio_vsock_remove,
+@@ -1084,6 +1094,23 @@ static struct virtio_driver virtio_vsock_driver = {
+ #endif
  };
  
 +static ssize_t dgram_sysfs_show(struct kobject *kobj,
@@ -64,7 +64,7 @@ index 59b34b7a6500..c050dd570e5e 100644
  static int __init virtio_vsock_init(void)
  {
  	int ret;
-@@ -1051,8 +1078,19 @@ static int __init virtio_vsock_init(void)
+@@ -1101,8 +1128,19 @@ static int __init virtio_vsock_init(void)
  	if (ret)
  		goto out_vci;
  
@@ -85,7 +85,7 @@ index 59b34b7a6500..c050dd570e5e 100644
  out_vci:
  	vsock_core_unregister(&virtio_transport.transport);
  out_wq:
-@@ -1065,6 +1103,10 @@ static void __exit virtio_vsock_exit(void)
+@@ -1115,6 +1153,10 @@ static void __exit virtio_vsock_exit(void)
  	unregister_virtio_driver(&virtio_vsock_driver);
  	vsock_core_unregister(&virtio_transport.transport);
  	destroy_workqueue(virtio_vsock_workqueue);

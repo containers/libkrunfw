@@ -1,7 +1,7 @@
-From d7c82ebbd4628446b26f82af02781e61668b448e Mon Sep 17 00:00:00 2001
+From 109f0226a02ce16ca06a7aeae021fe326b0f5f03 Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@redhat.com>
 Date: Thu, 19 May 2022 22:42:01 +0200
-Subject: [PATCH 11/14] tsi: allow hijacking sockets (tsi_hijack)
+Subject: [PATCH 11/15] tsi: allow hijacking sockets (tsi_hijack)
 
 Add a kernel command line option (tsi_hijack) enabling users to
 request the kernel to hijack AF_INET(SOCK_STREAM || SOCK_DGRAM)
@@ -14,10 +14,10 @@ Signed-off-by: Sergio Lopez <slp@redhat.com>
  2 files changed, 18 insertions(+), 1 deletion(-)
 
 diff --git a/net/socket.c b/net/socket.c
-index 88a3a191b3ad..126ae49936d3 100644
+index 52d9e5b070cb..d3ae41f24eed 100644
 --- a/net/socket.c
 +++ b/net/socket.c
-@@ -111,6 +111,10 @@ unsigned int sysctl_net_busy_read __read_mostly;
+@@ -112,6 +112,10 @@ unsigned int sysctl_net_busy_read __read_mostly;
  unsigned int sysctl_net_busy_poll __read_mostly;
  #endif
  
@@ -28,7 +28,7 @@ index 88a3a191b3ad..126ae49936d3 100644
  static ssize_t sock_read_iter(struct kiocb *iocb, struct iov_iter *to);
  static ssize_t sock_write_iter(struct kiocb *iocb, struct iov_iter *from);
  static int sock_mmap(struct file *file, struct vm_area_struct *vma);
-@@ -1379,6 +1383,10 @@ int sock_wake_async(struct socket_wq *wq, int how, int band)
+@@ -1427,6 +1431,10 @@ int sock_wake_async(struct socket_wq *wq, int how, int band)
  }
  EXPORT_SYMBOL(sock_wake_async);
  
@@ -39,7 +39,7 @@ index 88a3a191b3ad..126ae49936d3 100644
  /**
   *	__sock_create - creates a socket
   *	@net: net namespace
-@@ -1449,6 +1457,15 @@ int __sock_create(struct net *net, int family, int type, int protocol,
+@@ -1497,6 +1505,15 @@ int __sock_create(struct net *net, int family, int type, int protocol,
  		request_module("net-pf-%d", family);
  #endif
  
@@ -56,7 +56,7 @@ index 88a3a191b3ad..126ae49936d3 100644
  	pf = rcu_dereference(net_families[family]);
  	err = -EAFNOSUPPORT;
 diff --git a/net/tsi/af_tsi.c b/net/tsi/af_tsi.c
-index 724c0ea36520..bb6004dedaa2 100644
+index 38a383634ccd..91c9c5cb2285 100644
 --- a/net/tsi/af_tsi.c
 +++ b/net/tsi/af_tsi.c
 @@ -474,7 +474,7 @@ static int tsi_accept(struct socket *sock, struct socket *newsock, int flags,

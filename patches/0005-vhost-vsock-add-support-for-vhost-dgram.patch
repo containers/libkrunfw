@@ -1,7 +1,7 @@
-From ae49985b3e0ccd2de8df81a805bd42822ed2a093 Mon Sep 17 00:00:00 2001
+From da5bd093faa01a999764be7a256c4ef18cb5c51e Mon Sep 17 00:00:00 2001
 From: Jiang Wang <jiang.wang@bytedance.com>
 Date: Fri, 10 Dec 2021 12:42:16 +0100
-Subject: [PATCH 05/14] vhost/vsock: add support for vhost dgram.
+Subject: [PATCH 05/15] vhost/vsock: add support for vhost dgram.
 
 This patch supports dgram on vhost side, including
 tx and rx. The vhost send packets asynchronously.
@@ -10,12 +10,13 @@ Also, ignore vq errors when vq number is larger than 2,
 so it will be comptaible with old versions.
 
 Signed-off-by: Jiang Wang <jiang.wang@bytedance.com>
+Signed-off-by: Sergio Lopez <slp@redhat.com>
 ---
- drivers/vhost/vsock.c | 212 +++++++++++++++++++++++++++++++++++++-----
- 1 file changed, 187 insertions(+), 25 deletions(-)
+ drivers/vhost/vsock.c | 209 +++++++++++++++++++++++++++++++++++++-----
+ 1 file changed, 185 insertions(+), 24 deletions(-)
 
 diff --git a/drivers/vhost/vsock.c b/drivers/vhost/vsock.c
-index 4436c2fd5095..2b9b354b4d56 100644
+index c0d477729282..4b6000866224 100644
 --- a/drivers/vhost/vsock.c
 +++ b/drivers/vhost/vsock.c
 @@ -28,7 +28,10 @@
@@ -307,7 +308,7 @@ index 4436c2fd5095..2b9b354b4d56 100644
  
  	mutex_lock(&vq->mutex);
  
-@@ -510,11 +624,14 @@ static void vhost_vsock_handle_tx_kick(struct vhost_work *work)
+@@ -510,7 +624,9 @@ static void vhost_vsock_handle_tx_kick(struct vhost_work *work)
  	if (!vq_meta_prefetch(vq))
  		goto out;
  
@@ -315,15 +316,9 @@ index 4436c2fd5095..2b9b354b4d56 100644
  	vhost_disable_notify(&vsock->dev, vq);
 +	preempt_disable();
  	do {
- 		u32 len;
- 
--		if (!vhost_vsock_more_replies(vsock)) {
-+		if (vq == &vsock->vqs[VSOCK_VQ_TX]
-+			&& !vhost_vsock_more_replies(vsock)) {
+ 		if (!vhost_vsock_more_replies(vsock)) {
  			/* Stop tx until the device processes already
- 			 * pending replies.  Leave tx virtqueue
- 			 * callbacks disabled.
-@@ -528,6 +645,11 @@ static void vhost_vsock_handle_tx_kick(struct vhost_work *work)
+@@ -526,6 +642,11 @@ static void vhost_vsock_handle_tx_kick(struct vhost_work *work)
  			break;
  
  		if (head == vq->num) {
@@ -335,15 +330,15 @@ index 4436c2fd5095..2b9b354b4d56 100644
  			if (unlikely(vhost_enable_notify(&vsock->dev, vq))) {
  				vhost_disable_notify(&vsock->dev, vq);
  				continue;
-@@ -559,6 +681,7 @@ static void vhost_vsock_handle_tx_kick(struct vhost_work *work)
- 		total_len += len;
+@@ -555,6 +676,7 @@ static void vhost_vsock_handle_tx_kick(struct vhost_work *work)
+ 		vhost_add_used(vq, head, 0);
  		added = true;
  	} while(likely(!vhost_exceeds_weight(vq, ++pkts, total_len)));
 +	preempt_enable();
  
  no_more_replies:
  	if (added)
-@@ -597,14 +720,30 @@ static int vhost_vsock_start(struct vhost_vsock *vsock)
+@@ -593,14 +715,30 @@ static int vhost_vsock_start(struct vhost_vsock *vsock)
  
  		if (!vhost_vq_access_ok(vq)) {
  			ret = -EFAULT;
@@ -376,7 +371,7 @@ index 4436c2fd5095..2b9b354b4d56 100644
  		}
  
  		mutex_unlock(&vq->mutex);
-@@ -614,6 +753,7 @@ static int vhost_vsock_start(struct vhost_vsock *vsock)
+@@ -610,6 +748,7 @@ static int vhost_vsock_start(struct vhost_vsock *vsock)
  	 * let's kick the send worker to send them.
  	 */
  	vhost_work_queue(&vsock->dev, &vsock->send_pkt_work);
@@ -384,7 +379,7 @@ index 4436c2fd5095..2b9b354b4d56 100644
  
  	mutex_unlock(&vsock->dev.mutex);
  	return 0;
-@@ -690,8 +830,14 @@ static int vhost_vsock_dev_open(struct inode *inode, struct file *file)
+@@ -686,8 +825,14 @@ static int vhost_vsock_dev_open(struct inode *inode, struct file *file)
  
  	vqs[VSOCK_VQ_TX] = &vsock->vqs[VSOCK_VQ_TX];
  	vqs[VSOCK_VQ_RX] = &vsock->vqs[VSOCK_VQ_RX];
@@ -399,7 +394,7 @@ index 4436c2fd5095..2b9b354b4d56 100644
  
  	vhost_dev_init(&vsock->dev, vqs, ARRAY_SIZE(vsock->vqs),
  		       UIO_MAXIOV, VHOST_VSOCK_PKT_WEIGHT,
-@@ -701,6 +847,11 @@ static int vhost_vsock_dev_open(struct inode *inode, struct file *file)
+@@ -697,6 +842,11 @@ static int vhost_vsock_dev_open(struct inode *inode, struct file *file)
  	spin_lock_init(&vsock->send_pkt_list_lock);
  	INIT_LIST_HEAD(&vsock->send_pkt_list);
  	vhost_work_init(&vsock->send_pkt_work, vhost_transport_send_pkt_work);
@@ -411,7 +406,7 @@ index 4436c2fd5095..2b9b354b4d56 100644
  	return 0;
  
  out:
-@@ -781,6 +932,17 @@ static int vhost_vsock_dev_release(struct inode *inode, struct file *file)
+@@ -772,6 +922,17 @@ static int vhost_vsock_dev_release(struct inode *inode, struct file *file)
  	}
  	spin_unlock_bh(&vsock->send_pkt_list_lock);
  
@@ -429,7 +424,7 @@ index 4436c2fd5095..2b9b354b4d56 100644
  	vhost_dev_cleanup(&vsock->dev);
  	kfree(vsock->dev.vqs);
  	vhost_vsock_free(vsock);
-@@ -966,7 +1128,7 @@ static int __init vhost_vsock_init(void)
+@@ -957,7 +1118,7 @@ static int __init vhost_vsock_init(void)
  	int ret;
  
  	ret = vsock_core_register(&vhost_transport.transport,

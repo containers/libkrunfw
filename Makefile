@@ -1,13 +1,13 @@
-KERNEL_VERSION = linux-5.15.71
-KERNEL_REMOTE = https://cdn.kernel.org/pub/linux/kernel/v5.x/$(KERNEL_VERSION).tar.xz
+KERNEL_VERSION = linux-6.0.2
+KERNEL_REMOTE = https://cdn.kernel.org/pub/linux/kernel/v6.x/$(KERNEL_VERSION).tar.xz
 KERNEL_TARBALL = tarballs/$(KERNEL_VERSION).tar.xz
 KERNEL_SOURCES = $(KERNEL_VERSION)
 KERNEL_PATCHES = $(shell find patches/ -name "0*.patch" | sort)
 KERNEL_C_BUNDLE = kernel.c
 
 ABI_VERSION = 3
-FULL_VERSION = 3.7.0
-TIMESTAMP = "Tue Oct  4 02:45:44 PM UTC 2022"
+FULL_VERSION = 3.8.0
+TIMESTAMP = "Thu Oct 20 03:43:21 PM UTC 2022"
 
 KERNEL_FLAGS = KBUILD_BUILD_TIMESTAMP=$(TIMESTAMP)
 KERNEL_FLAGS += KBUILD_BUILD_USER=root

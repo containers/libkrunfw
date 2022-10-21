@@ -1,7 +1,7 @@
-From 68ff53954375f1584fdf289bd96e010ba3dbf734 Mon Sep 17 00:00:00 2001
+From 615547ad226accb259bba8b0239fd6084c6a8159 Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@redhat.com>
 Date: Thu, 19 May 2022 22:34:49 +0200
-Subject: [PATCH 09/14] virtio/vsock: add DGRAM to virtio_transport_get_type
+Subject: [PATCH 09/15] virtio/vsock: add DGRAM to virtio_transport_get_type
 
 Add missing DGRAM to virtio_transport_get_type.
 
