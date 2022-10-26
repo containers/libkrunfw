@@ -1,0 +1,49 @@
+From dbbfd531d64c6c53534da37bbc6eb80dc0607a25 Mon Sep 17 00:00:00 2001
+From: Andrew Fasano <fasano@mit.edu>
+Date: Wed, 26 Oct 2022 14:57:48 -0400
+Subject: [PATCH] tsi: fix selinux errors
+
+---
+ security/selinux/hooks.c            | 5 ++++-
+ security/selinux/include/classmap.h | 4 +++-
+ 2 files changed, 7 insertions(+), 2 deletions(-)
+
+diff --git a/security/selinux/hooks.c b/security/selinux/hooks.c
+index 03bca97c8b29..484bd58dc268 100644
+--- a/security/selinux/hooks.c
++++ b/security/selinux/hooks.c
+@@ -1257,7 +1257,10 @@ static inline u16 socket_type_to_security_class(int family, int type, int protoc
+      return SECCLASS_XDP_SOCKET;
+    case PF_MCTP:
+      return SECCLASS_MCTP_SOCKET;
+-#if PF_MAX > 46
++   case PF_TSI:
++     return SECCLASS_TSI_SOCKET;
++
++#if PF_MAX > 47
+ #error New address family defined, please update this function.
+ #endif
+    }
+diff --git a/security/selinux/include/classmap.h b/security/selinux/include/classmap.h
+index 1c2f41ff4e55..0e39da6c2343 100644
+--- a/security/selinux/include/classmap.h
++++ b/security/selinux/include/classmap.h
+@@ -237,6 +237,8 @@ const struct security_class_mapping secclass_map[] = {
+    { COMMON_SOCK_PERMS, NULL } },
+  { "smc_socket",
+    { COMMON_SOCK_PERMS, NULL } },
++ { "tsi_socket",
++   { COMMON_SOCK_PERMS, NULL } },
+  { "infiniband_pkey",
+    { "access", NULL } },
+  { "infiniband_endport",
+@@ -257,6 +259,6 @@ const struct security_class_mapping secclass_map[] = {
+  { NULL }
+   };
+
+-#if PF_MAX > 46
++#if PF_MAX > 47
+ #error New address family defined, please update secclass_map.
+ #endif
+--
+2.34.1
