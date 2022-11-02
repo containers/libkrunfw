@@ -1,4 +1,4 @@
-From 39c6583e24d23dc1f26cf3bb5e38b8864ac0e3c9 Mon Sep 17 00:00:00 2001
+From 726e542aaedf3616ccd2dd4b04685637adfbdc28 Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@redhat.com>
 Date: Thu, 20 Oct 2022 14:26:54 +0200
 Subject: [PATCH] x86/sev: Avoid using native_cpuid
@@ -16,7 +16,7 @@ Signed-off-by: Sergio Lopez <slp@redhat.com>
  1 file changed, 26 insertions(+), 87 deletions(-)
 
 diff --git a/arch/x86/mm/mem_encrypt_identity.c b/arch/x86/mm/mem_encrypt_identity.c
-index f415498d3175..198c278541b2 100644
+index f415498d3175..43a2b3febfd1 100644
 --- a/arch/x86/mm/mem_encrypt_identity.c
 +++ b/arch/x86/mm/mem_encrypt_identity.c
 @@ -504,114 +504,53 @@ void __init sme_encrypt_kernel(struct boot_params *bp)
@@ -64,7 +64,7 @@ index f415498d3175..198c278541b2 100644
 +	snp = snp_init(bp);
  
 -	me_mask = 1UL << (ebx & 0x3f);
-+	if (snp) {
++	if (snp || sev_status & MSR_AMD64_SEV_ES_ENABLED) {
 +		cbit = __rdmsr(MSR_AMD64_SEV_ES_GHCB) >> 24;
 +		me_mask = 1UL << (cbit & 0x3f);
  
@@ -72,7 +72,7 @@ index f415498d3175..198c278541b2 100644
 -	sev_status   = __rdmsr(MSR_AMD64_SEV);
 -	feature_mask = (sev_status & MSR_AMD64_SEV_ENABLED) ? AMD_SEV_BIT : AMD_SME_BIT;
 +		/* The SEV-SNP CC blob should never be present unless SEV-SNP is enabled. */
-+		if (!(sev_status & MSR_AMD64_SEV_SNP_ENABLED))
++		if (snp && !(sev_status & MSR_AMD64_SEV_SNP_ENABLED))
 +			snp_abort();
 +	} else {
  
