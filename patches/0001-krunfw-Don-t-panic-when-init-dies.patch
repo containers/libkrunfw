@@ -1,4 +1,4 @@
-From b6519158b2d80756fdf3de13cea86e3d2e7c6a4e Mon Sep 17 00:00:00 2001
+From 5d929eca46d48c02ce43694f6289a45220cfef78 Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@redhat.com>
 Date: Mon, 16 May 2022 15:47:50 +0200
 Subject: [PATCH 01/15] krunfw: Don't panic when init dies

@@ -1,7 +1,7 @@
-From 188eae83bd87c54c2d35225cc63ca2e24b5a3579 Mon Sep 17 00:00:00 2001
+From 726e542aaedf3616ccd2dd4b04685637adfbdc28 Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@redhat.com>
 Date: Thu, 20 Oct 2022 14:26:54 +0200
-Subject: [PATCH 15/15] x86/sev: Avoid using native_cpuid
+Subject: [PATCH] x86/sev: Avoid using native_cpuid
 
 In the state we get into the kernel from qboot-krunfw we can't return
 from #VC properly, so avoid calling native_cpuid in the early stages
@@ -12,19 +12,19 @@ enabled and the location of the cbit.
 
 Signed-off-by: Sergio Lopez <slp@redhat.com>
 ---
- arch/x86/mm/mem_encrypt_identity.c | 97 ++----------------------------
- 1 file changed, 6 insertions(+), 91 deletions(-)
+ arch/x86/mm/mem_encrypt_identity.c | 113 +++++++----------------------
+ 1 file changed, 26 insertions(+), 87 deletions(-)
 
 diff --git a/arch/x86/mm/mem_encrypt_identity.c b/arch/x86/mm/mem_encrypt_identity.c
-index f415498d3175..e08ec0ca5457 100644
+index f415498d3175..43a2b3febfd1 100644
 --- a/arch/x86/mm/mem_encrypt_identity.c
 +++ b/arch/x86/mm/mem_encrypt_identity.c
-@@ -504,114 +504,29 @@ void __init sme_encrypt_kernel(struct boot_params *bp)
+@@ -504,114 +504,53 @@ void __init sme_encrypt_kernel(struct boot_params *bp)
  
  void __init sme_enable(struct boot_params *bp)
  {
 -	const char *cmdline_ptr, *cmdline_arg, *cmdline_on, *cmdline_off;
--	unsigned int eax, ebx, ecx, edx;
+ 	unsigned int eax, ebx, ecx, edx;
 -	unsigned long feature_mask;
 -	bool active_by_default;
  	unsigned long me_mask;
@@ -33,8 +33,8 @@ index f415498d3175..e08ec0ca5457 100644
  	bool snp;
  	u64 msr;
  
- 	snp = snp_init(bp);
- 
+-	snp = snp_init(bp);
+-
 -	/* Check for the SME/SEV support leaf */
 -	eax = 0x80000000;
 -	ecx = 0;
@@ -44,7 +44,9 @@ index f415498d3175..e08ec0ca5457 100644
 -
 -#define AMD_SME_BIT	BIT(0)
 -#define AMD_SEV_BIT	BIT(1)
--
++	/* Check the SEV MSR whether SEV or SME is enabled */
++	sev_status = __rdmsr(MSR_AMD64_SEV);
+ 
 -	/*
 -	 * Check for the SME/SEV feature:
 -	 *   CPUID Fn8000_001F[EAX]
@@ -59,24 +61,30 @@ index f415498d3175..e08ec0ca5457 100644
 -	/* Check whether SEV or SME is supported */
 -	if (!(eax & (AMD_SEV_BIT | AMD_SME_BIT)))
 -		return;
--
++	snp = snp_init(bp);
+ 
 -	me_mask = 1UL << (ebx & 0x3f);
-+	cbit = __rdmsr(MSR_AMD64_SEV_ES_GHCB) >> 24;
-+	me_mask = 1UL << (cbit & 0x3f);
++	if (snp || sev_status & MSR_AMD64_SEV_ES_ENABLED) {
++		cbit = __rdmsr(MSR_AMD64_SEV_ES_GHCB) >> 24;
++		me_mask = 1UL << (cbit & 0x3f);
  
- 	/* Check the SEV MSR whether SEV or SME is enabled */
- 	sev_status   = __rdmsr(MSR_AMD64_SEV);
+-	/* Check the SEV MSR whether SEV or SME is enabled */
+-	sev_status   = __rdmsr(MSR_AMD64_SEV);
 -	feature_mask = (sev_status & MSR_AMD64_SEV_ENABLED) ? AMD_SEV_BIT : AMD_SME_BIT;
++		/* The SEV-SNP CC blob should never be present unless SEV-SNP is enabled. */
++		if (snp && !(sev_status & MSR_AMD64_SEV_SNP_ENABLED))
++			snp_abort();
++	} else {
  
- 	/* The SEV-SNP CC blob should never be present unless SEV-SNP is enabled. */
- 	if (snp && !(sev_status & MSR_AMD64_SEV_SNP_ENABLED))
- 		snp_abort();
-+	
-+	sme_me_mask = me_mask;
+-	/* The SEV-SNP CC blob should never be present unless SEV-SNP is enabled. */
+-	if (snp && !(sev_status & MSR_AMD64_SEV_SNP_ENABLED))
+-		snp_abort();
++#define AMD_SME_BIT    BIT(0)
++#define AMD_SEV_BIT    BIT(1)
  
 -	/* Check if memory encryption is enabled */
 -	if (feature_mask == AMD_SME_BIT) {
--		/*
+ 		/*
 -		 * No SME if Hypervisor bit is set. This check is here to
 -		 * prevent a guest from trying to enable SME. For running as a
 -		 * KVM guest the MSR_AMD64_SYSCFG will be sufficient, but there
@@ -84,13 +92,22 @@ index f415498d3175..e08ec0ca5457 100644
 -		 * or even pass it through to the guest.
 -		 * A malicious hypervisor can still trick a guest into this
 -		 * path, but there is no way to protect against that.
--		 */
++		 * Check for the SME/SEV feature:
++		 *   CPUID Fn8000_001F[EAX]
++		 *   - Bit 0 - Secure Memory Encryption support
++		 *   - Bit 1 - Secure Encrypted Virtualization support
++		 *   CPUID Fn8000_001F[EBX]
++		 *   - Bits 5:0 - Pagetable bit position used to indicate encryption
+ 		 */
 -		eax = 1;
--		ecx = 0;
--		native_cpuid(&eax, &ebx, &ecx, &edx);
++		eax = 0x8000001f;
+ 		ecx = 0;
+ 		native_cpuid(&eax, &ebx, &ecx, &edx);
 -		if (ecx & BIT(31))
--			return;
--
++		/* Check whether SEV or SME is supported */
++		if (!(eax & (AMD_SEV_BIT | AMD_SME_BIT)))
+ 			return;
+ 
 -		/* For SME, check the SYSCFG MSR */
 -		msr = __rdmsr(MSR_AMD64_SYSCFG);
 -		if (!(msr & MSR_AMD64_SYSCFG_MEM_ENCRYPT))
@@ -99,8 +116,11 @@ index f415498d3175..e08ec0ca5457 100644
 -		/* SEV state cannot be controlled by a command line option */
 -		sme_me_mask = me_mask;
 -		goto out;
--	}
--
++		me_mask = 1UL << (ebx & 0x3f);
+ 	}
++	
++	sme_me_mask = me_mask;
+ 
 -	/*
 -	 * Fixups have not been applied to phys_base yet and we're running
 -	 * identity mapped, so we must obtain the address to the SME command
@@ -141,5 +161,5 @@ index f415498d3175..e08ec0ca5457 100644
  }
 +
 -- 
-2.37.3
+2.35.1
 

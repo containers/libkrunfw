@@ -1,4 +1,4 @@
-From 042a00f01e7011d0fecf8aa30b6d30a9a59d124e Mon Sep 17 00:00:00 2001
+From 63b8b93d7ebb39e208ab0a9f9127769cf1758dc3 Mon Sep 17 00:00:00 2001
 From: Jiang Wang <jiang.wang@bytedance.com>
 Date: Thu, 26 May 2022 18:43:37 +0200
 Subject: [PATCH 04/15] virtio/vsock: add support for virtio datagram
@@ -662,7 +662,7 @@ index 3e157a62a9b1..abaae264453b 100644
  		goto out_wq;
  
 diff --git a/net/vmw_vsock/virtio_transport_common.c b/net/vmw_vsock/virtio_transport_common.c
-index ec2c2afbf0d0..7b62b6f6cc23 100644
+index 3a12aee33e92..d3d43f25c247 100644
 --- a/net/vmw_vsock/virtio_transport_common.c
 +++ b/net/vmw_vsock/virtio_transport_common.c
 @@ -26,6 +26,8 @@
