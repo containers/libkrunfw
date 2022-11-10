@@ -46,6 +46,10 @@ This will create a lightweight Linux VM using ```krunvm``` with the current work
 make
 ```
 
+## Known limitations
+
+* To save memory, the embedded kernel is configured with ```CONFIG_NR_CPUS=8```, which limits the maximum number of supported CPUs to 8. If this kernel runs in a VM with more CPUs, only the first 8 will be initialized and used.
+
 ## License
 
 This library bundles a Linux kernel but does not execute any code from it, acting as a mere storage format. As a consequence, this library does not constitute a derivative work of the Linux kernel. Thus, the following licenses apply:
