@@ -1,4 +1,4 @@
-From 3ab87ed90ad286b50a8f0fa943ae33212cfb0e35 Mon Sep 17 00:00:00 2001
+From 693b52bd33f75634ea41e1999589c0e97018cd90 Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@redhat.com>
 Date: Thu, 19 May 2022 22:38:26 +0200
 Subject: [PATCH 10/15] Transparent Socket Impersonation implementation
@@ -60,10 +60,10 @@ index de3701a2a212..3412fca9a223 100644
  
  /* Maximum queue length specifiable by listen.  */
 diff --git a/net/Kconfig b/net/Kconfig
-index 6b78f695caa6..87042aac730f 100644
+index 48c33c222199..0cd0eacfa927 100644
 --- a/net/Kconfig
 +++ b/net/Kconfig
-@@ -244,6 +244,7 @@ source "net/switchdev/Kconfig"
+@@ -242,6 +242,7 @@ source "net/switchdev/Kconfig"
  source "net/l3mdev/Kconfig"
  source "net/qrtr/Kconfig"
  source "net/ncsi/Kconfig"
@@ -72,16 +72,16 @@ index 6b78f695caa6..87042aac730f 100644
  config PCPU_DEV_REFCNT
  	bool "Use percpu variables to maintain network device refcount"
 diff --git a/net/Makefile b/net/Makefile
-index fbfeb8a0bb37..93b06ded75ad 100644
+index 6a62e5b27378..6e3d19c62528 100644
 --- a/net/Makefile
 +++ b/net/Makefile
-@@ -79,3 +79,4 @@ obj-$(CONFIG_NET_NCSI)		+= ncsi/
+@@ -78,3 +78,4 @@ obj-$(CONFIG_NET_NCSI)		+= ncsi/
  obj-$(CONFIG_XDP_SOCKETS)	+= xdp/
  obj-$(CONFIG_MPTCP)		+= mptcp/
  obj-$(CONFIG_MCTP)		+= mctp/
 +obj-$(CONFIG_TSI)		+= tsi/
 diff --git a/net/socket.c b/net/socket.c
-index 7378375d3a5b..52d9e5b070cb 100644
+index 00da9ce3dba0..5ea92b3f8e0d 100644
 --- a/net/socket.c
 +++ b/net/socket.c
 @@ -214,6 +214,7 @@ static const char * const pf_family_names[] = {
@@ -1510,5 +1510,5 @@ index 000000000000..cf381734bebe
 +
 +#endif
 -- 
-2.37.3
+2.39.0
 

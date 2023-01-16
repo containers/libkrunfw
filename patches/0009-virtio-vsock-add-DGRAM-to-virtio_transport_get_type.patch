@@ -1,4 +1,4 @@
-From d7c79548a124c727605182606353f465688aa4d4 Mon Sep 17 00:00:00 2001
+From 31ad56a4323ce6269187fe24849d4679b4fe6d3d Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@redhat.com>
 Date: Thu, 19 May 2022 22:34:49 +0200
 Subject: [PATCH 09/15] virtio/vsock: add DGRAM to virtio_transport_get_type
@@ -11,7 +11,7 @@ Signed-off-by: Sergio Lopez <slp@redhat.com>
  1 file changed, 3 insertions(+), 1 deletion(-)
 
 diff --git a/net/vmw_vsock/virtio_transport_common.c b/net/vmw_vsock/virtio_transport_common.c
-index d3d43f25c247..7e96c6cdd4d4 100644
+index 06d4b89c597a..5e31e789b007 100644
 --- a/net/vmw_vsock/virtio_transport_common.c
 +++ b/net/vmw_vsock/virtio_transport_common.c
 @@ -179,8 +179,10 @@ static u16 virtio_transport_get_type(struct sock *sk)
@@ -27,5 +27,5 @@ index d3d43f25c247..7e96c6cdd4d4 100644
  
  /* This function can only be used on connecting/connected sockets,
 -- 
-2.37.3
+2.39.0
 

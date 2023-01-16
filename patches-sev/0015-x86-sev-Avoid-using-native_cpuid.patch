@@ -1,7 +1,7 @@
-From 726e542aaedf3616ccd2dd4b04685637adfbdc28 Mon Sep 17 00:00:00 2001
+From 835a346d36ad10d8d6f22aec02ab68704dde4297 Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@redhat.com>
 Date: Thu, 20 Oct 2022 14:26:54 +0200
-Subject: [PATCH] x86/sev: Avoid using native_cpuid
+Subject: [PATCH 15/15] x86/sev: Avoid using native_cpuid
 
 In the state we get into the kernel from qboot-krunfw we can't return
 from #VC properly, so avoid calling native_cpuid in the early stages
@@ -161,5 +161,5 @@ index f415498d3175..43a2b3febfd1 100644
  }
 +
 -- 
-2.35.1
+2.39.0
 
