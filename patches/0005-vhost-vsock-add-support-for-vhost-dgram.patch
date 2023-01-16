@@ -1,4 +1,4 @@
-From d5415d216b19ab1a829da47d4c527aa665c31a8d Mon Sep 17 00:00:00 2001
+From d9e0886790ef0c4af98852a8b2657ee6c4b15756 Mon Sep 17 00:00:00 2001
 From: Jiang Wang <jiang.wang@bytedance.com>
 Date: Fri, 10 Dec 2021 12:42:16 +0100
 Subject: [PATCH 05/15] vhost/vsock: add support for vhost dgram.
@@ -16,7 +16,7 @@ Signed-off-by: Sergio Lopez <slp@redhat.com>
  1 file changed, 185 insertions(+), 24 deletions(-)
 
 diff --git a/drivers/vhost/vsock.c b/drivers/vhost/vsock.c
-index a54ac5fc1adf..84529e6e155d 100644
+index f02f5a3cd819..70720bdb6a63 100644
 --- a/drivers/vhost/vsock.c
 +++ b/drivers/vhost/vsock.c
 @@ -28,7 +28,10 @@
@@ -432,7 +432,7 @@ index a54ac5fc1adf..84529e6e155d 100644
 +				  VSOCK_TRANSPORT_F_H2G | VSOCK_TRANSPORT_F_DGRAM);
  	if (ret < 0)
  		return ret;
- 	return misc_register(&vhost_vsock_misc);
+ 
 -- 
-2.37.3
+2.39.0
 

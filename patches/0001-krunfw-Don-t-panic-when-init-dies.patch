@@ -1,4 +1,4 @@
-From 5d929eca46d48c02ce43694f6289a45220cfef78 Mon Sep 17 00:00:00 2001
+From b20bfe45b87990231d222cb88a88dcbf19c8bdac Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@redhat.com>
 Date: Mon, 16 May 2022 15:47:50 +0200
 Subject: [PATCH 01/15] krunfw: Don't panic when init dies
@@ -16,10 +16,10 @@ Signed-off-by: Sergio Lopez <slp@redhat.com>
  2 files changed, 7 insertions(+)
 
 diff --git a/kernel/exit.c b/kernel/exit.c
-index 84021b24f79e..1021ee02a942 100644
+index 35e0a31a0315..5bd5d63fed88 100644
 --- a/kernel/exit.c
 +++ b/kernel/exit.c
-@@ -66,6 +66,7 @@
+@@ -67,6 +67,7 @@
  #include <linux/io_uring.h>
  #include <linux/kprobes.h>
  #include <linux/rethook.h>
@@ -27,7 +27,7 @@ index 84021b24f79e..1021ee02a942 100644
  
  #include <linux/uaccess.h>
  #include <asm/unistd.h>
-@@ -761,8 +762,12 @@ void __noreturn do_exit(long code)
+@@ -786,8 +787,12 @@ void __noreturn do_exit(long code)
  		 * immediately to get a useable coredump.
  		 */
  		if (unlikely(is_global_init(tsk)))
@@ -41,11 +41,11 @@ index 84021b24f79e..1021ee02a942 100644
  #ifdef CONFIG_POSIX_TIMERS
  		hrtimer_cancel(&tsk->signal->real_timer);
 diff --git a/kernel/reboot.c b/kernel/reboot.c
-index 3c35445bf5ad..496bf5010dd9 100644
+index 3bba88c7ffc6..a08a8a9b4d88 100644
 --- a/kernel/reboot.c
 +++ b/kernel/reboot.c
-@@ -256,10 +256,12 @@ void kernel_restart(char *cmd)
- 	kernel_restart_prepare(cmd);
+@@ -268,10 +268,12 @@ void kernel_restart(char *cmd)
+ 	do_kernel_restart_prepare();
  	migrate_to_reboot_cpu();
  	syscore_shutdown();
 +#ifdef VERBOSE_LIBKRUN
@@ -58,5 +58,5 @@ index 3c35445bf5ad..496bf5010dd9 100644
  	machine_restart(cmd);
  }
 -- 
-2.37.3
+2.39.0
 
