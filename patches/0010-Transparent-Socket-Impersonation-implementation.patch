@@ -1,4 +1,4 @@
-From 693b52bd33f75634ea41e1999589c0e97018cd90 Mon Sep 17 00:00:00 2001
+From 96ad1b3abeae77a04cd16d559eee2abf716a740a Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@redhat.com>
 Date: Thu, 19 May 2022 22:38:26 +0200
 Subject: [PATCH 10/15] Transparent Socket Impersonation implementation
@@ -37,10 +37,10 @@ Signed-off-by: Sergio Lopez <slp@redhat.com>
  create mode 100644 net/tsi/af_tsi.h
 
 diff --git a/include/linux/socket.h b/include/linux/socket.h
-index de3701a2a212..3412fca9a223 100644
+index 13c3a237b9c9..5fdca5e4e768 100644
 --- a/include/linux/socket.h
 +++ b/include/linux/socket.h
-@@ -235,8 +235,9 @@ struct ucred {
+@@ -238,8 +238,9 @@ struct ucred {
  #define AF_MCTP		45	/* Management component
  				 * transport protocol
  				 */
@@ -51,7 +51,7 @@ index de3701a2a212..3412fca9a223 100644
  
  /* Protocol families, same as address families. */
  #define PF_UNSPEC	AF_UNSPEC
-@@ -287,6 +288,7 @@ struct ucred {
+@@ -290,6 +291,7 @@ struct ucred {
  #define PF_SMC		AF_SMC
  #define PF_XDP		AF_XDP
  #define PF_MCTP		AF_MCTP
@@ -81,7 +81,7 @@ index 6a62e5b27378..6e3d19c62528 100644
  obj-$(CONFIG_MCTP)		+= mctp/
 +obj-$(CONFIG_TSI)		+= tsi/
 diff --git a/net/socket.c b/net/socket.c
-index 00da9ce3dba0..5ea92b3f8e0d 100644
+index c12af3c84d3a..f4c821fac342 100644
 --- a/net/socket.c
 +++ b/net/socket.c
 @@ -214,6 +214,7 @@ static const char * const pf_family_names[] = {
@@ -1510,5 +1510,5 @@ index 000000000000..cf381734bebe
 +
 +#endif
 -- 
-2.39.0
+2.35.1
 

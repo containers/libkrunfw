@@ -1,7 +1,7 @@
-From 835a346d36ad10d8d6f22aec02ab68704dde4297 Mon Sep 17 00:00:00 2001
+From 6627abe4c66533d3916a30a03f98daf560120a0f Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@redhat.com>
 Date: Thu, 20 Oct 2022 14:26:54 +0200
-Subject: [PATCH 15/15] x86/sev: Avoid using native_cpuid
+Subject: [PATCH 2/2] x86/sev: Avoid using native_cpuid
 
 In the state we get into the kernel from qboot-krunfw we can't return
 from #VC properly, so avoid calling native_cpuid in the early stages
@@ -16,7 +16,7 @@ Signed-off-by: Sergio Lopez <slp@redhat.com>
  1 file changed, 26 insertions(+), 87 deletions(-)
 
 diff --git a/arch/x86/mm/mem_encrypt_identity.c b/arch/x86/mm/mem_encrypt_identity.c
-index f415498d3175..43a2b3febfd1 100644
+index 88cccd65029d..471ebf438010 100644
 --- a/arch/x86/mm/mem_encrypt_identity.c
 +++ b/arch/x86/mm/mem_encrypt_identity.c
 @@ -504,114 +504,53 @@ void __init sme_encrypt_kernel(struct boot_params *bp)
