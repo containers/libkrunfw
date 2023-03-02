@@ -1,4 +1,4 @@
-From 31ad56a4323ce6269187fe24849d4679b4fe6d3d Mon Sep 17 00:00:00 2001
+From acf7832d984064649ff03c5b2440c8eed85f15d4 Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@redhat.com>
 Date: Thu, 19 May 2022 22:34:49 +0200
 Subject: [PATCH 09/15] virtio/vsock: add DGRAM to virtio_transport_get_type
@@ -27,5 +27,5 @@ index 06d4b89c597a..5e31e789b007 100644
  
  /* This function can only be used on connecting/connected sockets,
 -- 
-2.39.0
+2.35.1
 

@@ -1,4 +1,4 @@
-From 5a0ce494679c0af63d58cbee014610b6a05b6a84 Mon Sep 17 00:00:00 2001
+From 874ad1e79038e3888332a289993564f4be2affc8 Mon Sep 17 00:00:00 2001
 From: Jiang Wang <jiang.wang@bytedance.com>
 Date: Tue, 6 Apr 2021 23:22:06 +0000
 Subject: [PATCH 03/15] virtio/vsock: add VIRTIO_VSOCK_F_DGRAM feature bit
@@ -17,7 +17,7 @@ Signed-off-by: Sergio Lopez <slp@redhat.com>
  4 files changed, 74 insertions(+), 10 deletions(-)
 
 diff --git a/drivers/vhost/vsock.c b/drivers/vhost/vsock.c
-index 10a7d23731fe..f02f5a3cd819 100644
+index a2b374372363..c2353f2ac4e1 100644
 --- a/drivers/vhost/vsock.c
 +++ b/drivers/vhost/vsock.c
 @@ -32,7 +32,8 @@
@@ -207,5 +207,5 @@ index ad64f403536a..3e157a62a9b1 100644
  
  static struct virtio_driver virtio_vsock_driver = {
 -- 
-2.39.0
+2.35.1
 

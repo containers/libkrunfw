@@ -1,6 +1,6 @@
-From b20bfe45b87990231d222cb88a88dcbf19c8bdac Mon Sep 17 00:00:00 2001
+From 6cdbce21bba4a756ccb4b7e2ba199898543a24b5 Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@redhat.com>
-Date: Mon, 16 May 2022 15:47:50 +0200
+Date: Thu, 2 Mar 2023 07:34:49 +0100
 Subject: [PATCH 01/15] krunfw: Don't panic when init dies
 
 In libkrun, the isolated process runs as PID 1. When it exits,
@@ -16,18 +16,18 @@ Signed-off-by: Sergio Lopez <slp@redhat.com>
  2 files changed, 7 insertions(+)
 
 diff --git a/kernel/exit.c b/kernel/exit.c
-index 35e0a31a0315..5bd5d63fed88 100644
+index 15dc2ec80c46..caf35fe8ff5d 100644
 --- a/kernel/exit.c
 +++ b/kernel/exit.c
-@@ -67,6 +67,7 @@
- #include <linux/io_uring.h>
+@@ -68,6 +68,7 @@
  #include <linux/kprobes.h>
  #include <linux/rethook.h>
+ #include <linux/sysfs.h>
 +#include <linux/reboot.h>
  
  #include <linux/uaccess.h>
  #include <asm/unistd.h>
-@@ -786,8 +787,12 @@ void __noreturn do_exit(long code)
+@@ -833,8 +834,12 @@ void __noreturn do_exit(long code)
  		 * immediately to get a useable coredump.
  		 */
  		if (unlikely(is_global_init(tsk)))
@@ -58,5 +58,5 @@ index 3bba88c7ffc6..a08a8a9b4d88 100644
  	machine_restart(cmd);
  }
 -- 
-2.39.0
+2.35.1
 
