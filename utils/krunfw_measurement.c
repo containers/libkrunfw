@@ -169,10 +169,10 @@ void measurement_snp(int num_cpus)
 	bootp.hdr.ramdisk_size = payload_size;
 	digest_blob(&digest[0], (char *)&bootp, 0x7000, 0x1000);
 
-	digest_zero(&digest[0], 0x0, 0x1000, 4);
+	digest_zero(&digest[0], 0x0, 0x1000, 3);
 	digest_zero(&digest[0], 0x5000, 0x1000, 5);
 	digest_zero(&digest[0], 0x6000, 0x1000, 6);
-	digest_zero(&digest[0], 0x8000, 0x7000, 4);
+	digest_zero(&digest[0], 0x8000, 0x7000, 3);
 
 	digest_vmsa(&digest[0]);
 
