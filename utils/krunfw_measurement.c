@@ -132,14 +132,14 @@ void digest_zero(char *current, uint64_t gaddr, size_t size, uint8_t page_type)
 	}
 }
 
-void digest_vmsa(char *current)
+void digest_vmsa(char *current, const char *vmsa)
 {
 	SHA512_CTX ctx;
 	struct page_info info;
 
 	memset(&info, 0, sizeof(struct page_info));
 	memcpy(&info.current[0], current, 48);
-	SHA384((char *)&SNP_VMSA_BP[0], 4096, &info.contents[0]);
+	SHA384(vmsa, 4096, &info.contents[0]);
 
 	info.length = sizeof(struct page_info);
 	info.page_type = 2;
@@ -174,7 +174,11 @@ void measurement_snp(int num_cpus)
 	digest_zero(&digest[0], 0x6000, 0x1000, 6);
 	digest_zero(&digest[0], 0x8000, 0x7000, 3);
 
-	digest_vmsa(&digest[0]);
+	digest_vmsa(&digest[0], &SNP_VMSA_BP[0]);
+	for (i = 1; i < num_cpus; i++)
+	{
+		digest_vmsa(&digest[0], &SNP_VMSA_AP[0]);
+	}
 
 	printf("SNP:\t");
 	for (i = 0; i < 48; ++i)
