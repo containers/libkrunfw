@@ -1,4 +1,4 @@
-From 6cdbce21bba4a756ccb4b7e2ba199898543a24b5 Mon Sep 17 00:00:00 2001
+From df778bb2679379cb35d7d08179df16676a8fef6a Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@redhat.com>
 Date: Thu, 2 Mar 2023 07:34:49 +0100
 Subject: [PATCH 01/15] krunfw: Don't panic when init dies
@@ -16,7 +16,7 @@ Signed-off-by: Sergio Lopez <slp@redhat.com>
  2 files changed, 7 insertions(+)
 
 diff --git a/kernel/exit.c b/kernel/exit.c
-index 15dc2ec80c46..caf35fe8ff5d 100644
+index f2afdb0add7c..705bfdbb6124 100644
 --- a/kernel/exit.c
 +++ b/kernel/exit.c
 @@ -68,6 +68,7 @@
@@ -27,7 +27,7 @@ index 15dc2ec80c46..caf35fe8ff5d 100644
  
  #include <linux/uaccess.h>
  #include <asm/unistd.h>
-@@ -833,8 +834,12 @@ void __noreturn do_exit(long code)
+@@ -835,8 +836,12 @@ void __noreturn do_exit(long code)
  		 * immediately to get a useable coredump.
  		 */
  		if (unlikely(is_global_init(tsk)))
@@ -58,5 +58,5 @@ index 3bba88c7ffc6..a08a8a9b4d88 100644
  	machine_restart(cmd);
  }
 -- 
-2.35.1
+2.39.2
 

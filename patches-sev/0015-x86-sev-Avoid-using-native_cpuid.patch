@@ -1,7 +1,7 @@
-From 6627abe4c66533d3916a30a03f98daf560120a0f Mon Sep 17 00:00:00 2001
+From bc5d592e5820c6a949fabc196d81404bb824630f Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@redhat.com>
 Date: Thu, 20 Oct 2022 14:26:54 +0200
-Subject: [PATCH 2/2] x86/sev: Avoid using native_cpuid
+Subject: [PATCH 15/15] x86/sev: Avoid using native_cpuid
 
 In the state we get into the kernel from qboot-krunfw we can't return
 from #VC properly, so avoid calling native_cpuid in the early stages
@@ -12,14 +12,14 @@ enabled and the location of the cbit.
 
 Signed-off-by: Sergio Lopez <slp@redhat.com>
 ---
- arch/x86/mm/mem_encrypt_identity.c | 113 +++++++----------------------
- 1 file changed, 26 insertions(+), 87 deletions(-)
+ arch/x86/mm/mem_encrypt_identity.c | 114 +++++++----------------------
+ 1 file changed, 26 insertions(+), 88 deletions(-)
 
 diff --git a/arch/x86/mm/mem_encrypt_identity.c b/arch/x86/mm/mem_encrypt_identity.c
-index 88cccd65029d..471ebf438010 100644
+index c6efcf559d88..471ebf438010 100644
 --- a/arch/x86/mm/mem_encrypt_identity.c
 +++ b/arch/x86/mm/mem_encrypt_identity.c
-@@ -504,114 +504,53 @@ void __init sme_encrypt_kernel(struct boot_params *bp)
+@@ -504,115 +504,53 @@ void __init sme_encrypt_kernel(struct boot_params *bp)
  
  void __init sme_enable(struct boot_params *bp)
  {
@@ -144,7 +144,8 @@ index 88cccd65029d..471ebf438010 100644
 -	cmdline_ptr = (const char *)((u64)bp->hdr.cmd_line_ptr |
 -				     ((u64)bp->ext_cmd_line_ptr << 32));
 -
--	cmdline_find_option(cmdline_ptr, cmdline_arg, buffer, sizeof(buffer));
+-	if (cmdline_find_option(cmdline_ptr, cmdline_arg, buffer, sizeof(buffer)) < 0)
+-		return;
 -
 -	if (!strncmp(buffer, cmdline_on, sizeof(buffer)))
 -		sme_me_mask = me_mask;
@@ -161,5 +162,5 @@ index 88cccd65029d..471ebf438010 100644
  }
 +
 -- 
-2.39.0
+2.39.2
 

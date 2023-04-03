@@ -1,4 +1,4 @@
-From 26577be5f70564d4fb9bf6391a55a2e240b94d1c Mon Sep 17 00:00:00 2001
+From a4853e8c504fb0f19ba731c068ec9e680338e9f9 Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@redhat.com>
 Date: Thu, 20 Oct 2022 10:23:16 +0200
 Subject: [PATCH 13/15] x86/sev: write AP reset vector
@@ -12,7 +12,7 @@ Signed-off-by: Sergio Lopez <slp@redhat.com>
  1 file changed, 24 insertions(+), 1 deletion(-)
 
 diff --git a/arch/x86/kernel/sev.c b/arch/x86/kernel/sev.c
-index 679026a640ef..6663d75529d6 100644
+index 3f664ab277c4..8770bdbdf1e2 100644
 --- a/arch/x86/kernel/sev.c
 +++ b/arch/x86/kernel/sev.c
 @@ -1144,6 +1144,29 @@ void snp_set_wakeup_secondary_cpu(void)
@@ -55,5 +55,5 @@ index 679026a640ef..6663d75529d6 100644
  	/* Check if AP Jump Table is page-aligned */
  	if (jump_table_addr & ~PAGE_MASK)
 -- 
-2.35.1
+2.39.2
 
