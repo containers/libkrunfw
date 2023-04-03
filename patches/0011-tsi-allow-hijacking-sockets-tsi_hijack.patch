@@ -1,4 +1,4 @@
-From ad50560b45673f182b882f3ac6426391d117cfe2 Mon Sep 17 00:00:00 2001
+From dc48dc6f33b5d84cf2b2ee2e1fcd69a4236ed7be Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@redhat.com>
 Date: Thu, 19 May 2022 22:42:01 +0200
 Subject: [PATCH 11/15] tsi: allow hijacking sockets (tsi_hijack)
@@ -14,7 +14,7 @@ Signed-off-by: Sergio Lopez <slp@redhat.com>
  2 files changed, 18 insertions(+), 1 deletion(-)
 
 diff --git a/net/socket.c b/net/socket.c
-index f4c821fac342..72c4c6db0349 100644
+index 2ae4f6eab56c..ec8b8100e3cc 100644
 --- a/net/socket.c
 +++ b/net/socket.c
 @@ -112,6 +112,10 @@ unsigned int sysctl_net_busy_read __read_mostly;
@@ -28,7 +28,7 @@ index f4c821fac342..72c4c6db0349 100644
  static ssize_t sock_read_iter(struct kiocb *iocb, struct iov_iter *to);
  static ssize_t sock_write_iter(struct kiocb *iocb, struct iov_iter *from);
  static int sock_mmap(struct file *file, struct vm_area_struct *vma);
-@@ -1430,6 +1434,10 @@ int sock_wake_async(struct socket_wq *wq, int how, int band)
+@@ -1432,6 +1436,10 @@ int sock_wake_async(struct socket_wq *wq, int how, int band)
  }
  EXPORT_SYMBOL(sock_wake_async);
  
@@ -39,7 +39,7 @@ index f4c821fac342..72c4c6db0349 100644
  /**
   *	__sock_create - creates a socket
   *	@net: net namespace
-@@ -1500,6 +1508,15 @@ int __sock_create(struct net *net, int family, int type, int protocol,
+@@ -1502,6 +1510,15 @@ int __sock_create(struct net *net, int family, int type, int protocol,
  		request_module("net-pf-%d", family);
  #endif
  
@@ -69,5 +69,5 @@ index 38a383634ccd..91c9c5cb2285 100644
  	int err;
  
 -- 
-2.35.1
+2.39.2
 

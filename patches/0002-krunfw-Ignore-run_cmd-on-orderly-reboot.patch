@@ -1,4 +1,4 @@
-From 3a15e5dfa3dcae76b334d0010644af520ba2666d Mon Sep 17 00:00:00 2001
+From 3fd0df5d88d3f10a45dd309c09be923d33f08eb3 Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@redhat.com>
 Date: Mon, 16 May 2022 16:04:27 +0200
 Subject: [PATCH 02/15] krunfw: Ignore run_cmd on orderly reboot
@@ -28,5 +28,5 @@ index a08a8a9b4d88..838b7a293e43 100644
  	if (ret) {
  		pr_warn("Failed to start orderly reboot: forcing the issue\n");
 -- 
-2.35.1
+2.39.2
 
