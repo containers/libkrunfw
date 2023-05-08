@@ -11,7 +11,7 @@ AARCH64_LOAD_ADDR = '0x80000000'
 
 def write_header(ofile, bundle_name):
     ofile.write('#include <stddef.h>\n')
-    ofile.write('__attribute__ ((aligned (4096))) char {}_BUNDLE[] = \n"'.format(bundle_name))
+    ofile.write('__attribute__ ((aligned (16384))) char {}_BUNDLE[] = \n"'.format(bundle_name))
 
 
 def write_padding(ofile, padding, col):
