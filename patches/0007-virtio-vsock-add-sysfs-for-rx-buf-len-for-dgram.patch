@@ -1,4 +1,4 @@
-From 9684168326cde58f09e178ca6c20294622b21dba Mon Sep 17 00:00:00 2001
+From 18b3daa1dd3e1094abb9f35e9707c74df04a5557 Mon Sep 17 00:00:00 2001
 From: Jiang Wang <jiang.wang@bytedance.com>
 Date: Thu, 26 May 2022 18:46:09 +0200
 Subject: [PATCH 07/15] virtio/vsock: add sysfs for rx buf len for dgram
@@ -97,5 +97,5 @@ index abaae264453b..5e78e9ca3e2b 100644
  
  module_init(virtio_vsock_init);
 -- 
-2.39.2
+2.40.1
 

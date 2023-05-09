@@ -1,4 +1,4 @@
-From bc5d592e5820c6a949fabc196d81404bb824630f Mon Sep 17 00:00:00 2001
+From f068769b62bd01fafe0b58f0bdc9aefbb2a5eae8 Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@redhat.com>
 Date: Thu, 20 Oct 2022 14:26:54 +0200
 Subject: [PATCH 15/15] x86/sev: Avoid using native_cpuid
@@ -162,5 +162,5 @@ index c6efcf559d88..471ebf438010 100644
  }
 +
 -- 
-2.39.2
+2.40.1
 
