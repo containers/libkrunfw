@@ -5,13 +5,13 @@ except:
 import argparse
 import sys
 
-# Use Apple Silicon's page size for rounding.
-PAGE_SIZE = 16384
+# Use 64k page size for rounding. This should cover 4k/16k/64k kernels
+PAGE_SIZE = 65536
 AARCH64_LOAD_ADDR = '0x80000000'
 
 def write_header(ofile, bundle_name):
     ofile.write('#include <stddef.h>\n')
-    ofile.write('__attribute__ ((aligned (16384))) char {}_BUNDLE[] = \n"'.format(bundle_name))
+    ofile.write('__attribute__ ((aligned ({}))) char {}_BUNDLE[] = \n"'.format(PAGE_SIZE, bundle_name))
 
 
 def write_padding(ofile, padding, col):
