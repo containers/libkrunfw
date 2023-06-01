@@ -1,9 +1,7 @@
-try:
-    from elftools.elf.elffile import ELFFile
-except:
-    pass
 import argparse
 import sys
+
+from elftools.elf.elffile import ELFFile
 
 # Use 64k page size for rounding. This should cover 4k/16k/64k kernels
 PAGE_SIZE = 65536
