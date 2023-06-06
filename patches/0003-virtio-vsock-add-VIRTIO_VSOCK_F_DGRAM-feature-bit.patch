@@ -1,4 +1,4 @@
-From 951968bfafe3fca9d9ff71ec05663f4a46b20ea6 Mon Sep 17 00:00:00 2001
+From e8b9f335fe550a1240323d94061b0a8be14abeaf Mon Sep 17 00:00:00 2001
 From: Jiang Wang <jiang.wang@bytedance.com>
 Date: Tue, 6 Apr 2021 23:22:06 +0000
 Subject: [PATCH 03/15] virtio/vsock: add VIRTIO_VSOCK_F_DGRAM feature bit

@@ -1,4 +1,4 @@
-From 085e37bf809ebcc443d16740666a8e65afd8515d Mon Sep 17 00:00:00 2001
+From 1d033cc0b362200e35f2cba50b5d46ff177b03e3 Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@sinrega.org>
 Date: Fri, 10 Sep 2021 13:05:01 +0200
 Subject: [PATCH 12/15] virtio: enable DMA API if memory is restricted
@@ -15,7 +15,7 @@ Signed-off-by: Sergio Lopez <slp@redhat.com>
  2 files changed, 4 insertions(+), 6 deletions(-)
 
 diff --git a/drivers/virtio/virtio.c b/drivers/virtio/virtio.c
-index b9a80aedee1b..6adf39d2ecb6 100644
+index 828ced060742..a22ab612a728 100644
 --- a/drivers/virtio/virtio.c
 +++ b/drivers/virtio/virtio.c
 @@ -180,12 +180,6 @@ static int virtio_features_ok(struct virtio_device *dev)
@@ -32,7 +32,7 @@ index b9a80aedee1b..6adf39d2ecb6 100644
  
  	if (!virtio_has_feature(dev, VIRTIO_F_VERSION_1))
 diff --git a/drivers/virtio/virtio_ring.c b/drivers/virtio/virtio_ring.c
-index 723c4e29e1d3..cb8a213e3412 100644
+index 90d514c14179..1835bfdde364 100644
 --- a/drivers/virtio/virtio_ring.c
 +++ b/drivers/virtio/virtio_ring.c
 @@ -6,6 +6,7 @@
