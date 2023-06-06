@@ -1,4 +1,4 @@
-From 70263a10005754f67a2c63ee32df4940b785f334 Mon Sep 17 00:00:00 2001
+From 659fbb1edccbc1ebbf59e90fdfc5064d102fe44f Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@redhat.com>
 Date: Mon, 16 May 2022 16:04:27 +0200
 Subject: [PATCH 02/15] krunfw: Ignore run_cmd on orderly reboot

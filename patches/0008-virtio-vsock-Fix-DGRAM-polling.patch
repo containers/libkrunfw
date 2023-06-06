@@ -1,4 +1,4 @@
-From bbeef5894f73357653229313db77b6d24a7dabb5 Mon Sep 17 00:00:00 2001
+From 4d305b40fe50bd06f3add397eeb35e01ff76b069 Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@redhat.com>
 Date: Thu, 19 May 2022 22:31:03 +0200
 Subject: [PATCH 08/15] virtio/vsock: Fix DGRAM polling
@@ -11,10 +11,10 @@ Signed-off-by: Sergio Lopez <slp@redhat.com>
  1 file changed, 21 insertions(+), 5 deletions(-)
 
 diff --git a/net/vmw_vsock/af_vsock.c b/net/vmw_vsock/af_vsock.c
-index 0fd3df91f52f..d4210968809b 100644
+index 9e576b1d39b3..83a1e0345630 100644
 --- a/net/vmw_vsock/af_vsock.c
 +++ b/net/vmw_vsock/af_vsock.c
-@@ -1057,12 +1057,28 @@ static __poll_t vsock_poll(struct file *file, struct socket *sock,
+@@ -1058,12 +1058,28 @@ static __poll_t vsock_poll(struct file *file, struct socket *sock,
  	}
  
  	if (sock->type == SOCK_DGRAM) {
