@@ -18,9 +18,16 @@ if [ $? != 0 ]; then
 	exit -1
 fi
 
-krunvm start libkrunfw-builder /usr/bin/dnf -- install -y make gcc glibc-devel findutils xz patch flex bison diffutils bc perl cpio
+krunvm start libkrunfw-builder /usr/bin/dnf -- install -y 'dnf-command(builddep)' python3-pyelftools
 if [ $? != 0 ]; then
-	echo "Error running command on VM"
+	echo "Error installing dnf-builddep on VM"
+	krunvm delete libkrunfw-builder
+	exit -1
+fi
+
+krunvm start libkrunfw-builder /usr/bin/dnf -- builddep -y kernel
+if [ $? != 0 ]; then
+	echo "Error installing build dependencies for kernel"
 	krunvm delete libkrunfw-builder
 	exit -1
 fi
