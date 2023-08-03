@@ -27,7 +27,7 @@ def write_padding(ofile, padding, col):
         
 def write_elf_cbundle(ifile, ofile) -> int:
     elffile = ELFFile(ifile)
-    entry = elffile['e_entry']
+    entry_addr = elffile['e_entry']
 
     load_segments = [ ]
     for segment in elffile.iter_segments():
@@ -37,10 +37,11 @@ def write_elf_cbundle(ifile, ofile) -> int:
     col = 0
     total_size = 0
     prev_paddr = None
-    load_addr = elffile['e_entry']
 
     for segment in load_segments:
-        if prev_paddr != None:
+        if prev_paddr == None:
+            load_addr = segment['p_vaddr'] & 0xfffffff
+        else:
             padding = segment['p_paddr'] - prev_paddr - prev_filesz
             write_padding(ofile, padding, col)
             total_size = total_size + padding
@@ -64,7 +65,7 @@ def write_elf_cbundle(ifile, ofile) -> int:
     padding = rounded_size - total_size    
     write_padding(ofile, padding, col)
 
-    return load_addr
+    return load_addr, entry_addr
 
     
 def write_raw_cbundle(ifile, ofile) -> int:
@@ -100,11 +101,12 @@ char * krunfw_get_{}(size_t *size)
     ofile.write(footer.format(bundle_name.lower(), bundle_name, bundle_name))
 
     
-def write_footer_kernel(ofile, load_addr):
+def write_footer_kernel(ofile, load_addr, entry_addr):
     footer = """
-char * krunfw_get_kernel(size_t *load_addr, size_t *size)
+char * krunfw_get_kernel(size_t *load_addr, size_t *entry_addr, size_t *size)
 {{
     *load_addr = {};
+    *entry_addr = {};
     *size = sizeof(KERNEL_BUNDLE) - 1;
     return &KERNEL_BUNDLE[0];
 }}
@@ -115,7 +117,7 @@ int krunfw_get_version()
 }}
 """
     ofile.write('";\n')
-    ofile.write(footer.format(load_addr))
+    ofile.write(footer.format(load_addr, entry_addr))
     
 
 def main() -> int:
@@ -153,14 +155,15 @@ def main() -> int:
     write_header(ofile, bundle_name)
 
     if ifmt == 'elf':
-        load_addr = write_elf_cbundle(ifile, ofile)
+        load_addr, entry_addr = write_elf_cbundle(ifile, ofile)
     elif ifmt == 'raw':
         write_raw_cbundle(ifile, ofile)
 
     if bundle_name == 'KERNEL':
         if ifmt == 'raw':
             load_addr = AARCH64_LOAD_ADDR;
-        write_footer_kernel(ofile, load_addr)
+            entry_addr = AARCH64_LOAD_ADDR;
+        write_footer_kernel(ofile, load_addr, entry_addr)
     else:
         write_footer_generic(ofile, bundle_name)
 

@@ -1,7 +1,7 @@
-From 406287870068994ca127486809f7b6f8bec9c7e3 Mon Sep 17 00:00:00 2001
+From e863c50073e55fa7f88471ab3ca505a3e9bbbc0c Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@redhat.com>
 Date: Thu, 19 May 2022 22:38:26 +0200
-Subject: [PATCH 10/15] Transparent Socket Impersonation implementation
+Subject: [PATCH 10/11] Transparent Socket Impersonation implementation
 
 Transparent Socket Impersonation (AF_TSI) is an address family that
 provides sockets presenting two simultaneous personalities, AF_INET
@@ -37,10 +37,10 @@ Signed-off-by: Sergio Lopez <slp@redhat.com>
  create mode 100644 net/tsi/af_tsi.h
 
 diff --git a/include/linux/socket.h b/include/linux/socket.h
-index de3701a2a212..3412fca9a223 100644
+index 13c3a237b9c9..5fdca5e4e768 100644
 --- a/include/linux/socket.h
 +++ b/include/linux/socket.h
-@@ -235,8 +235,9 @@ struct ucred {
+@@ -238,8 +238,9 @@ struct ucred {
  #define AF_MCTP		45	/* Management component
  				 * transport protocol
  				 */
@@ -51,7 +51,7 @@ index de3701a2a212..3412fca9a223 100644
  
  /* Protocol families, same as address families. */
  #define PF_UNSPEC	AF_UNSPEC
-@@ -287,6 +288,7 @@ struct ucred {
+@@ -290,6 +291,7 @@ struct ucred {
  #define PF_SMC		AF_SMC
  #define PF_XDP		AF_XDP
  #define PF_MCTP		AF_MCTP
@@ -60,10 +60,10 @@ index de3701a2a212..3412fca9a223 100644
  
  /* Maximum queue length specifiable by listen.  */
 diff --git a/net/Kconfig b/net/Kconfig
-index 48c33c222199..0cd0eacfa927 100644
+index 7d39c1773eb4..be92fdfc3bb9 100644
 --- a/net/Kconfig
 +++ b/net/Kconfig
-@@ -242,6 +242,7 @@ source "net/switchdev/Kconfig"
+@@ -262,6 +262,7 @@ source "net/switchdev/Kconfig"
  source "net/l3mdev/Kconfig"
  source "net/qrtr/Kconfig"
  source "net/ncsi/Kconfig"
@@ -72,19 +72,19 @@ index 48c33c222199..0cd0eacfa927 100644
  config PCPU_DEV_REFCNT
  	bool "Use percpu variables to maintain network device refcount"
 diff --git a/net/Makefile b/net/Makefile
-index 6a62e5b27378..6e3d19c62528 100644
+index 4c4dc535453d..b07f65c0ef56 100644
 --- a/net/Makefile
 +++ b/net/Makefile
-@@ -78,3 +78,4 @@ obj-$(CONFIG_NET_NCSI)		+= ncsi/
- obj-$(CONFIG_XDP_SOCKETS)	+= xdp/
+@@ -80,3 +80,4 @@ obj-$(CONFIG_XDP_SOCKETS)	+= xdp/
  obj-$(CONFIG_MPTCP)		+= mptcp/
  obj-$(CONFIG_MCTP)		+= mctp/
+ obj-$(CONFIG_NET_HANDSHAKE)	+= handshake/
 +obj-$(CONFIG_TSI)		+= tsi/
 diff --git a/net/socket.c b/net/socket.c
-index c2e0a22f16d9..41561f69cc55 100644
+index b7e01d0fe082..683a9cde976c 100644
 --- a/net/socket.c
 +++ b/net/socket.c
-@@ -214,6 +214,7 @@ static const char * const pf_family_names[] = {
+@@ -215,6 +215,7 @@ static const char * const pf_family_names[] = {
  	[PF_SMC]	= "PF_SMC",
  	[PF_XDP]	= "PF_XDP",
  	[PF_MCTP]	= "PF_MCTP",
@@ -1510,5 +1510,5 @@ index 000000000000..cf381734bebe
 +
 +#endif
 -- 
-2.40.1
+2.40.0
 
