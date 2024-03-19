@@ -1,7 +1,7 @@
-From 592ede013c847fb537f28f5c9663f75a24ffab95 Mon Sep 17 00:00:00 2001
+From 4a59c212ef33bafeb8c354b882cb8159de7742f0 Mon Sep 17 00:00:00 2001
 From: Bobby Eshleman <bobby.eshleman () bytedance ! com>
 Date: Sat, 10 Jun 2023 00:58:28 +0000
-Subject: [PATCH 03/11] vsock/dgram: generalize recvmsg and drop
+Subject: [PATCH 03/15] vsock/dgram: generalize recvmsg and drop
  transport->dgram_dequeue
 
 This commit drops the transport->dgram_dequeue callback and makes
@@ -23,7 +23,7 @@ Signed-off-by: Bobby Eshleman <bobby.eshleman@bytedance.com>
  9 files changed, 132 insertions(+), 50 deletions(-)
 
 diff --git a/drivers/vhost/vsock.c b/drivers/vhost/vsock.c
-index 6578db78f0ae..c8201c070b4b 100644
+index 61255855d490..a6b8316331ca 100644
 --- a/drivers/vhost/vsock.c
 +++ b/drivers/vhost/vsock.c
 @@ -410,9 +410,11 @@ static struct virtio_transport vhost_transport = {
@@ -40,7 +40,7 @@ index 6578db78f0ae..c8201c070b4b 100644
  		.stream_enqueue           = virtio_transport_stream_enqueue,
  		.stream_dequeue           = virtio_transport_stream_dequeue,
 diff --git a/include/linux/virtio_vsock.h b/include/linux/virtio_vsock.h
-index c58453699ee9..23521a318cf0 100644
+index fbf30721bac9..1098a4c0d738 100644
 --- a/include/linux/virtio_vsock.h
 +++ b/include/linux/virtio_vsock.h
 @@ -219,6 +219,9 @@ bool virtio_transport_stream_allow(u32 cid, u32 port);
@@ -54,7 +54,7 @@ index c58453699ee9..23521a318cf0 100644
  int virtio_transport_connect(struct vsock_sock *vsk);
  
 diff --git a/include/net/af_vsock.h b/include/net/af_vsock.h
-index 0e7504a42925..7bedb9ee7e3e 100644
+index dc3cb16835b6..3fee8b8bb3e0 100644
 --- a/include/net/af_vsock.h
 +++ b/include/net/af_vsock.h
 @@ -120,11 +120,20 @@ struct vsock_transport {
@@ -81,10 +81,10 @@ index 0e7504a42925..7bedb9ee7e3e 100644
  	/* STREAM. */
  	/* TODO: stream_bind() */
 diff --git a/net/vmw_vsock/af_vsock.c b/net/vmw_vsock/af_vsock.c
-index efb8a0937a13..ffb4dd8b6ea7 100644
+index 4afb6a541cf3..c66d3def5e6e 100644
 --- a/net/vmw_vsock/af_vsock.c
 +++ b/net/vmw_vsock/af_vsock.c
-@@ -1271,11 +1271,15 @@ static int vsock_dgram_connect(struct socket *sock,
+@@ -1273,11 +1273,15 @@ static int vsock_dgram_connect(struct socket *sock,
  int vsock_dgram_recvmsg(struct socket *sock, struct msghdr *msg,
  			size_t len, int flags)
  {
@@ -100,7 +100,7 @@ index efb8a0937a13..ffb4dd8b6ea7 100644
  
  	sk = sock->sk;
  	vsk = vsock_sk(sk);
-@@ -1286,7 +1290,52 @@ int vsock_dgram_recvmsg(struct socket *sock, struct msghdr *msg,
+@@ -1288,7 +1292,52 @@ int vsock_dgram_recvmsg(struct socket *sock, struct msghdr *msg,
  		return prot->recvmsg(sk, msg, len, flags, NULL);
  #endif
  
@@ -155,7 +155,7 @@ index efb8a0937a13..ffb4dd8b6ea7 100644
  EXPORT_SYMBOL_GPL(vsock_dgram_recvmsg);
  
 diff --git a/net/vmw_vsock/hyperv_transport.c b/net/vmw_vsock/hyperv_transport.c
-index 7cb1a9d2cdb4..ff6e87e25fa0 100644
+index e2157e387217..a83b30d366af 100644
 --- a/net/vmw_vsock/hyperv_transport.c
 +++ b/net/vmw_vsock/hyperv_transport.c
 @@ -556,8 +556,17 @@ static int hvs_dgram_bind(struct vsock_sock *vsk, struct sockaddr_vm *addr)
@@ -190,7 +190,7 @@ index 7cb1a9d2cdb4..ff6e87e25fa0 100644
  	.dgram_allow              = hvs_dgram_allow,
  
 diff --git a/net/vmw_vsock/virtio_transport.c b/net/vmw_vsock/virtio_transport.c
-index e95df847176b..5763cdf13804 100644
+index a64bf601b480..06be719c7bd0 100644
 --- a/net/vmw_vsock/virtio_transport.c
 +++ b/net/vmw_vsock/virtio_transport.c
 @@ -429,9 +429,11 @@ static struct virtio_transport virtio_transport = {
@@ -207,10 +207,10 @@ index e95df847176b..5763cdf13804 100644
  		.stream_dequeue           = virtio_transport_stream_dequeue,
  		.stream_enqueue           = virtio_transport_stream_enqueue,
 diff --git a/net/vmw_vsock/virtio_transport_common.c b/net/vmw_vsock/virtio_transport_common.c
-index b769fc258931..e6903c719964 100644
+index e87fd9480acd..ed1235d57ffb 100644
 --- a/net/vmw_vsock/virtio_transport_common.c
 +++ b/net/vmw_vsock/virtio_transport_common.c
-@@ -797,6 +797,24 @@ int virtio_transport_dgram_bind(struct vsock_sock *vsk,
+@@ -860,6 +860,24 @@ int virtio_transport_dgram_bind(struct vsock_sock *vsk,
  }
  EXPORT_SYMBOL_GPL(virtio_transport_dgram_bind);
  
@@ -335,7 +335,7 @@ index b370070194fa..bbc63826bf48 100644
  	.stream_enqueue = vmci_transport_stream_enqueue,
  	.stream_has_data = vmci_transport_stream_has_data,
 diff --git a/net/vmw_vsock/vsock_loopback.c b/net/vmw_vsock/vsock_loopback.c
-index 5c6360df1f31..2f3cabc79ee5 100644
+index 0ce65d0a4a44..6b19e308a140 100644
 --- a/net/vmw_vsock/vsock_loopback.c
 +++ b/net/vmw_vsock/vsock_loopback.c
 @@ -62,9 +62,11 @@ static struct virtio_transport loopback_transport = {
@@ -352,5 +352,5 @@ index 5c6360df1f31..2f3cabc79ee5 100644
  		.stream_dequeue           = virtio_transport_stream_dequeue,
  		.stream_enqueue           = virtio_transport_stream_enqueue,
 -- 
-2.40.0
+2.43.0
 

@@ -1,7 +1,7 @@
-From e863c50073e55fa7f88471ab3ca505a3e9bbbc0c Mon Sep 17 00:00:00 2001
+From 7dd9b9b40956914e455f8bb9ac9fd449bbe2c173 Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@redhat.com>
 Date: Thu, 19 May 2022 22:38:26 +0200
-Subject: [PATCH 10/11] Transparent Socket Impersonation implementation
+Subject: [PATCH 10/15] Transparent Socket Impersonation implementation
 
 Transparent Socket Impersonation (AF_TSI) is an address family that
 provides sockets presenting two simultaneous personalities, AF_INET
@@ -28,19 +28,19 @@ Signed-off-by: Sergio Lopez <slp@redhat.com>
  net/socket.c           |    1 +
  net/tsi/Kconfig        |    7 +
  net/tsi/Makefile       |    4 +
- net/tsi/af_tsi.c       | 1282 ++++++++++++++++++++++++++++++++++++++++
+ net/tsi/af_tsi.c       | 1280 ++++++++++++++++++++++++++++++++++++++++
  net/tsi/af_tsi.h       |  100 ++++
- 8 files changed, 1399 insertions(+), 1 deletion(-)
+ 8 files changed, 1397 insertions(+), 1 deletion(-)
  create mode 100644 net/tsi/Kconfig
  create mode 100644 net/tsi/Makefile
  create mode 100644 net/tsi/af_tsi.c
  create mode 100644 net/tsi/af_tsi.h
 
 diff --git a/include/linux/socket.h b/include/linux/socket.h
-index 13c3a237b9c9..5fdca5e4e768 100644
+index cfcb7e2c3813..b5891faf7996 100644
 --- a/include/linux/socket.h
 +++ b/include/linux/socket.h
-@@ -238,8 +238,9 @@ struct ucred {
+@@ -239,8 +239,9 @@ struct ucred {
  #define AF_MCTP		45	/* Management component
  				 * transport protocol
  				 */
@@ -51,7 +51,7 @@ index 13c3a237b9c9..5fdca5e4e768 100644
  
  /* Protocol families, same as address families. */
  #define PF_UNSPEC	AF_UNSPEC
-@@ -290,6 +291,7 @@ struct ucred {
+@@ -291,6 +292,7 @@ struct ucred {
  #define PF_SMC		AF_SMC
  #define PF_XDP		AF_XDP
  #define PF_MCTP		AF_MCTP
@@ -60,10 +60,10 @@ index 13c3a237b9c9..5fdca5e4e768 100644
  
  /* Maximum queue length specifiable by listen.  */
 diff --git a/net/Kconfig b/net/Kconfig
-index 7d39c1773eb4..be92fdfc3bb9 100644
+index d532ec33f1fe..cce74ff2a107 100644
 --- a/net/Kconfig
 +++ b/net/Kconfig
-@@ -262,6 +262,7 @@ source "net/switchdev/Kconfig"
+@@ -267,6 +267,7 @@ source "net/switchdev/Kconfig"
  source "net/l3mdev/Kconfig"
  source "net/qrtr/Kconfig"
  source "net/ncsi/Kconfig"
@@ -81,10 +81,10 @@ index 4c4dc535453d..b07f65c0ef56 100644
  obj-$(CONFIG_NET_HANDSHAKE)	+= handshake/
 +obj-$(CONFIG_TSI)		+= tsi/
 diff --git a/net/socket.c b/net/socket.c
-index b7e01d0fe082..683a9cde976c 100644
+index 8d83c4bb163b..91ef12312a0a 100644
 --- a/net/socket.c
 +++ b/net/socket.c
-@@ -215,6 +215,7 @@ static const char * const pf_family_names[] = {
+@@ -218,6 +218,7 @@ static const char * const pf_family_names[] = {
  	[PF_SMC]	= "PF_SMC",
  	[PF_XDP]	= "PF_XDP",
  	[PF_MCTP]	= "PF_MCTP",
@@ -117,10 +117,10 @@ index 000000000000..8b3cf74116a5
 +tsi-y := af_tsi.o
 diff --git a/net/tsi/af_tsi.c b/net/tsi/af_tsi.c
 new file mode 100644
-index 000000000000..38a383634ccd
+index 000000000000..eda6c4ba7961
 --- /dev/null
 +++ b/net/tsi/af_tsi.c
-@@ -0,0 +1,1282 @@
+@@ -0,0 +1,1280 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */
 +/*
 + * Transparent Socket Impersonation Driver
@@ -1255,7 +1255,6 @@ index 000000000000..38a383634ccd
 +	.sendmsg = tsi_stream_sendmsg,
 +	.recvmsg = tsi_stream_recvmsg,
 +	.mmap = sock_no_mmap,
-+	.sendpage = sock_no_sendpage,
 +};
 +
 +static const struct proto_ops tsi_dgram_ops = {
@@ -1276,7 +1275,6 @@ index 000000000000..38a383634ccd
 +	.sendmsg = tsi_dgram_sendmsg,
 +	.recvmsg = tsi_dgram_recvmsg,
 +	.mmap = sock_no_mmap,
-+	.sendpage = sock_no_sendpage,
 +};
 +
 +static int tsi_create(struct net *net, struct socket *sock,
@@ -1510,5 +1508,5 @@ index 000000000000..cf381734bebe
 +
 +#endif
 -- 
-2.40.0
+2.43.0
 
