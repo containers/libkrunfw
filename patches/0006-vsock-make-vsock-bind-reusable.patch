@@ -1,7 +1,7 @@
-From fcece30707cdc46ba5a77fbb648cdeea850ebe53 Mon Sep 17 00:00:00 2001
+From c49b3d0e7225760761fb2954e8aa4203ccff1357 Mon Sep 17 00:00:00 2001
 From: Bobby Eshleman <bobby.eshleman () bytedance ! com>
 Date: Sat, 10 Jun 2023 00:58:31 +0000
-Subject: [PATCH 06/11] vsock: make vsock bind reusable
+Subject: [PATCH 06/15] vsock: make vsock bind reusable
 
 This commit makes the bind table management functions in vsock usable
 for different bind tables. For use by datagrams in a future patch.
@@ -12,10 +12,10 @@ Signed-off-by: Bobby Eshleman <bobby.eshleman@bytedance.com>
  1 file changed, 26 insertions(+), 7 deletions(-)
 
 diff --git a/net/vmw_vsock/af_vsock.c b/net/vmw_vsock/af_vsock.c
-index ef86765f3765..7a3ca4270446 100644
+index 2567641a829f..034c3db91fc3 100644
 --- a/net/vmw_vsock/af_vsock.c
 +++ b/net/vmw_vsock/af_vsock.c
-@@ -230,11 +230,12 @@ static void __vsock_remove_connected(struct vsock_sock *vsk)
+@@ -232,11 +232,12 @@ static void __vsock_remove_connected(struct vsock_sock *vsk)
  	sock_put(&vsk->sk);
  }
  
@@ -30,7 +30,7 @@ index ef86765f3765..7a3ca4270446 100644
  		if (vsock_addr_equals_addr(addr, &vsk->local_addr))
  			return sk_vsock(vsk);
  
-@@ -247,6 +248,11 @@ static struct sock *__vsock_find_bound_socket(struct sockaddr_vm *addr)
+@@ -249,6 +250,11 @@ static struct sock *__vsock_find_bound_socket(struct sockaddr_vm *addr)
  	return NULL;
  }
  
@@ -42,7 +42,7 @@ index ef86765f3765..7a3ca4270446 100644
  static struct sock *__vsock_find_connected_socket(struct sockaddr_vm *src,
  						  struct sockaddr_vm *dst)
  {
-@@ -646,12 +652,17 @@ static void vsock_pending_work(struct work_struct *work)
+@@ -648,12 +654,17 @@ static void vsock_pending_work(struct work_struct *work)
  
  /**** SOCKET OPERATIONS ****/
  
@@ -62,7 +62,7 @@ index ef86765f3765..7a3ca4270446 100644
  	if (!port)
  		port = get_random_u32_above(LAST_RESERVED_PORT);
  
-@@ -667,7 +678,8 @@ static int __vsock_bind_connectible(struct vsock_sock *vsk,
+@@ -669,7 +680,8 @@ static int __vsock_bind_connectible(struct vsock_sock *vsk,
  
  			new_addr.svm_port = port++;
  
@@ -72,7 +72,7 @@ index ef86765f3765..7a3ca4270446 100644
  				found = true;
  				break;
  			}
-@@ -684,7 +696,8 @@ static int __vsock_bind_connectible(struct vsock_sock *vsk,
+@@ -686,7 +698,8 @@ static int __vsock_bind_connectible(struct vsock_sock *vsk,
  			return -EACCES;
  		}
  
@@ -82,7 +82,7 @@ index ef86765f3765..7a3ca4270446 100644
  			return -EADDRINUSE;
  	}
  
-@@ -696,11 +709,17 @@ static int __vsock_bind_connectible(struct vsock_sock *vsk,
+@@ -698,11 +711,17 @@ static int __vsock_bind_connectible(struct vsock_sock *vsk,
  	 * by AF_UNIX.
  	 */
  	__vsock_remove_bound(vsk);
@@ -102,5 +102,5 @@ index ef86765f3765..7a3ca4270446 100644
  			      struct sockaddr_vm *addr)
  {
 -- 
-2.40.0
+2.43.0
 

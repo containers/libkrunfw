@@ -1,4 +1,4 @@
-From 7431e96b6b322993fbd027d104758bfde209aaf4 Mon Sep 17 00:00:00 2001
+From 33ec7f77be813f455a9215591ad9972752051074 Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@redhat.com>
 Date: Thu, 20 Oct 2022 10:23:16 +0200
 Subject: [PATCH 13/15] x86/sev: write AP reset vector
@@ -12,11 +12,11 @@ Signed-off-by: Sergio Lopez <slp@redhat.com>
  1 file changed, 24 insertions(+), 1 deletion(-)
 
 diff --git a/arch/x86/kernel/sev.c b/arch/x86/kernel/sev.c
-index b031244d6d2d..19e4964fcc93 100644
+index d87c6ff1f513..f16277f67536 100644
 --- a/arch/x86/kernel/sev.c
 +++ b/arch/x86/kernel/sev.c
-@@ -1146,6 +1146,29 @@ void snp_set_wakeup_secondary_cpu(void)
- 	apic->wakeup_secondary_cpu = wakeup_cpu_via_vmgexit;
+@@ -1128,6 +1128,29 @@ void __init snp_set_wakeup_secondary_cpu(void)
+ 	apic_update_callback(wakeup_secondary_cpu, wakeup_cpu_via_vmgexit);
  }
  
 +#define KRUN_AP_RESET_VECTOR 0xfffffff4
@@ -45,7 +45,7 @@ index b031244d6d2d..19e4964fcc93 100644
  int __init sev_es_setup_ap_jump_table(struct real_mode_header *rmh)
  {
  	u16 startup_cs, startup_ip;
-@@ -1157,7 +1180,7 @@ int __init sev_es_setup_ap_jump_table(struct real_mode_header *rmh)
+@@ -1139,7 +1162,7 @@ int __init sev_es_setup_ap_jump_table(struct real_mode_header *rmh)
  
  	/* On UP guests there is no jump table so this is not a failure */
  	if (!jump_table_addr)
@@ -55,5 +55,5 @@ index b031244d6d2d..19e4964fcc93 100644
  	/* Check if AP Jump Table is page-aligned */
  	if (jump_table_addr & ~PAGE_MASK)
 -- 
-2.40.0
+2.43.0
 

@@ -1,7 +1,7 @@
-From 9960a46c26f15f31628384644ce35d5f9772eea0 Mon Sep 17 00:00:00 2001
+From fbce22997243ced7c34ad7202d93362332875a38 Mon Sep 17 00:00:00 2001
 From: Bobby Eshleman <bobby.eshleman () bytedance ! com>
 Date: Sat, 10 Jun 2023 00:58:33 +0000
-Subject: [PATCH 08/11] virtio/vsock: support dgrams
+Subject: [PATCH 08/15] virtio/vsock: support dgrams
 
 This commit adds support for datagrams over virtio/vsock.
 
@@ -36,7 +36,7 @@ Signed-off-by: Bobby Eshleman <bobby.eshleman@bytedance.com>
  8 files changed, 264 insertions(+), 66 deletions(-)
 
 diff --git a/drivers/vhost/vsock.c b/drivers/vhost/vsock.c
-index 8f0082da5e70..159c1a22c1a8 100644
+index ccbc186727b2..5f38bd389bf4 100644
 --- a/drivers/vhost/vsock.c
 +++ b/drivers/vhost/vsock.c
 @@ -32,7 +32,8 @@
@@ -78,7 +78,7 @@ index 8f0082da5e70..159c1a22c1a8 100644
  
  		.stream_enqueue           = virtio_transport_stream_enqueue,
  		.stream_dequeue           = virtio_transport_stream_dequeue,
-@@ -446,6 +450,22 @@ static struct virtio_transport vhost_transport = {
+@@ -447,6 +451,22 @@ static struct virtio_transport vhost_transport = {
  	.send_pkt = vhost_transport_send_pkt,
  };
  
@@ -101,7 +101,7 @@ index 8f0082da5e70..159c1a22c1a8 100644
  static bool vhost_transport_seqpacket_allow(u32 remote_cid)
  {
  	struct vhost_vsock *vsock;
-@@ -802,6 +822,9 @@ static int vhost_vsock_set_features(struct vhost_vsock *vsock, u64 features)
+@@ -803,6 +823,9 @@ static int vhost_vsock_set_features(struct vhost_vsock *vsock, u64 features)
  	if (features & (1ULL << VIRTIO_VSOCK_F_SEQPACKET))
  		vsock->seqpacket_allow = true;
  
@@ -112,7 +112,7 @@ index 8f0082da5e70..159c1a22c1a8 100644
  		vq = &vsock->vqs[i];
  		mutex_lock(&vq->mutex);
 diff --git a/include/linux/virtio_vsock.h b/include/linux/virtio_vsock.h
-index 73afa09f4585..237ca87a2ecd 100644
+index 26339021418d..ca5aeb0f9c2e 100644
 --- a/include/linux/virtio_vsock.h
 +++ b/include/linux/virtio_vsock.h
 @@ -216,7 +216,6 @@ void virtio_transport_notify_buffer_size(struct vsock_sock *vsk, u64 *val);
@@ -123,20 +123,20 @@ index 73afa09f4585..237ca87a2ecd 100644
  int virtio_transport_dgram_get_cid(struct sk_buff *skb, unsigned int *cid);
  int virtio_transport_dgram_get_port(struct sk_buff *skb, unsigned int *port);
  int virtio_transport_dgram_get_length(struct sk_buff *skb, size_t *len);
-@@ -247,4 +246,8 @@ void virtio_transport_put_credit(struct virtio_vsock_sock *vvs, u32 credit);
- void virtio_transport_deliver_tap_pkt(struct sk_buff *skb);
+@@ -248,4 +247,8 @@ void virtio_transport_deliver_tap_pkt(struct sk_buff *skb);
  int virtio_transport_purge_skbs(void *vsk, struct sk_buff_head *list);
  int virtio_transport_read_skb(struct vsock_sock *vsk, skb_read_actor_t read_actor);
+ int virtio_transport_notify_set_rcvlowat(struct vsock_sock *vsk, int val);
 +void virtio_transport_init_dgram_bind_tables(void);
 +int virtio_transport_dgram_get_cid(struct sk_buff *skb, unsigned int *cid);
 +int virtio_transport_dgram_get_port(struct sk_buff *skb, unsigned int *port);
 +int virtio_transport_dgram_get_length(struct sk_buff *skb, size_t *len);
  #endif /* _LINUX_VIRTIO_VSOCK_H */
 diff --git a/include/net/af_vsock.h b/include/net/af_vsock.h
-index 7bedb9ee7e3e..c115e655b4f5 100644
+index 3fee8b8bb3e0..0c1ff966ab27 100644
 --- a/include/net/af_vsock.h
 +++ b/include/net/af_vsock.h
-@@ -225,6 +225,7 @@ void vsock_for_each_connected_socket(struct vsock_transport *transport,
+@@ -224,6 +224,7 @@ void vsock_for_each_connected_socket(struct vsock_transport *transport,
  				     void (*fn)(struct sock *sk));
  int vsock_assign_transport(struct vsock_sock *vsk, struct vsock_sock *psk);
  bool vsock_find_cid(unsigned int cid);
@@ -157,10 +157,10 @@ index 9c25f267bbc0..27b4b2b8bf13 100644
  
  enum virtio_vsock_op {
 diff --git a/net/vmw_vsock/af_vsock.c b/net/vmw_vsock/af_vsock.c
-index 7a3ca4270446..b0b18e7f4299 100644
+index 034c3db91fc3..c59bbd0e1e1c 100644
 --- a/net/vmw_vsock/af_vsock.c
 +++ b/net/vmw_vsock/af_vsock.c
-@@ -114,6 +114,7 @@
+@@ -116,6 +116,7 @@
  static int __vsock_bind(struct sock *sk, struct sockaddr_vm *addr);
  static void vsock_sk_destruct(struct sock *sk);
  static int vsock_queue_rcv_skb(struct sock *sk, struct sk_buff *skb);
@@ -168,7 +168,7 @@ index 7a3ca4270446..b0b18e7f4299 100644
  
  /* Protocol family. */
  struct proto vsock_proto = {
-@@ -180,6 +181,8 @@ struct list_head vsock_connected_table[VSOCK_HASH_SIZE];
+@@ -182,6 +183,8 @@ struct list_head vsock_connected_table[VSOCK_HASH_SIZE];
  EXPORT_SYMBOL_GPL(vsock_connected_table);
  DEFINE_SPINLOCK(vsock_table_lock);
  EXPORT_SYMBOL_GPL(vsock_table_lock);
@@ -177,7 +177,7 @@ index 7a3ca4270446..b0b18e7f4299 100644
  
  /* Autobind this socket to the local address if necessary. */
  static int vsock_auto_bind(struct vsock_sock *vsk)
-@@ -202,6 +205,9 @@ static void vsock_init_tables(void)
+@@ -204,6 +207,9 @@ static void vsock_init_tables(void)
  
  	for (i = 0; i < ARRAY_SIZE(vsock_connected_table); i++)
  		INIT_LIST_HEAD(&vsock_connected_table[i]);
@@ -187,7 +187,7 @@ index 7a3ca4270446..b0b18e7f4299 100644
  }
  
  static void __vsock_insert_bound(struct list_head *list,
-@@ -230,8 +236,8 @@ static void __vsock_remove_connected(struct vsock_sock *vsk)
+@@ -232,8 +238,8 @@ static void __vsock_remove_connected(struct vsock_sock *vsk)
  	sock_put(&vsk->sk);
  }
  
@@ -198,7 +198,7 @@ index 7a3ca4270446..b0b18e7f4299 100644
  {
  	struct vsock_sock *vsk;
  
-@@ -248,6 +254,23 @@ struct sock *vsock_find_bound_socket_common(struct sockaddr_vm *addr,
+@@ -250,6 +256,23 @@ struct sock *vsock_find_bound_socket_common(struct sockaddr_vm *addr,
  	return NULL;
  }
  
@@ -222,7 +222,7 @@ index 7a3ca4270446..b0b18e7f4299 100644
  static struct sock *__vsock_find_bound_socket(struct sockaddr_vm *addr)
  {
  	return vsock_find_bound_socket_common(addr, vsock_bound_sockets(addr));
-@@ -287,6 +310,14 @@ void vsock_insert_connected(struct vsock_sock *vsk)
+@@ -289,6 +312,14 @@ void vsock_insert_connected(struct vsock_sock *vsk)
  }
  EXPORT_SYMBOL_GPL(vsock_insert_connected);
  
@@ -237,7 +237,7 @@ index 7a3ca4270446..b0b18e7f4299 100644
  void vsock_remove_bound(struct vsock_sock *vsk)
  {
  	spin_lock_bh(&vsock_table_lock);
-@@ -338,7 +369,10 @@ EXPORT_SYMBOL_GPL(vsock_find_connected_socket);
+@@ -340,7 +371,10 @@ EXPORT_SYMBOL_GPL(vsock_find_connected_socket);
  
  void vsock_remove_sock(struct vsock_sock *vsk)
  {
@@ -249,7 +249,7 @@ index 7a3ca4270446..b0b18e7f4299 100644
  	vsock_remove_connected(vsk);
  }
  EXPORT_SYMBOL_GPL(vsock_remove_sock);
-@@ -720,11 +754,19 @@ static int __vsock_bind_connectible(struct vsock_sock *vsk,
+@@ -722,11 +756,19 @@ static int __vsock_bind_connectible(struct vsock_sock *vsk,
  	return vsock_bind_common(vsk, addr, vsock_bind_table, VSOCK_HASH_SIZE + 1);
  }
  
@@ -273,7 +273,7 @@ index 7a3ca4270446..b0b18e7f4299 100644
  
  	return vsk->transport->dgram_bind(vsk, addr);
  }
-@@ -755,7 +797,7 @@ static int __vsock_bind(struct sock *sk, struct sockaddr_vm *addr)
+@@ -757,7 +799,7 @@ static int __vsock_bind(struct sock *sk, struct sockaddr_vm *addr)
  		break;
  
  	case SOCK_DGRAM:
@@ -283,7 +283,7 @@ index 7a3ca4270446..b0b18e7f4299 100644
  
  	default:
 diff --git a/net/vmw_vsock/virtio_transport.c b/net/vmw_vsock/virtio_transport.c
-index 1b7843a7779a..7160a3104218 100644
+index 122cbaaa238c..7ca9ca0d0d84 100644
 --- a/net/vmw_vsock/virtio_transport.c
 +++ b/net/vmw_vsock/virtio_transport.c
 @@ -63,6 +63,7 @@ struct virtio_vsock {
@@ -302,7 +302,7 @@ index 1b7843a7779a..7160a3104218 100644
  static bool virtio_transport_seqpacket_allow(u32 remote_cid);
  
  static struct virtio_transport virtio_transport = {
-@@ -465,6 +467,21 @@ static struct virtio_transport virtio_transport = {
+@@ -466,6 +468,21 @@ static struct virtio_transport virtio_transport = {
  	.send_pkt = virtio_transport_send_pkt,
  };
  
@@ -324,7 +324,7 @@ index 1b7843a7779a..7160a3104218 100644
  static bool virtio_transport_seqpacket_allow(u32 remote_cid)
  {
  	struct virtio_vsock *vsock;
-@@ -658,6 +675,9 @@ static int virtio_vsock_probe(struct virtio_device *vdev)
+@@ -673,6 +690,9 @@ static int virtio_vsock_probe(struct virtio_device *vdev)
  	if (virtio_has_feature(vdev, VIRTIO_VSOCK_F_SEQPACKET))
  		vsock->seqpacket_allow = true;
  
@@ -334,7 +334,7 @@ index 1b7843a7779a..7160a3104218 100644
  	vdev->priv = vsock;
  
  	ret = virtio_vsock_vqs_init(vsock);
-@@ -750,7 +770,8 @@ static struct virtio_device_id id_table[] = {
+@@ -767,7 +787,8 @@ static struct virtio_device_id id_table[] = {
  };
  
  static unsigned int features[] = {
@@ -345,7 +345,7 @@ index 1b7843a7779a..7160a3104218 100644
  
  static struct virtio_driver virtio_vsock_driver = {
 diff --git a/net/vmw_vsock/virtio_transport_common.c b/net/vmw_vsock/virtio_transport_common.c
-index d5a3c8efe84b..bc9d459723f5 100644
+index 0b2f6c211544..7ff2d3a44dc2 100644
 --- a/net/vmw_vsock/virtio_transport_common.c
 +++ b/net/vmw_vsock/virtio_transport_common.c
 @@ -37,6 +37,35 @@ virtio_transport_get_ops(struct vsock_sock *vsk)
@@ -418,7 +418,7 @@ index d5a3c8efe84b..bc9d459723f5 100644
  
  	hdr = virtio_vsock_hdr(skb);
  	hdr->type	= cpu_to_le16(info->type);
-@@ -96,12 +138,14 @@ virtio_transport_alloc_skb(struct virtio_vsock_pkt_info *info,
+@@ -98,12 +140,14 @@ virtio_transport_alloc_skb(struct virtio_vsock_pkt_info *info,
  
  	if (info->vsk && !skb_set_owner_sk_safe(skb, sk_vsock(info->vsk))) {
  		WARN_ONCE(1, "failed to allocate skb on vsock socket with sk_refcnt == 0\n");
@@ -433,7 +433,7 @@ index d5a3c8efe84b..bc9d459723f5 100644
  	kfree_skb(skb);
  	return NULL;
  }
-@@ -183,7 +227,9 @@ EXPORT_SYMBOL_GPL(virtio_transport_deliver_tap_pkt);
+@@ -185,7 +229,9 @@ EXPORT_SYMBOL_GPL(virtio_transport_deliver_tap_pkt);
  
  static u16 virtio_transport_get_type(struct sock *sk)
  {
@@ -444,7 +444,7 @@ index d5a3c8efe84b..bc9d459723f5 100644
  		return VIRTIO_VSOCK_TYPE_STREAM;
  	else
  		return VIRTIO_VSOCK_TYPE_SEQPACKET;
-@@ -239,11 +285,10 @@ static int virtio_transport_send_pkt_info(struct vsock_sock *vsk,
+@@ -241,11 +287,10 @@ static int virtio_transport_send_pkt_info(struct vsock_sock *vsk,
  
  		skb = virtio_transport_alloc_skb(info, skb_len,
  						 src_cid, src_port,
@@ -459,7 +459,7 @@ index d5a3c8efe84b..bc9d459723f5 100644
  
  		virtio_transport_inc_tx_pkt(vvs, skb);
  
-@@ -583,14 +628,30 @@ virtio_transport_seqpacket_enqueue(struct vsock_sock *vsk,
+@@ -646,14 +691,30 @@ virtio_transport_seqpacket_enqueue(struct vsock_sock *vsk,
  }
  EXPORT_SYMBOL_GPL(virtio_transport_seqpacket_enqueue);
  
@@ -496,7 +496,7 @@ index d5a3c8efe84b..bc9d459723f5 100644
  
  s64 virtio_transport_stream_has_data(struct vsock_sock *vsk)
  {
-@@ -790,30 +851,6 @@ bool virtio_transport_stream_allow(u32 cid, u32 port)
+@@ -853,30 +914,6 @@ bool virtio_transport_stream_allow(u32 cid, u32 port)
  }
  EXPORT_SYMBOL_GPL(virtio_transport_stream_allow);
  
@@ -527,7 +527,7 @@ index d5a3c8efe84b..bc9d459723f5 100644
  int virtio_transport_connect(struct vsock_sock *vsk)
  {
  	struct virtio_vsock_pkt_info info = {
-@@ -846,7 +883,34 @@ virtio_transport_dgram_enqueue(struct vsock_sock *vsk,
+@@ -909,7 +946,34 @@ virtio_transport_dgram_enqueue(struct vsock_sock *vsk,
  			       struct msghdr *msg,
  			       size_t dgram_len)
  {
@@ -563,7 +563,7 @@ index d5a3c8efe84b..bc9d459723f5 100644
  }
  EXPORT_SYMBOL_GPL(virtio_transport_dgram_enqueue);
  
-@@ -903,6 +967,7 @@ static int virtio_transport_reset_no_sock(const struct virtio_transport *t,
+@@ -966,6 +1030,7 @@ static int virtio_transport_reset_no_sock(const struct virtio_transport *t,
  		.reply = true,
  	};
  	struct sk_buff *reply;
@@ -571,7 +571,7 @@ index d5a3c8efe84b..bc9d459723f5 100644
  
  	/* Send RST only if the original pkt is not a RST pkt */
  	if (le16_to_cpu(hdr->op) == VIRTIO_VSOCK_OP_RST)
-@@ -915,9 +980,10 @@ static int virtio_transport_reset_no_sock(const struct virtio_transport *t,
+@@ -978,9 +1043,10 @@ static int virtio_transport_reset_no_sock(const struct virtio_transport *t,
  					   le64_to_cpu(hdr->dst_cid),
  					   le32_to_cpu(hdr->dst_port),
  					   le64_to_cpu(hdr->src_cid),
@@ -584,7 +584,7 @@ index d5a3c8efe84b..bc9d459723f5 100644
  
  	return t->send_pkt(reply);
  }
-@@ -1137,6 +1203,21 @@ virtio_transport_recv_enqueue(struct vsock_sock *vsk,
+@@ -1200,6 +1266,21 @@ virtio_transport_recv_enqueue(struct vsock_sock *vsk,
  		kfree_skb(skb);
  }
  
@@ -606,7 +606,7 @@ index d5a3c8efe84b..bc9d459723f5 100644
  static int
  virtio_transport_recv_connected(struct sock *sk,
  				struct sk_buff *skb)
-@@ -1300,7 +1381,8 @@ virtio_transport_recv_listen(struct sock *sk, struct sk_buff *skb,
+@@ -1369,7 +1450,8 @@ virtio_transport_recv_listen(struct sock *sk, struct sk_buff *skb,
  static bool virtio_transport_valid_type(u16 type)
  {
  	return (type == VIRTIO_VSOCK_TYPE_STREAM) ||
@@ -616,7 +616,7 @@ index d5a3c8efe84b..bc9d459723f5 100644
  }
  
  /* We are under the virtio-vsock's vsock->rx_lock or vhost-vsock's vq->mutex
-@@ -1314,40 +1396,52 @@ void virtio_transport_recv_pkt(struct virtio_transport *t,
+@@ -1383,40 +1465,52 @@ void virtio_transport_recv_pkt(struct virtio_transport *t,
  	struct vsock_sock *vsk;
  	struct sock *sk;
  	bool space_available;
@@ -679,7 +679,7 @@ index d5a3c8efe84b..bc9d459723f5 100644
  		sock_put(sk);
  		goto free_pkt;
  	}
-@@ -1363,12 +1457,18 @@ void virtio_transport_recv_pkt(struct virtio_transport *t,
+@@ -1432,12 +1526,18 @@ void virtio_transport_recv_pkt(struct virtio_transport *t,
  
  	/* Check if sk has been closed before lock_sock */
  	if (sock_flag(sk, SOCK_DONE)) {
@@ -699,7 +699,7 @@ index d5a3c8efe84b..bc9d459723f5 100644
  	space_available = virtio_transport_space_update(sk, skb);
  
  	/* Update CID in case it has changed after a transport reset event */
-@@ -1400,6 +1500,7 @@ void virtio_transport_recv_pkt(struct virtio_transport *t,
+@@ -1469,6 +1569,7 @@ void virtio_transport_recv_pkt(struct virtio_transport *t,
  		break;
  	}
  
@@ -708,7 +708,7 @@ index d5a3c8efe84b..bc9d459723f5 100644
  
  	/* Release refcnt obtained when we fetched this socket out of the
 diff --git a/net/vmw_vsock/vsock_loopback.c b/net/vmw_vsock/vsock_loopback.c
-index e9de45a26fbd..68312aa8c972 100644
+index 21a4debde550..20f5b123bde5 100644
 --- a/net/vmw_vsock/vsock_loopback.c
 +++ b/net/vmw_vsock/vsock_loopback.c
 @@ -46,6 +46,7 @@ static int vsock_loopback_cancel_pkt(struct vsock_sock *vsk)
@@ -728,7 +728,7 @@ index e9de45a26fbd..68312aa8c972 100644
  		.dgram_get_cid		  = virtio_transport_dgram_get_cid,
  		.dgram_get_port		  = virtio_transport_dgram_get_port,
  		.dgram_get_length	  = virtio_transport_dgram_get_length,
-@@ -98,6 +99,11 @@ static struct virtio_transport loopback_transport = {
+@@ -99,6 +100,11 @@ static struct virtio_transport loopback_transport = {
  	.send_pkt = vsock_loopback_send_pkt,
  };
  
@@ -741,5 +741,5 @@ index e9de45a26fbd..68312aa8c972 100644
  {
  	return true;
 -- 
-2.40.0
+2.43.0
 
