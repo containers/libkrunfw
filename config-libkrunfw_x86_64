@@ -1812,7 +1812,7 @@ CONFIG_HAVE_HARDENED_USERCOPY_ALLOCATOR=y
 # CONFIG_HARDENED_USERCOPY is not set
 CONFIG_FORTIFY_SOURCE=y
 # CONFIG_STATIC_USERMODEHELPER is not set
-# CONFIG_SECURITY_SELINUX is not set
+CONFIG_SECURITY_SELINUX=y
 # CONFIG_SECURITY_SMACK is not set
 # CONFIG_SECURITY_TOMOYO is not set
 # CONFIG_SECURITY_APPARMOR is not set
@@ -1823,7 +1823,7 @@ CONFIG_FORTIFY_SOURCE=y
 # CONFIG_SECURITY_LANDLOCK is not set
 # CONFIG_INTEGRITY is not set
 CONFIG_DEFAULT_SECURITY_DAC=y
-CONFIG_LSM="lockdown,yama,loadpin,safesetid,integrity,bpf"
+CONFIG_LSM="lockdown,yama,loadpin,safesetid,integrity,selinux,bpf"
 
 #
 # Kernel hardening options
