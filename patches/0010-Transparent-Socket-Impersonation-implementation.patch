@@ -22,17 +22,15 @@ TODO - implement remote [get|set]sockopt
 
 Signed-off-by: Sergio Lopez <slp@redhat.com>
 ---
- include/linux/socket.h              |    4 +-
- net/Kconfig                         |    1 +
- net/Makefile                        |    1 +
- net/socket.c                        |    1 +
- net/tsi/Kconfig                     |    7 +
- net/tsi/Makefile                    |    4 +
- net/tsi/af_tsi.c                    | 1280 +++++++++++++++++++++++++++
- net/tsi/af_tsi.h                    |  100 +++
- security/selinux/hooks.c            |    2 +-
- security/selinux/include/classmap.h |    2 +-
- 10 files changed, 1399 insertions(+), 3 deletions(-)
+ include/linux/socket.h |    4 +-
+ net/Kconfig            |    1 +
+ net/Makefile           |    1 +
+ net/socket.c           |    1 +
+ net/tsi/Kconfig        |    7 +
+ net/tsi/Makefile       |    4 +
+ net/tsi/af_tsi.c       | 1280 ++++++++++++++++++++++++++++++++++++++++
+ net/tsi/af_tsi.h       |  100 ++++
+ 8 files changed, 1397 insertions(+), 1 deletion(-)
  create mode 100644 net/tsi/Kconfig
  create mode 100644 net/tsi/Makefile
  create mode 100644 net/tsi/af_tsi.c
@@ -1509,31 +1507,6 @@ index 000000000000..cf381734bebe
 +} __attribute__((packed));
 +
 +#endif
-diff --git a/security/selinux/hooks.c b/security/selinux/hooks.c
-index 53cfeefb2f19..428801687e5c 100644
---- a/security/selinux/hooks.c
-+++ b/security/selinux/hooks.c
-@@ -1295,7 +1295,7 @@ static inline u16 socket_type_to_security_class(int family, int type, int protoc
- 			return SECCLASS_XDP_SOCKET;
- 		case PF_MCTP:
- 			return SECCLASS_MCTP_SOCKET;
--#if PF_MAX > 46
-+#if PF_MAX > 47
- #error New address family defined, please update this function.
- #endif
- 		}
-diff --git a/security/selinux/include/classmap.h b/security/selinux/include/classmap.h
-index a3c380775d41..06cb017611f8 100644
---- a/security/selinux/include/classmap.h
-+++ b/security/selinux/include/classmap.h
-@@ -259,6 +259,6 @@ const struct security_class_mapping secclass_map[] = {
- 	{ NULL }
-   };
- 
--#if PF_MAX > 46
-+#if PF_MAX > 47
- #error New address family defined, please update secclass_map.
- #endif
 -- 
 2.43.0
 
