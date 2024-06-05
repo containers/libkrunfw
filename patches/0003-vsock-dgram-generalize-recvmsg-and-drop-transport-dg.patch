@@ -1,4 +1,4 @@
-From 4a59c212ef33bafeb8c354b882cb8159de7742f0 Mon Sep 17 00:00:00 2001
+From 915fb507c6b714320a1880a07447ce008ddbc409 Mon Sep 17 00:00:00 2001
 From: Bobby Eshleman <bobby.eshleman () bytedance ! com>
 Date: Sat, 10 Jun 2023 00:58:28 +0000
 Subject: [PATCH 03/15] vsock/dgram: generalize recvmsg and drop
@@ -190,10 +190,10 @@ index e2157e387217..a83b30d366af 100644
  	.dgram_allow              = hvs_dgram_allow,
  
 diff --git a/net/vmw_vsock/virtio_transport.c b/net/vmw_vsock/virtio_transport.c
-index a64bf601b480..06be719c7bd0 100644
+index 2925f5d27ad3..332d6d580cba 100644
 --- a/net/vmw_vsock/virtio_transport.c
 +++ b/net/vmw_vsock/virtio_transport.c
-@@ -429,9 +429,11 @@ static struct virtio_transport virtio_transport = {
+@@ -430,9 +430,11 @@ static struct virtio_transport virtio_transport = {
  		.cancel_pkt               = virtio_transport_cancel_pkt,
  
  		.dgram_bind               = virtio_transport_dgram_bind,
@@ -352,5 +352,5 @@ index 0ce65d0a4a44..6b19e308a140 100644
  		.stream_dequeue           = virtio_transport_stream_dequeue,
  		.stream_enqueue           = virtio_transport_stream_enqueue,
 -- 
-2.43.0
+2.45.1
 

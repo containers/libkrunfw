@@ -1,4 +1,4 @@
-From 4f00cd024f48a737478f663b81c7f8948de54f40 Mon Sep 17 00:00:00 2001
+From 1c6ba81a2fc7eacfc8622eab862fe34154526f6a Mon Sep 17 00:00:00 2001
 From: Bobby Eshleman <bobby.eshleman () bytedance ! com>
 Date: Sat, 10 Jun 2023 00:58:30 +0000
 Subject: [PATCH 05/15] vsock: support multi-transport datagrams
@@ -262,10 +262,10 @@ index a83b30d366af..1a9e9a22c929 100644
  	.dgram_get_port		  = hvs_dgram_get_port,
  	.dgram_get_length	  = hvs_dgram_get_length,
 diff --git a/net/vmw_vsock/virtio_transport.c b/net/vmw_vsock/virtio_transport.c
-index 06be719c7bd0..122cbaaa238c 100644
+index 332d6d580cba..4e138ad3c113 100644
 --- a/net/vmw_vsock/virtio_transport.c
 +++ b/net/vmw_vsock/virtio_transport.c
-@@ -428,7 +428,6 @@ static struct virtio_transport virtio_transport = {
+@@ -429,7 +429,6 @@ static struct virtio_transport virtio_transport = {
  		.shutdown                 = virtio_transport_shutdown,
  		.cancel_pkt               = virtio_transport_cancel_pkt,
  
@@ -304,5 +304,5 @@ index 6b19e308a140..21a4debde550 100644
  		.dgram_allow              = virtio_transport_dgram_allow,
  		.dgram_get_cid		  = virtio_transport_dgram_get_cid,
 -- 
-2.43.0
+2.45.1
 
