@@ -1,4 +1,4 @@
-From cd93675f1948f2ba865e4feb05c1c161ed33105a Mon Sep 17 00:00:00 2001
+From c06716b09e9f021cc0a66ded750a6daee3cd1a0f Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@redhat.com>
 Date: Thu, 19 May 2022 22:42:01 +0200
 Subject: [PATCH 11/15] tsi: allow hijacking sockets (tsi_hijack)
@@ -69,5 +69,5 @@ index eda6c4ba7961..6cf01d7ce8f5 100644
  	int err;
  
 -- 
-2.43.0
+2.45.1
 
