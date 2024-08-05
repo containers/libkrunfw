@@ -2511,7 +2511,7 @@ CONFIG_FS_MBCACHE=y
 CONFIG_XFS_FS=y
 # CONFIG_GFS2_FS is not set
 # CONFIG_OCFS2_FS is not set
-# CONFIG_BTRFS_FS is not set
+CONFIG_BTRFS_FS=y
 # CONFIG_NILFS2_FS is not set
 # CONFIG_F2FS_FS is not set
 # CONFIG_ZONEFS_FS is not set
