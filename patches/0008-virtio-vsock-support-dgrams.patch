@@ -1,4 +1,4 @@
-From fffe341670a4c18182d59ce9e0c415c8e83dd7e9 Mon Sep 17 00:00:00 2001
+From 49d36822cfdca63ffbb3b1632cf613eb20a2a02c Mon Sep 17 00:00:00 2001
 From: Bobby Eshleman <bobby.eshleman () bytedance ! com>
 Date: Sat, 10 Jun 2023 00:58:33 +0000
 Subject: [PATCH 08/15] virtio/vsock: support dgrams
@@ -36,7 +36,7 @@ Signed-off-by: Bobby Eshleman <bobby.eshleman@bytedance.com>
  8 files changed, 264 insertions(+), 66 deletions(-)
 
 diff --git a/drivers/vhost/vsock.c b/drivers/vhost/vsock.c
-index ccbc186727b2..5f38bd389bf4 100644
+index ea093563b96b..a3fea3cd2603 100644
 --- a/drivers/vhost/vsock.c
 +++ b/drivers/vhost/vsock.c
 @@ -32,7 +32,8 @@
@@ -102,8 +102,8 @@ index ccbc186727b2..5f38bd389bf4 100644
  {
  	struct vhost_vsock *vsock;
 @@ -803,6 +823,9 @@ static int vhost_vsock_set_features(struct vhost_vsock *vsock, u64 features)
- 	if (features & (1ULL << VIRTIO_VSOCK_F_SEQPACKET))
- 		vsock->seqpacket_allow = true;
+ 
+ 	vsock->seqpacket_allow = features & (1ULL << VIRTIO_VSOCK_F_SEQPACKET);
  
 +	if (features & (1ULL << VIRTIO_VSOCK_F_DGRAM))
 +		vsock->dgram_allow = true;
@@ -741,5 +741,5 @@ index 21a4debde550..20f5b123bde5 100644
  {
  	return true;
 -- 
-2.45.1
+2.45.2
 
