@@ -1,4 +1,4 @@
-From 915fb507c6b714320a1880a07447ce008ddbc409 Mon Sep 17 00:00:00 2001
+From 0334eb653db47ada29d2e523b2e7651dee2fb4e2 Mon Sep 17 00:00:00 2001
 From: Bobby Eshleman <bobby.eshleman () bytedance ! com>
 Date: Sat, 10 Jun 2023 00:58:28 +0000
 Subject: [PATCH 03/15] vsock/dgram: generalize recvmsg and drop
@@ -23,7 +23,7 @@ Signed-off-by: Bobby Eshleman <bobby.eshleman@bytedance.com>
  9 files changed, 132 insertions(+), 50 deletions(-)
 
 diff --git a/drivers/vhost/vsock.c b/drivers/vhost/vsock.c
-index 61255855d490..a6b8316331ca 100644
+index d94a06008ff6..549158375086 100644
 --- a/drivers/vhost/vsock.c
 +++ b/drivers/vhost/vsock.c
 @@ -410,9 +410,11 @@ static struct virtio_transport vhost_transport = {
@@ -352,5 +352,5 @@ index 0ce65d0a4a44..6b19e308a140 100644
  		.stream_dequeue           = virtio_transport_stream_dequeue,
  		.stream_enqueue           = virtio_transport_stream_enqueue,
 -- 
-2.45.1
+2.45.2
 

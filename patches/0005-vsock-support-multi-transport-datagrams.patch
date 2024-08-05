@@ -1,4 +1,4 @@
-From 1c6ba81a2fc7eacfc8622eab862fe34154526f6a Mon Sep 17 00:00:00 2001
+From 0eca7ac3da42ac518e6410fa91d754ee40371886 Mon Sep 17 00:00:00 2001
 From: Bobby Eshleman <bobby.eshleman () bytedance ! com>
 Date: Sat, 10 Jun 2023 00:58:30 +0000
 Subject: [PATCH 05/15] vsock: support multi-transport datagrams
@@ -57,7 +57,7 @@ Signed-off-by: Bobby Eshleman <bobby.eshleman@bytedance.com>
  7 files changed, 60 insertions(+), 36 deletions(-)
 
 diff --git a/drivers/vhost/vsock.c b/drivers/vhost/vsock.c
-index a6b8316331ca..ccbc186727b2 100644
+index 549158375086..ea093563b96b 100644
 --- a/drivers/vhost/vsock.c
 +++ b/drivers/vhost/vsock.c
 @@ -410,7 +410,6 @@ static struct virtio_transport vhost_transport = {
@@ -304,5 +304,5 @@ index 6b19e308a140..21a4debde550 100644
  		.dgram_allow              = virtio_transport_dgram_allow,
  		.dgram_get_cid		  = virtio_transport_dgram_get_cid,
 -- 
-2.45.1
+2.45.2
 
