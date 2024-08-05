@@ -2622,6 +2622,7 @@ CONFIG_KEY_DH_OPERATIONS=y
 # CONFIG_HARDENED_USERCOPY is not set
 # CONFIG_FORTIFY_SOURCE is not set
 # CONFIG_STATIC_USERMODEHELPER is not set
+CONFIG_SECURITY_SELINUX=y
 CONFIG_DEFAULT_SECURITY_DAC=y
 CONFIG_LSM="yama,loadpin,safesetid,integrity,selinux,smack,tomoyo,apparmor"
 
