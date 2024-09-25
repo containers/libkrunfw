@@ -1,0 +1,85 @@
+From d5eb37359e9bf9c208f252ac01c345fb6947d74b Mon Sep 17 00:00:00 2001
+From: Asahi Lina <lina@asahilina.net>
+Date: Wed, 25 Sep 2024 16:35:34 +0200
+Subject: [PATCH 12/17] arm64: cpufeature: Unify SCOPE_LOCAL_CPU early & late
+ behavior
+
+SCOPE_LOCAL_CPU is mostly used for CPU errata. The early feature logic
+prior to this patch will enable a feature if any secondary matches it,
+but will not do anything once the feature is already enabled.
+
+However, the late CPU verification logic is more flexible, with flags:
+
+- ARM64_CPUCAP_OPTIONAL_FOR_LATE_CPU means "any cpu" logic applies
+- ARM64_CPUCAP_PERMITTED_FOR_LATE_CPU means "all cpus" logic applies
+
+This means the early secondary feature code right now behaves as if
+OPTIONAL && !PERMITTED was specified (it ignores secondaries missing the
+feature and forces the system state to active if any secondary has the
+feature).
+
+Change this so that the early feature detection code inspects the flags
+too and applies the logic to make feature state consistent:
+
+- If a feature is NOT OPTIONAL and missing on a secondary, remove it
+  from the system set (we can do this before finalization)
+- If a feature is PERMITTED and missing on the boot CPU, don't enable it
+  but rather leave it off.
+
+This allows SCOPE_LOCAL_CPU to be used for feature detection as well as
+CPU errata.
+
+Signed-off-by: Asahi Lina <lina@asahilina.net>
+---
+ arch/arm64/kernel/cpufeature.c | 34 +++++++++++++++++++++++++++++++---
+ 1 file changed, 31 insertions(+), 3 deletions(-)
+
+diff --git a/arch/arm64/kernel/cpufeature.c b/arch/arm64/kernel/cpufeature.c
+index 7e9660455900..6802a8eeb6a6 100644
+--- a/arch/arm64/kernel/cpufeature.c
++++ b/arch/arm64/kernel/cpufeature.c
+@@ -2986,10 +2986,38 @@ static void update_cpu_capabilities(u16 scope_mask)
+ 
+ 	scope_mask &= ARM64_CPUCAP_SCOPE_MASK;
+ 	for (i = 0; i < ARM64_NCAPS; i++) {
++		bool matches;
++
+ 		caps = cpucap_ptrs[i];
+-		if (!caps || !(caps->type & scope_mask) ||
+-		    cpus_have_cap(caps->capability) ||
+-		    !caps->matches(caps, cpucap_default_scope(caps)))
++		if (!caps || !(caps->type & scope_mask))
++			continue;
++
++		if (!(scope_mask & SCOPE_LOCAL_CPU) && cpus_have_cap(caps->capability))
++			continue;
++
++		matches = caps->matches(caps, cpucap_default_scope(caps));
++
++		if (matches == cpus_have_cap(caps->capability))
++			continue;
++
++		if (!matches) {
++			/*
++			 * Cap detected on boot CPU but not this CPU,
++			 * disable it if not optional.
++			 */
++			if (!cpucap_late_cpu_optional(caps)) {
++				__clear_bit(caps->capability, system_cpucaps);
++				pr_info("missing on secondary: %s\n", caps->desc);
++			}
++			continue;
++		}
++
++		if (!(scope_mask & (SCOPE_BOOT_CPU | SCOPE_SYSTEM)) &&
++		    cpucap_late_cpu_permitted(caps))
++			/*
++			 * Cap detected on this CPU but not boot CPU,
++			 * skip it if permitted for late CPUs.
++			 */
+ 			continue;
+ 
+ 		if (caps->desc)
+-- 
+2.46.0
+

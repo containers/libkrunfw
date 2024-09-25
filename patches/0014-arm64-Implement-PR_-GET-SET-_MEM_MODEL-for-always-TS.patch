@@ -1,7 +1,7 @@
-From 37e470e60bc5c0dad986f211ff05629bed0b9d47 Mon Sep 17 00:00:00 2001
-From: Sergio Lopez <slp@redhat.com>
+From 55e5da0ad8c673f5f8e07524210bba70b5714ff3 Mon Sep 17 00:00:00 2001
+From: Hector Martin <marcan@marcan.st>
 Date: Mon, 6 May 2024 16:47:51 +0200
-Subject: [PATCH 2/4] arm64: Implement PR_{GET,SET}_MEM_MODEL for always-TSO
+Subject: [PATCH 14/17] arm64: Implement PR_{GET,SET}_MEM_MODEL for always-TSO
  CPUs
 
 Some ARM64 implementations are known to always use the TSO memory model.
@@ -27,10 +27,10 @@ Reviewed-by: Neal Gompa <neal@gompa.dev>
  create mode 100644 arch/arm64/kernel/cpufeature_impdef.c
 
 diff --git a/arch/arm64/Kconfig b/arch/arm64/Kconfig
-index b5df38c2a..dade81d8f 100644
+index 9e0c1ac3d13e..741833d2f1a0 100644
 --- a/arch/arm64/Kconfig
 +++ b/arch/arm64/Kconfig
-@@ -2160,6 +2160,15 @@ config ARM64_DEBUG_PRIORITY_MASKING
+@@ -2198,6 +2198,15 @@ config ARM64_DEBUG_PRIORITY_MASKING
  	  If unsure, say N
  endif # ARM64_PSEUDO_NMI
  
@@ -47,7 +47,7 @@ index b5df38c2a..dade81d8f 100644
  	bool "Build a relocatable kernel image" if EXPERT
  	select ARCH_HAS_RELR
 diff --git a/arch/arm64/include/asm/cpufeature.h b/arch/arm64/include/asm/cpufeature.h
-index 5bba39376..f83f951be 100644
+index 5bba39376055..f83f951bec94 100644
 --- a/arch/arm64/include/asm/cpufeature.h
 +++ b/arch/arm64/include/asm/cpufeature.h
 @@ -924,6 +924,10 @@ extern struct arm64_ftr_override arm64_sw_feature_override;
@@ -62,7 +62,7 @@ index 5bba39376..f83f951be 100644
  
  #endif
 diff --git a/arch/arm64/kernel/Makefile b/arch/arm64/kernel/Makefile
-index d95b3d6b4..2a86fc69c 100644
+index d95b3d6b471a..2a86fc69ccea 100644
 --- a/arch/arm64/kernel/Makefile
 +++ b/arch/arm64/kernel/Makefile
 @@ -34,7 +34,7 @@ obj-y			:= debug-monitors.o entry.o irq.o fpsimd.o		\
@@ -75,7 +75,7 @@ index d95b3d6b4..2a86fc69c 100644
  obj-$(CONFIG_COMPAT)			+= sys32.o signal32.o			\
  					   sys_compat.o
 diff --git a/arch/arm64/kernel/cpufeature.c b/arch/arm64/kernel/cpufeature.c
-index 444a73c2e..2f3b99ea5 100644
+index 6802a8eeb6a6..ceebd3ccbe4a 100644
 --- a/arch/arm64/kernel/cpufeature.c
 +++ b/arch/arm64/kernel/cpufeature.c
 @@ -965,7 +965,7 @@ static void init_cpu_ftr_reg(u32 sys_reg, u64 new)
@@ -125,7 +125,7 @@ index 444a73c2e..2f3b99ea5 100644
  const struct cpumask *system_32bit_el0_cpumask(void)
 diff --git a/arch/arm64/kernel/cpufeature_impdef.c b/arch/arm64/kernel/cpufeature_impdef.c
 new file mode 100644
-index 000000000..bb04a8e3d
+index 000000000000..de784a1fb49b
 --- /dev/null
 +++ b/arch/arm64/kernel/cpufeature_impdef.c
 @@ -0,0 +1,38 @@
@@ -156,7 +156,7 @@ index 000000000..bb04a8e3d
 +	{
 +		.desc = "TSO memory model (Fixed)",
 +		.capability = ARM64_HAS_TSO_FIXED,
-+		.type = ARM64_CPUCAP_SYSTEM_FEATURE,
++		.type = SCOPE_LOCAL_CPU | ARM64_CPUCAP_PERMITTED_FOR_LATE_CPU,
 +		.matches = has_tso_fixed,
 +	},
 +#endif
@@ -168,7 +168,7 @@ index 000000000..bb04a8e3d
 +	init_cpucap_indirect_list_from_array(arm64_impdef_features);
 +}
 diff --git a/arch/arm64/kernel/process.c b/arch/arm64/kernel/process.c
-index 0fcc4eb1a..2f37a56a4 100644
+index 0fcc4eb1a7ab..2f37a56a4a4b 100644
 --- a/arch/arm64/kernel/process.c
 +++ b/arch/arm64/kernel/process.c
 @@ -41,6 +41,7 @@
@@ -217,7 +217,7 @@ index 0fcc4eb1a..2f37a56a4 100644
  
  #ifdef CONFIG_ARM64_TAGGED_ADDR_ABI
 diff --git a/arch/arm64/tools/cpucaps b/arch/arm64/tools/cpucaps
-index 5511bee15..419810c21 100644
+index c251ef3caae5..cedae062dbdd 100644
 --- a/arch/arm64/tools/cpucaps
 +++ b/arch/arm64/tools/cpucaps
 @@ -50,6 +50,7 @@ HAS_STAGE2_FWB
@@ -229,5 +229,5 @@ index 5511bee15..419810c21 100644
  HAS_WFXT
  HW_DBM
 -- 
-2.45.1
+2.46.0
 

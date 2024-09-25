@@ -1,7 +1,7 @@
-From 399d3ee078cad45dafe6c00d17edfb31377963c6 Mon Sep 17 00:00:00 2001
+From b4ce449d32a4a9c71041052c1e4599f3a01eccfa Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@redhat.com>
 Date: Thu, 19 May 2022 22:38:26 +0200
-Subject: [PATCH 10/15] Transparent Socket Impersonation implementation
+Subject: [PATCH 10/21] Transparent Socket Impersonation implementation
 
 Transparent Socket Impersonation (AF_TSI) is an address family that
 provides sockets presenting two simultaneous personalities, AF_INET
@@ -30,9 +30,9 @@ Signed-off-by: Sergio Lopez <slp@redhat.com>
  net/tsi/Makefile                    |    4 +
  net/tsi/af_tsi.c                    | 1280 +++++++++++++++++++++++++++
  net/tsi/af_tsi.h                    |  100 +++
- security/selinux/hooks.c            |    2 +-
- security/selinux/include/classmap.h |    2 +-
- 10 files changed, 1399 insertions(+), 3 deletions(-)
+ security/selinux/hooks.c            |    4 +-
+ security/selinux/include/classmap.h |    4 +-
+ 10 files changed, 1403 insertions(+), 3 deletions(-)
  create mode 100644 net/tsi/Kconfig
  create mode 100644 net/tsi/Makefile
  create mode 100644 net/tsi/af_tsi.c
@@ -83,7 +83,7 @@ index 4c4dc535453d..b07f65c0ef56 100644
  obj-$(CONFIG_NET_HANDSHAKE)	+= handshake/
 +obj-$(CONFIG_TSI)		+= tsi/
 diff --git a/net/socket.c b/net/socket.c
-index 8d83c4bb163b..91ef12312a0a 100644
+index 9db33cd4a71b..8b92dd098235 100644
 --- a/net/socket.c
 +++ b/net/socket.c
 @@ -218,6 +218,7 @@ static const char * const pf_family_names[] = {
@@ -1510,23 +1510,34 @@ index 000000000000..cf381734bebe
 +
 +#endif
 diff --git a/security/selinux/hooks.c b/security/selinux/hooks.c
-index 53cfeefb2f19..428801687e5c 100644
+index d4a99d98ec77..82fd1f975ef6 100644
 --- a/security/selinux/hooks.c
 +++ b/security/selinux/hooks.c
-@@ -1295,7 +1295,7 @@ static inline u16 socket_type_to_security_class(int family, int type, int protoc
+@@ -1295,7 +1295,9 @@ static inline u16 socket_type_to_security_class(int family, int type, int protoc
  			return SECCLASS_XDP_SOCKET;
  		case PF_MCTP:
  			return SECCLASS_MCTP_SOCKET;
 -#if PF_MAX > 46
++		case PF_TSI:
++			return SECCLASS_TSI_SOCKET;
 +#if PF_MAX > 47
  #error New address family defined, please update this function.
  #endif
  		}
 diff --git a/security/selinux/include/classmap.h b/security/selinux/include/classmap.h
-index a3c380775d41..06cb017611f8 100644
+index a3c380775d41..4640eb408c06 100644
 --- a/security/selinux/include/classmap.h
 +++ b/security/selinux/include/classmap.h
-@@ -259,6 +259,6 @@ const struct security_class_mapping secclass_map[] = {
+@@ -248,6 +248,8 @@ const struct security_class_mapping secclass_map[] = {
+ 	  { COMMON_SOCK_PERMS, NULL } },
+ 	{ "mctp_socket",
+ 	  { COMMON_SOCK_PERMS, NULL } },
++	{ "tsi_socket",
++	  { COMMON_SOCK_PERMS, NULL } },
+ 	{ "perf_event",
+ 	  { "open", "cpu", "kernel", "tracepoint", "read", "write", NULL } },
+ 	{ "anon_inode",
+@@ -259,6 +261,6 @@ const struct security_class_mapping secclass_map[] = {
  	{ NULL }
    };
  

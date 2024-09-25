@@ -1,7 +1,7 @@
-From 0334eb653db47ada29d2e523b2e7651dee2fb4e2 Mon Sep 17 00:00:00 2001
+From 06a9c813b4f59d92edf78a6011a719629323081c Mon Sep 17 00:00:00 2001
 From: Bobby Eshleman <bobby.eshleman () bytedance ! com>
 Date: Sat, 10 Jun 2023 00:58:28 +0000
-Subject: [PATCH 03/15] vsock/dgram: generalize recvmsg and drop
+Subject: [PATCH 03/17] vsock/dgram: generalize recvmsg and drop
  transport->dgram_dequeue
 
 This commit drops the transport->dgram_dequeue callback and makes
@@ -14,13 +14,13 @@ Signed-off-by: Bobby Eshleman <bobby.eshleman@bytedance.com>
  drivers/vhost/vsock.c                   |  4 +-
  include/linux/virtio_vsock.h            |  3 ++
  include/net/af_vsock.h                  | 13 ++++-
- net/vmw_vsock/af_vsock.c                | 51 ++++++++++++++++++-
+ net/vmw_vsock/af_vsock.c                | 58 +++++++++++++++++++--
  net/vmw_vsock/hyperv_transport.c        | 17 +++++--
  net/vmw_vsock/virtio_transport.c        |  4 +-
  net/vmw_vsock/virtio_transport_common.c | 18 +++++++
  net/vmw_vsock/vmci_transport.c          | 68 ++++++++++---------------
  net/vmw_vsock/vsock_loopback.c          |  4 +-
- 9 files changed, 132 insertions(+), 50 deletions(-)
+ 9 files changed, 137 insertions(+), 52 deletions(-)
 
 diff --git a/drivers/vhost/vsock.c b/drivers/vhost/vsock.c
 index d94a06008ff6..549158375086 100644
@@ -54,7 +54,7 @@ index fbf30721bac9..1098a4c0d738 100644
  int virtio_transport_connect(struct vsock_sock *vsk);
  
 diff --git a/include/net/af_vsock.h b/include/net/af_vsock.h
-index dc3cb16835b6..3fee8b8bb3e0 100644
+index f8b09a82f62e..7a342d406c34 100644
 --- a/include/net/af_vsock.h
 +++ b/include/net/af_vsock.h
 @@ -120,11 +120,20 @@ struct vsock_transport {
@@ -81,28 +81,24 @@ index dc3cb16835b6..3fee8b8bb3e0 100644
  	/* STREAM. */
  	/* TODO: stream_bind() */
 diff --git a/net/vmw_vsock/af_vsock.c b/net/vmw_vsock/af_vsock.c
-index 4afb6a541cf3..c66d3def5e6e 100644
+index f5eb737a677d..c3fdb22cfd39 100644
 --- a/net/vmw_vsock/af_vsock.c
 +++ b/net/vmw_vsock/af_vsock.c
-@@ -1273,11 +1273,15 @@ static int vsock_dgram_connect(struct socket *sock,
- int vsock_dgram_recvmsg(struct socket *sock, struct msghdr *msg,
- 			size_t len, int flags)
+@@ -1273,10 +1273,62 @@ static int vsock_dgram_connect(struct socket *sock,
+ int __vsock_dgram_recvmsg(struct socket *sock, struct msghdr *msg,
+ 			  size_t len, int flags)
  {
+-	struct sock *sk = sock->sk;
+-	struct vsock_sock *vsk = vsock_sk(sk);
 +	const struct vsock_transport *transport;
- #ifdef CONFIG_BPF_SYSCALL
- 	const struct proto *prot;
- #endif
- 	struct vsock_sock *vsk;
++	struct vsock_sock *vsk;
 +	struct sk_buff *skb;
 +	size_t payload_len;
- 	struct sock *sk;
++	struct sock *sk;
 +	int err;
- 
- 	sk = sock->sk;
- 	vsk = vsock_sk(sk);
-@@ -1288,7 +1292,52 @@ int vsock_dgram_recvmsg(struct socket *sock, struct msghdr *msg,
- 		return prot->recvmsg(sk, msg, len, flags, NULL);
- #endif
++
++	sk = sock->sk;
++	vsk = vsock_sk(sk);
  
 -	return vsk->transport->dgram_dequeue(vsk, msg, len, flags);
 +	if (flags & MSG_OOB || flags & MSG_ERRQUEUE)
@@ -152,8 +148,8 @@ index 4afb6a541cf3..c66d3def5e6e 100644
 +	skb_free_datagram(&vsk->sk, skb);
 +	return err;
  }
- EXPORT_SYMBOL_GPL(vsock_dgram_recvmsg);
  
+ int vsock_dgram_recvmsg(struct socket *sock, struct msghdr *msg,
 diff --git a/net/vmw_vsock/hyperv_transport.c b/net/vmw_vsock/hyperv_transport.c
 index e2157e387217..a83b30d366af 100644
 --- a/net/vmw_vsock/hyperv_transport.c
@@ -352,5 +348,5 @@ index 0ce65d0a4a44..6b19e308a140 100644
  		.stream_dequeue           = virtio_transport_stream_dequeue,
  		.stream_enqueue           = virtio_transport_stream_enqueue,
 -- 
-2.45.2
+2.46.0
 
