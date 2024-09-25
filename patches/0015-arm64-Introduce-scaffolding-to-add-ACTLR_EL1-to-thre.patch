@@ -1,7 +1,7 @@
-From c3564a75278be85e3e585fad1b1834a631b6e0e9 Mon Sep 17 00:00:00 2001
+From 0f5f434bc794b2a46105b8ae9aed8b99c7f9dea4 Mon Sep 17 00:00:00 2001
 From: Hector Martin <marcan@marcan.st>
 Date: Thu, 11 Apr 2024 09:51:22 +0900
-Subject: [PATCH 3/4] arm64: Introduce scaffolding to add ACTLR_EL1 to thread
+Subject: [PATCH 15/17] arm64: Introduce scaffolding to add ACTLR_EL1 to thread
  state
 
 Some CPUs expose IMPDEF features in ACTLR_EL1 that can be meaningfully
@@ -24,7 +24,7 @@ Reviewed-by: Neal Gompa <neal@gompa.dev>
  5 files changed, 44 insertions(+)
 
 diff --git a/arch/arm64/Kconfig b/arch/arm64/Kconfig
-index dade81d8f..c6c8bb46b 100644
+index 741833d2f1a0..cefb705dc3c7 100644
 --- a/arch/arm64/Kconfig
 +++ b/arch/arm64/Kconfig
 @@ -409,6 +409,9 @@ config KASAN_SHADOW_OFFSET
@@ -38,7 +38,7 @@ index dade81d8f..c6c8bb46b 100644
  
  menu "Kernel Features"
 diff --git a/arch/arm64/include/asm/cpufeature.h b/arch/arm64/include/asm/cpufeature.h
-index f83f951be..8c5d5a03b 100644
+index f83f951bec94..8c5d5a03b2af 100644
 --- a/arch/arm64/include/asm/cpufeature.h
 +++ b/arch/arm64/include/asm/cpufeature.h
 @@ -908,6 +908,11 @@ static inline unsigned int get_vmid_bits(u64 mmfr1)
@@ -54,7 +54,7 @@ index f83f951be..8c5d5a03b 100644
  struct arm64_ftr_reg *get_arm64_ftr_reg(u32 sys_id);
  
 diff --git a/arch/arm64/include/asm/processor.h b/arch/arm64/include/asm/processor.h
-index e5bc54522..e1ca89202 100644
+index e5bc54522e71..e1ca89202619 100644
 --- a/arch/arm64/include/asm/processor.h
 +++ b/arch/arm64/include/asm/processor.h
 @@ -179,6 +179,9 @@ struct thread_struct {
@@ -68,7 +68,7 @@ index e5bc54522..e1ca89202 100644
  
  static inline unsigned int thread_get_vl(struct thread_struct *thread,
 diff --git a/arch/arm64/kernel/process.c b/arch/arm64/kernel/process.c
-index 2f37a56a4..235c965eb 100644
+index 2f37a56a4a4b..235c965ebbc3 100644
 --- a/arch/arm64/kernel/process.c
 +++ b/arch/arm64/kernel/process.c
 @@ -375,6 +375,11 @@ int copy_thread(struct task_struct *p, const struct kernel_clone_args *args)
@@ -118,10 +118,10 @@ index 2f37a56a4..235c965eb 100644
  	/*
  	 * Complete any pending TLB or cache maintenance on this CPU in case
 diff --git a/arch/arm64/kernel/setup.c b/arch/arm64/kernel/setup.c
-index 417a8a86b..4580297d0 100644
+index c583d1f335f8..86e0631df0c1 100644
 --- a/arch/arm64/kernel/setup.c
 +++ b/arch/arm64/kernel/setup.c
-@@ -382,6 +382,14 @@ void __init __no_sanitize_address setup_arch(char **cmdline_p)
+@@ -379,6 +379,14 @@ void __init __no_sanitize_address setup_arch(char **cmdline_p)
  	 */
  	init_task.thread_info.ttbr0 = phys_to_ttbr(__pa_symbol(reserved_pg_dir));
  #endif
@@ -137,5 +137,5 @@ index 417a8a86b..4580297d0 100644
  	if (boot_args[1] || boot_args[2] || boot_args[3]) {
  		pr_err("WARNING: x1-x3 nonzero in violation of boot protocol:\n"
 -- 
-2.45.1
+2.46.0
 

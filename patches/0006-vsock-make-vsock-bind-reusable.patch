@@ -1,7 +1,7 @@
-From a01abc12504a5819737fc8dcb6026eb2c52e67de Mon Sep 17 00:00:00 2001
+From 9b076ce6da60de7904d340289a2187325efee512 Mon Sep 17 00:00:00 2001
 From: Bobby Eshleman <bobby.eshleman () bytedance ! com>
 Date: Sat, 10 Jun 2023 00:58:31 +0000
-Subject: [PATCH 06/15] vsock: make vsock bind reusable
+Subject: [PATCH 06/17] vsock: make vsock bind reusable
 
 This commit makes the bind table management functions in vsock usable
 for different bind tables. For use by datagrams in a future patch.
@@ -12,7 +12,7 @@ Signed-off-by: Bobby Eshleman <bobby.eshleman@bytedance.com>
  1 file changed, 26 insertions(+), 7 deletions(-)
 
 diff --git a/net/vmw_vsock/af_vsock.c b/net/vmw_vsock/af_vsock.c
-index 2567641a829f..034c3db91fc3 100644
+index afe28d3b0b74..6a94a623dd07 100644
 --- a/net/vmw_vsock/af_vsock.c
 +++ b/net/vmw_vsock/af_vsock.c
 @@ -232,11 +232,12 @@ static void __vsock_remove_connected(struct vsock_sock *vsk)
@@ -102,5 +102,5 @@ index 2567641a829f..034c3db91fc3 100644
  			      struct sockaddr_vm *addr)
  {
 -- 
-2.45.2
+2.46.0
 

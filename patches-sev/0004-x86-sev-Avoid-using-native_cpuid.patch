@@ -1,7 +1,7 @@
-From 3fcf7bfe438218d884d8aa36159bcf6ec37e23eb Mon Sep 17 00:00:00 2001
+From 95ae01ac9240b47dcdeda540e59a24ba0bdaf963 Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@redhat.com>
 Date: Wed, 5 Jun 2024 16:20:08 +0200
-Subject: [PATCH 15/15] x86/sev: Avoid using native_cpuid
+Subject: [PATCH 4/4] x86/sev: Avoid using native_cpuid
 
 In the state we get into the kernel from qboot-krunfw we can't return
 from #VC properly, so avoid calling native_cpuid in the early stages
@@ -61,5 +61,5 @@ index cc47a818a640..a2b5b08eee23 100644
  	/* Check the SEV MSR whether SEV or SME is enabled */
  	RIP_REL_REF(sev_status) = msr = __rdmsr(MSR_AMD64_SEV);
 -- 
-2.45.2
+2.46.0
 
