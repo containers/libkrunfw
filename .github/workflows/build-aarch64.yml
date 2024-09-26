@@ -6,18 +6,12 @@ jobs:
     if: github.event_name == 'pull_request'
     name: Build aarch64 kernel
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        rust:
-          - stable
-        target:
-          - aarch64-unknown-linux-gnu
     steps:
       - name: Code checkout
         uses: actions/checkout@v2
 
       - name: Install dependencies
-        run: sudo apt-get install -y make gcc bc bison flex elfutils python3-pyelftools curl patch libelf-dev
+        run: sudo apt-get install -y make gcc bc bison flex elfutils python3-pyelftools curl patch libelf-dev gcc-aarch64-linux-gnu
 
       - name: Build aarch64 kernel
-        run: make
+        run: make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu-
