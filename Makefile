@@ -18,8 +18,20 @@ ifeq ($(SEV),1)
     KERNEL_PATCHES += $(shell find patches-sev/ -name "0*.patch" | sort)
 endif
 
-ARCH = $(shell uname -m)
+HOSTARCH = $(shell uname -m)
 OS = $(shell uname -s)
+ifeq ($(ARCH),)
+	GUESTARCH := $(HOSTARCH)
+	STRIP := strip
+else ifeq ($(ARCH),arm64)
+	GUESTARCH := aarch64
+	CC := $(CROSS_COMPILE)gcc
+	STRIP := $(CROSS_COMPILE)strip
+else
+	GUESTARCH := $(ARCH)
+	CC := $(CROSS_COMPILE)gcc
+	STRIP := $(CROSS_COMPILE)strip
+endif
 
 KBUNDLE_TYPE_x86_64 = vmlinux
 KBUNDLE_TYPE_aarch64 = Image
@@ -62,10 +74,10 @@ $(KERNEL_TARBALL):
 $(KERNEL_SOURCES): $(KERNEL_TARBALL)
 	tar xf $(KERNEL_TARBALL)
 	for patch in $(KERNEL_PATCHES); do patch -p1 -d $(KERNEL_SOURCES) < "$$patch"; done
-	cp config-libkrunfw$(VARIANT)_$(ARCH) $(KERNEL_SOURCES)/.config
+	cp config-libkrunfw$(VARIANT)_$(GUESTARCH) $(KERNEL_SOURCES)/.config
 	cd $(KERNEL_SOURCES) ; $(MAKE) olddefconfig
 
-$(KERNEL_BINARY_$(ARCH)): $(KERNEL_SOURCES)
+$(KERNEL_BINARY_$(GUESTARCH)): $(KERNEL_SOURCES)
 	cd $(KERNEL_SOURCES) ; rm -f .version ; $(MAKE) $(MAKEFLAGS) $(KERNEL_FLAGS)
 
 ifeq ($(OS),Darwin)
@@ -73,9 +85,9 @@ $(KERNEL_C_BUNDLE):
 	@echo "Building on macOS, using ./build_on_krunvm.sh"
 	./build_on_krunvm.sh
 else
-$(KERNEL_C_BUNDLE): $(KERNEL_BINARY_$(ARCH))
-	@echo "Generating $(KERNEL_C_BUNDLE) from $(KERNEL_BINARY_$(ARCH))..."
-	@python3 bin2cbundle.py -t $(KBUNDLE_TYPE_$(ARCH)) $(KERNEL_BINARY_$(ARCH)) kernel.c
+$(KERNEL_C_BUNDLE): $(KERNEL_BINARY_$(GUESTARCH))
+	@echo "Generating $(KERNEL_C_BUNDLE) from $(KERNEL_BINARY_$(GUESTARCH))..."
+	@python3 bin2cbundle.py -t $(KBUNDLE_TYPE_$(GUESTARCH)) $(KERNEL_BINARY_$(GUESTARCH)) kernel.c
 endif
 
 ifeq ($(SEV),1)
@@ -91,7 +103,7 @@ endif
 $(KRUNFW_BINARY_$(OS)): $(KERNEL_C_BUNDLE) $(QBOOT_C_BUNDLE) $(INITRD_C_BUNDLE)
 	$(CC) -fPIC -DABI_VERSION=$(ABI_VERSION) -shared $(SONAME_$(OS)) -o $@ $(KERNEL_C_BUNDLE) $(QBOOT_C_BUNDLE) $(INITRD_C_BUNDLE)
 ifeq ($(OS),Linux)
-	strip $(KRUNFW_BINARY_$(OS))
+	$(STRIP) $(KRUNFW_BINARY_$(OS))
 endif
 
 install:
