@@ -1,10 +1,10 @@
-name: Build aarch64 kernel
+name: Cross-build aarch64 kernel
 on: [pull_request, create]
 
 jobs:
   build:
     if: github.event_name == 'pull_request'
-    name: Build aarch64 kernel
+    name: Cross-build aarch64 kernel
     runs-on: ubuntu-latest
     steps:
       - name: Code checkout
