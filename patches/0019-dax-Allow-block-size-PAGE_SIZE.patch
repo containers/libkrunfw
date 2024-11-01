@@ -1,0 +1,39 @@
+From ce899b86d685b28016cc27c505d1fdca468c9b2e Mon Sep 17 00:00:00 2001
+From: Asahi Lina <lina@asahilina.net>
+Date: Sun, 20 Oct 2024 01:23:41 +0900
+Subject: [PATCH 1/2] dax: Allow block size > PAGE_SIZE
+
+For virtio-dax, the file/FS blocksize is irrelevant. FUSE always uses
+large DAX blocks (2MiB), which will work with all host page sizes. Since
+we are mapping files into the DAX window on the host, the underlying
+block size of the filesystem and its block device (if any) are
+meaningless.
+
+For real devices with DAX, the only requirement should be that the FS
+block size is *at least* as large as PAGE_SIZE, to ensure that at least
+whole pages can be mapped out of the device contiguously.
+
+Fixes warning when using virtio-dax on a 4K guest with a 16K host,
+backed by tmpfs (which sets blksz == PAGE_SIZE on the host).
+
+Signed-off-by: Asahi Lina <lina@asahilina.net>
+---
+ fs/dax.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/fs/dax.c b/fs/dax.c
+index becb4a6920c6..2ef3b50e8d7a 100644
+--- a/fs/dax.c
++++ b/fs/dax.c
+@@ -1032,7 +1032,7 @@ int dax_writeback_mapping_range(struct address_space *mapping,
+ 	int ret = 0;
+ 	unsigned int scanned = 0;
+ 
+-	if (WARN_ON_ONCE(inode->i_blkbits != PAGE_SHIFT))
++	if (WARN_ON_ONCE(inode->i_blkbits < PAGE_SHIFT))
+ 		return -EIO;
+ 
+ 	if (mapping_empty(mapping) || wbc->sync_mode != WB_SYNC_ALL)
+-- 
+2.47.0
+
