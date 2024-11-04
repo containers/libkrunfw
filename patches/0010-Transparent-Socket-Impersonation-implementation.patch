@@ -1,7 +1,7 @@
-From b4ce449d32a4a9c71041052c1e4599f3a01eccfa Mon Sep 17 00:00:00 2001
+From bf4eb6179408f2fb6bbdd0d750a494ca1d0bf9c2 Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@redhat.com>
 Date: Thu, 19 May 2022 22:38:26 +0200
-Subject: [PATCH 10/21] Transparent Socket Impersonation implementation
+Subject: [PATCH 10/20] Transparent Socket Impersonation implementation
 
 Transparent Socket Impersonation (AF_TSI) is an address family that
 provides sockets presenting two simultaneous personalities, AF_INET

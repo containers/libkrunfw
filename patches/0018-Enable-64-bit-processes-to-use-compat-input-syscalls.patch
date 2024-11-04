@@ -1,7 +1,7 @@
-From 897560fd00e1add63a9973c31fc437b006855680 Mon Sep 17 00:00:00 2001
+From a2a7742b033bd36460343555bcc9ddedac9ffb88 Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@redhat.com>
 Date: Tue, 8 Oct 2024 11:24:25 +0200
-Subject: [PATCH] Enable 64 bit processes to use compat input syscalls
+Subject: [PATCH 18/20] Enable 64 bit processes to use compat input syscalls
 
 The compat variant of input syscalls is only enabled for 32 bit
 tasks, but in some cases, such as userspace emulation, it's useful to
@@ -120,5 +120,5 @@ index 2db751ce25a2..1be74620b0b6 100644
  		error = -EINVAL;
  		break;
 -- 
-2.46.0
+2.45.2
 
