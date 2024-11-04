@@ -1,7 +1,7 @@
 From 10b18bb2d94abcf35e199c76fcf9921de1dbb9ae Mon Sep 17 00:00:00 2001
 From: Bobby Eshleman <bobby.eshleman () bytedance ! com>
 Date: Sat, 10 Jun 2023 00:58:30 +0000
-Subject: [PATCH 05/17] vsock: support multi-transport datagrams
+Subject: [PATCH 05/20] vsock: support multi-transport datagrams
 
 This patch adds support for multi-transport datagrams.
 
@@ -304,5 +304,5 @@ index 6b19e308a140..21a4debde550 100644
  		.dgram_allow              = virtio_transport_dgram_allow,
  		.dgram_get_cid		  = virtio_transport_dgram_get_cid,
 -- 
-2.46.0
+2.45.2
 

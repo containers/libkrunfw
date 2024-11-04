@@ -1,7 +1,7 @@
-From 81c1338fa3e17c7fd327224ea2466a517a92d914 Mon Sep 17 00:00:00 2001
+From 9ec85361575b3936127e5f879dc3250e716eb452 Mon Sep 17 00:00:00 2001
 From: Dmitry Osipenko <dmitry.osipenko@collabora.com>
 Date: Sat, 7 Oct 2023 22:47:47 +0300
-Subject: [PATCH 17/17] drm/virtio: Support fence-passing feature
+Subject: [PATCH 17/20] drm/virtio: Support fence-passing feature
 
 Support extended version of VIRTIO_GPU_CMD_SUBMIT_3D command that allows
 passing in-fence IDs to host for waiting, removing need to do expensive
@@ -450,5 +450,5 @@ index f556fde07b76..c3182c8255cf 100644
  
  #define VIRTIO_GPU_CAPSET_VIRGL 1
 -- 
-2.46.0
+2.45.2
 
