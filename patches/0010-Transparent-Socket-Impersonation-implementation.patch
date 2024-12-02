@@ -1,4 +1,4 @@
-From bf4eb6179408f2fb6bbdd0d750a494ca1d0bf9c2 Mon Sep 17 00:00:00 2001
+From ea172def827af9efb7b81ae19b0f2bde42c33b38 Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@redhat.com>
 Date: Thu, 19 May 2022 22:38:26 +0200
 Subject: [PATCH 10/20] Transparent Socket Impersonation implementation
@@ -83,7 +83,7 @@ index 4c4dc535453d..b07f65c0ef56 100644
  obj-$(CONFIG_NET_HANDSHAKE)	+= handshake/
 +obj-$(CONFIG_TSI)		+= tsi/
 diff --git a/net/socket.c b/net/socket.c
-index 9db33cd4a71b..8b92dd098235 100644
+index bad58f23f307..9992976a67ff 100644
 --- a/net/socket.c
 +++ b/net/socket.c
 @@ -218,6 +218,7 @@ static const char * const pf_family_names[] = {

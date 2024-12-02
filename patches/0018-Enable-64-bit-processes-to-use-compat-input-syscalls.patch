@@ -1,4 +1,4 @@
-From a2a7742b033bd36460343555bcc9ddedac9ffb88 Mon Sep 17 00:00:00 2001
+From 59d0207bce9759ed9f28fa62fb70e1bc36cae7a0 Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@redhat.com>
 Date: Tue, 8 Oct 2024 11:24:25 +0200
 Subject: [PATCH 18/20] Enable 64 bit processes to use compat input syscalls
@@ -64,10 +64,10 @@ index 3b7bb12b023b..e78c0492ce0d 100644
  }
  
 diff --git a/include/linux/sched.h b/include/linux/sched.h
-index 77f01ac385f7..01125573065e 100644
+index 3d83cc397eac..a48fce12adfb 100644
 --- a/include/linux/sched.h
 +++ b/include/linux/sched.h
-@@ -1535,6 +1535,11 @@ struct task_struct {
+@@ -1537,6 +1537,11 @@ struct task_struct {
  #ifdef CONFIG_USER_EVENTS
  	struct user_event_mm		*user_event_mm;
  #endif
