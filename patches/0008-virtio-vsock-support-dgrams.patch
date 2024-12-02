@@ -1,4 +1,4 @@
-From cea879931c45169784b8b2301ae02ee45c4aa20d Mon Sep 17 00:00:00 2001
+From b103d01ce2eccd9b73f3db15674137b259f02ec4 Mon Sep 17 00:00:00 2001
 From: Bobby Eshleman <bobby.eshleman () bytedance ! com>
 Date: Sat, 10 Jun 2023 00:58:33 +0000
 Subject: [PATCH 08/20] virtio/vsock: support dgrams
@@ -345,7 +345,7 @@ index 4e138ad3c113..3dd63dc8f6b7 100644
  
  static struct virtio_driver virtio_vsock_driver = {
 diff --git a/net/vmw_vsock/virtio_transport_common.c b/net/vmw_vsock/virtio_transport_common.c
-index 0b2f6c211544..7ff2d3a44dc2 100644
+index 456dfa74c642..2908af557aa0 100644
 --- a/net/vmw_vsock/virtio_transport_common.c
 +++ b/net/vmw_vsock/virtio_transport_common.c
 @@ -37,6 +37,35 @@ virtio_transport_get_ops(struct vsock_sock *vsk)
@@ -475,23 +475,23 @@ index 0b2f6c211544..7ff2d3a44dc2 100644
 +EXPORT_SYMBOL_GPL(virtio_transport_dgram_get_cid);
 +
 +int virtio_transport_dgram_get_port(struct sk_buff *skb, unsigned int *port)
-+{
+ {
+-	return -EOPNOTSUPP;
 +	*port = le32_to_cpu(virtio_vsock_hdr(skb)->src_port);
 +	return 0;
-+}
+ }
+-EXPORT_SYMBOL_GPL(virtio_transport_dgram_dequeue);
 +EXPORT_SYMBOL_GPL(virtio_transport_dgram_get_port);
 +
 +int virtio_transport_dgram_get_length(struct sk_buff *skb, size_t *len)
- {
--	return -EOPNOTSUPP;
++{
 +	/* The device layer must have already moved the data ptr beyond the
 +	 * header for skb->len to be correct.
 +	 */
 +	WARN_ON(skb->data == skb->head);
 +	*len = skb->len;
 +	return 0;
- }
--EXPORT_SYMBOL_GPL(virtio_transport_dgram_dequeue);
++}
 +EXPORT_SYMBOL_GPL(virtio_transport_dgram_get_length);
  
  s64 virtio_transport_stream_has_data(struct vsock_sock *vsk)
@@ -563,7 +563,7 @@ index 0b2f6c211544..7ff2d3a44dc2 100644
  }
  EXPORT_SYMBOL_GPL(virtio_transport_dgram_enqueue);
  
-@@ -966,6 +1030,7 @@ static int virtio_transport_reset_no_sock(const struct virtio_transport *t,
+@@ -967,6 +1031,7 @@ static int virtio_transport_reset_no_sock(const struct virtio_transport *t,
  		.reply = true,
  	};
  	struct sk_buff *reply;
@@ -571,7 +571,7 @@ index 0b2f6c211544..7ff2d3a44dc2 100644
  
  	/* Send RST only if the original pkt is not a RST pkt */
  	if (le16_to_cpu(hdr->op) == VIRTIO_VSOCK_OP_RST)
-@@ -978,9 +1043,10 @@ static int virtio_transport_reset_no_sock(const struct virtio_transport *t,
+@@ -979,9 +1044,10 @@ static int virtio_transport_reset_no_sock(const struct virtio_transport *t,
  					   le64_to_cpu(hdr->dst_cid),
  					   le32_to_cpu(hdr->dst_port),
  					   le64_to_cpu(hdr->src_cid),
@@ -584,7 +584,7 @@ index 0b2f6c211544..7ff2d3a44dc2 100644
  
  	return t->send_pkt(reply);
  }
-@@ -1200,6 +1266,21 @@ virtio_transport_recv_enqueue(struct vsock_sock *vsk,
+@@ -1201,6 +1267,21 @@ virtio_transport_recv_enqueue(struct vsock_sock *vsk,
  		kfree_skb(skb);
  }
  
@@ -606,7 +606,7 @@ index 0b2f6c211544..7ff2d3a44dc2 100644
  static int
  virtio_transport_recv_connected(struct sock *sk,
  				struct sk_buff *skb)
-@@ -1369,7 +1450,8 @@ virtio_transport_recv_listen(struct sock *sk, struct sk_buff *skb,
+@@ -1378,7 +1459,8 @@ virtio_transport_recv_listen(struct sock *sk, struct sk_buff *skb,
  static bool virtio_transport_valid_type(u16 type)
  {
  	return (type == VIRTIO_VSOCK_TYPE_STREAM) ||
@@ -616,7 +616,7 @@ index 0b2f6c211544..7ff2d3a44dc2 100644
  }
  
  /* We are under the virtio-vsock's vsock->rx_lock or vhost-vsock's vq->mutex
-@@ -1383,40 +1465,52 @@ void virtio_transport_recv_pkt(struct virtio_transport *t,
+@@ -1392,40 +1474,52 @@ void virtio_transport_recv_pkt(struct virtio_transport *t,
  	struct vsock_sock *vsk;
  	struct sock *sk;
  	bool space_available;
@@ -679,7 +679,7 @@ index 0b2f6c211544..7ff2d3a44dc2 100644
  		sock_put(sk);
  		goto free_pkt;
  	}
-@@ -1432,12 +1526,18 @@ void virtio_transport_recv_pkt(struct virtio_transport *t,
+@@ -1441,12 +1535,18 @@ void virtio_transport_recv_pkt(struct virtio_transport *t,
  
  	/* Check if sk has been closed before lock_sock */
  	if (sock_flag(sk, SOCK_DONE)) {
@@ -699,7 +699,7 @@ index 0b2f6c211544..7ff2d3a44dc2 100644
  	space_available = virtio_transport_space_update(sk, skb);
  
  	/* Update CID in case it has changed after a transport reset event */
-@@ -1469,6 +1569,7 @@ void virtio_transport_recv_pkt(struct virtio_transport *t,
+@@ -1478,6 +1578,7 @@ void virtio_transport_recv_pkt(struct virtio_transport *t,
  		break;
  	}
  

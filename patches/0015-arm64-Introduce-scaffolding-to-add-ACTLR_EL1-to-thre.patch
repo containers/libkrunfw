@@ -1,4 +1,4 @@
-From 411580c12e8dd196e525b71caebd4e847413747a Mon Sep 17 00:00:00 2001
+From f391c3e1b4072567adbebe792a0268433e68d2bc Mon Sep 17 00:00:00 2001
 From: Hector Martin <marcan@marcan.st>
 Date: Thu, 11 Apr 2024 09:51:22 +0900
 Subject: [PATCH 15/20] arm64: Introduce scaffolding to add ACTLR_EL1 to thread
@@ -24,10 +24,10 @@ Reviewed-by: Neal Gompa <neal@gompa.dev>
  5 files changed, 44 insertions(+)
 
 diff --git a/arch/arm64/Kconfig b/arch/arm64/Kconfig
-index 741833d2f1a0..cefb705dc3c7 100644
+index ffc0a44a8dee..5f774ff0945a 100644
 --- a/arch/arm64/Kconfig
 +++ b/arch/arm64/Kconfig
-@@ -409,6 +409,9 @@ config KASAN_SHADOW_OFFSET
+@@ -408,6 +408,9 @@ config KASAN_SHADOW_OFFSET
  config UNWIND_TABLES
  	bool
  

@@ -1,4 +1,4 @@
-From 5a2b5b9c1a9f473836c361153b15c10eab012e9a Mon Sep 17 00:00:00 2001
+From 789729bfd16c0f28d6b591ffd4d2537c9f1e9873 Mon Sep 17 00:00:00 2001
 From: Bobby Eshleman <bobby.eshleman () bytedance ! com>
 Date: Sat, 10 Jun 2023 00:58:29 +0000
 Subject: [PATCH 04/20] vsock: refactor transport lookup code

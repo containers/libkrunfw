@@ -1,4 +1,4 @@
-From 06a9c813b4f59d92edf78a6011a719629323081c Mon Sep 17 00:00:00 2001
+From 0bef0669ef2606831f442e86254e9e1ab86809b6 Mon Sep 17 00:00:00 2001
 From: Bobby Eshleman <bobby.eshleman () bytedance ! com>
 Date: Sat, 10 Jun 2023 00:58:28 +0000
 Subject: [PATCH 03/20] vsock/dgram: generalize recvmsg and drop
@@ -151,10 +151,10 @@ index f5eb737a677d..c3fdb22cfd39 100644
  
  int vsock_dgram_recvmsg(struct socket *sock, struct msghdr *msg,
 diff --git a/net/vmw_vsock/hyperv_transport.c b/net/vmw_vsock/hyperv_transport.c
-index e2157e387217..a83b30d366af 100644
+index 56c232cf5b0f..cc0a6c3401d3 100644
 --- a/net/vmw_vsock/hyperv_transport.c
 +++ b/net/vmw_vsock/hyperv_transport.c
-@@ -556,8 +556,17 @@ static int hvs_dgram_bind(struct vsock_sock *vsk, struct sockaddr_vm *addr)
+@@ -557,8 +557,17 @@ static int hvs_dgram_bind(struct vsock_sock *vsk, struct sockaddr_vm *addr)
  	return -EOPNOTSUPP;
  }
  
@@ -174,7 +174,7 @@ index e2157e387217..a83b30d366af 100644
  {
  	return -EOPNOTSUPP;
  }
-@@ -833,7 +842,9 @@ static struct vsock_transport hvs_transport = {
+@@ -834,7 +843,9 @@ static struct vsock_transport hvs_transport = {
  	.shutdown                 = hvs_shutdown,
  
  	.dgram_bind               = hvs_dgram_bind,
@@ -203,7 +203,7 @@ index 2925f5d27ad3..332d6d580cba 100644
  		.stream_dequeue           = virtio_transport_stream_dequeue,
  		.stream_enqueue           = virtio_transport_stream_enqueue,
 diff --git a/net/vmw_vsock/virtio_transport_common.c b/net/vmw_vsock/virtio_transport_common.c
-index e87fd9480acd..ed1235d57ffb 100644
+index 43495820b64f..b566fc80f8db 100644
 --- a/net/vmw_vsock/virtio_transport_common.c
 +++ b/net/vmw_vsock/virtio_transport_common.c
 @@ -860,6 +860,24 @@ int virtio_transport_dgram_bind(struct vsock_sock *vsk,

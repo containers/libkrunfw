@@ -1,4 +1,4 @@
-From 0d5513eeec3176ffdc62348f1fc52579f9daeebf Mon Sep 17 00:00:00 2001
+From dcf61fa3f1435132d79cf7e0a97db5fe883a2696 Mon Sep 17 00:00:00 2001
 From: Asahi Lina <lina@asahilina.net>
 Date: Sun, 20 Oct 2024 01:23:41 +0900
 Subject: [PATCH 19/20] dax: Allow block size > PAGE_SIZE
@@ -22,7 +22,7 @@ Signed-off-by: Asahi Lina <lina@asahilina.net>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/fs/dax.c b/fs/dax.c
-index 3380b43cb6bb..9a33625740c1 100644
+index 8c09578fa035..1f99f5556e85 100644
 --- a/fs/dax.c
 +++ b/fs/dax.c
 @@ -1032,7 +1032,7 @@ int dax_writeback_mapping_range(struct address_space *mapping,
