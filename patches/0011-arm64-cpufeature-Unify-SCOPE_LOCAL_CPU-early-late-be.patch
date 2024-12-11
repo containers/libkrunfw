@@ -1,7 +1,7 @@
-From 4799b17d694746a858a8d4b05807f1e2efe252a6 Mon Sep 17 00:00:00 2001
+From 74b584bdff56c762b881cd499f1cc14de83c2d5c Mon Sep 17 00:00:00 2001
 From: Asahi Lina <lina@asahilina.net>
 Date: Wed, 25 Sep 2024 16:35:34 +0200
-Subject: [PATCH 12/20] arm64: cpufeature: Unify SCOPE_LOCAL_CPU early & late
+Subject: [PATCH 11/19] arm64: cpufeature: Unify SCOPE_LOCAL_CPU early & late
  behavior
 
 SCOPE_LOCAL_CPU is mostly used for CPU errata. The early feature logic
@@ -35,10 +35,10 @@ Signed-off-by: Asahi Lina <lina@asahilina.net>
  1 file changed, 31 insertions(+), 3 deletions(-)
 
 diff --git a/arch/arm64/kernel/cpufeature.c b/arch/arm64/kernel/cpufeature.c
-index 7e9660455900..6802a8eeb6a6 100644
+index db994d1fd97e..a9377c83afcb 100644
 --- a/arch/arm64/kernel/cpufeature.c
 +++ b/arch/arm64/kernel/cpufeature.c
-@@ -2986,10 +2986,38 @@ static void update_cpu_capabilities(u16 scope_mask)
+@@ -3168,10 +3168,38 @@ static void update_cpu_capabilities(u16 scope_mask)
  
  	scope_mask &= ARM64_CPUCAP_SCOPE_MASK;
  	for (i = 0; i < ARM64_NCAPS; i++) {
@@ -79,7 +79,7 @@ index 7e9660455900..6802a8eeb6a6 100644
 +			 */
  			continue;
  
- 		if (caps->desc)
+ 		if (caps->desc && !caps->cpus)
 -- 
 2.45.2
 

@@ -1,4 +1,4 @@
-KERNEL_VERSION = linux-6.6.63
+KERNEL_VERSION = linux-6.12.3
 KERNEL_REMOTE = https://cdn.kernel.org/pub/linux/kernel/v6.x/$(KERNEL_VERSION).tar.xz
 KERNEL_TARBALL = tarballs/$(KERNEL_VERSION).tar.xz
 KERNEL_SOURCES = $(KERNEL_VERSION)
@@ -6,8 +6,8 @@ KERNEL_PATCHES = $(shell find patches/ -name "0*.patch" | sort)
 KERNEL_C_BUNDLE = kernel.c
 
 ABI_VERSION = 4
-FULL_VERSION = 4.6.0
-TIMESTAMP = "Mon Dec  2 11:39:28 CET 2024"
+FULL_VERSION = 4.7.0
+TIMESTAMP = "Wed Dec 11 20:34:13 CET 2024"
 
 KERNEL_FLAGS = KBUILD_BUILD_TIMESTAMP=$(TIMESTAMP)
 KERNEL_FLAGS += KBUILD_BUILD_USER=root

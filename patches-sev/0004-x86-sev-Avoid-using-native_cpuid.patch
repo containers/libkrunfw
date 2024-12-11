@@ -1,4 +1,4 @@
-From d53bef286ab6731ad5c721537ef8ad3ec39c0200 Mon Sep 17 00:00:00 2001
+From 459990b97e11b3be4272d06b4647bdab6bdf099e Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@redhat.com>
 Date: Wed, 5 Jun 2024 16:20:08 +0200
 Subject: [PATCH 4/4] x86/sev: Avoid using native_cpuid
@@ -16,7 +16,7 @@ Signed-off-by: Sergio Lopez <slp@redhat.com>
  1 file changed, 3 insertions(+), 23 deletions(-)
 
 diff --git a/arch/x86/mm/mem_encrypt_identity.c b/arch/x86/mm/mem_encrypt_identity.c
-index cc47a818a640..a2b5b08eee23 100644
+index ac33b2263a43..d894fdb89007 100644
 --- a/arch/x86/mm/mem_encrypt_identity.c
 +++ b/arch/x86/mm/mem_encrypt_identity.c
 @@ -495,37 +495,17 @@ void __head sme_enable(struct boot_params *bp)

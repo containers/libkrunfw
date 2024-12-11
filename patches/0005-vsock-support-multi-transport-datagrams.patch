@@ -1,7 +1,7 @@
-From aa746f8898e3b89d6d93a1373a85eea7815bb416 Mon Sep 17 00:00:00 2001
+From 448088b2a662ed19728b42e75c9a5f500d2c5359 Mon Sep 17 00:00:00 2001
 From: Bobby Eshleman <bobby.eshleman () bytedance ! com>
 Date: Sat, 10 Jun 2023 00:58:30 +0000
-Subject: [PATCH 05/20] vsock: support multi-transport datagrams
+Subject: [PATCH 05/19] vsock: support multi-transport datagrams
 
 This patch adds support for multi-transport datagrams.
 
@@ -57,10 +57,10 @@ Signed-off-by: Bobby Eshleman <bobby.eshleman@bytedance.com>
  7 files changed, 60 insertions(+), 36 deletions(-)
 
 diff --git a/drivers/vhost/vsock.c b/drivers/vhost/vsock.c
-index 549158375086..ea093563b96b 100644
+index 1b3e6963335b..d58be350ddca 100644
 --- a/drivers/vhost/vsock.c
 +++ b/drivers/vhost/vsock.c
-@@ -410,7 +410,6 @@ static struct virtio_transport vhost_transport = {
+@@ -419,7 +419,6 @@ static struct virtio_transport vhost_transport = {
  		.cancel_pkt               = vhost_transport_cancel_pkt,
  
  		.dgram_enqueue            = virtio_transport_dgram_enqueue,
@@ -69,10 +69,10 @@ index 549158375086..ea093563b96b 100644
  		.dgram_get_cid		  = virtio_transport_dgram_get_cid,
  		.dgram_get_port		  = virtio_transport_dgram_get_port,
 diff --git a/include/linux/virtio_vsock.h b/include/linux/virtio_vsock.h
-index 1098a4c0d738..26339021418d 100644
+index 954c5d66f8e4..741d643534f4 100644
 --- a/include/linux/virtio_vsock.h
 +++ b/include/linux/virtio_vsock.h
-@@ -216,8 +216,6 @@ void virtio_transport_notify_buffer_size(struct vsock_sock *vsk, u64 *val);
+@@ -232,8 +232,6 @@ void virtio_transport_notify_buffer_size(struct vsock_sock *vsk, u64 *val);
  u64 virtio_transport_stream_rcvhiwat(struct vsock_sock *vsk);
  bool virtio_transport_stream_is_active(struct vsock_sock *vsk);
  bool virtio_transport_stream_allow(u32 cid, u32 port);
@@ -82,10 +82,10 @@ index 1098a4c0d738..26339021418d 100644
  int virtio_transport_dgram_get_cid(struct sk_buff *skb, unsigned int *cid);
  int virtio_transport_dgram_get_port(struct sk_buff *skb, unsigned int *port);
 diff --git a/net/vmw_vsock/af_vsock.c b/net/vmw_vsock/af_vsock.c
-index 5a517638deed..afe28d3b0b74 100644
+index 5a45600002f5..2c4fda4215f1 100644
 --- a/net/vmw_vsock/af_vsock.c
 +++ b/net/vmw_vsock/af_vsock.c
-@@ -440,6 +440,18 @@ vsock_connectible_lookup_transport(unsigned int cid, __u8 flags)
+@@ -441,6 +441,18 @@ vsock_connectible_lookup_transport(unsigned int cid, __u8 flags)
  	return transport;
  }
  
@@ -104,7 +104,7 @@ index 5a517638deed..afe28d3b0b74 100644
  /* Assign a transport to a socket and call the .init transport callback.
   *
   * Note: for connection oriented socket this must be called when vsk->remote_addr
-@@ -476,7 +488,8 @@ int vsock_assign_transport(struct vsock_sock *vsk, struct vsock_sock *psk)
+@@ -477,7 +489,8 @@ int vsock_assign_transport(struct vsock_sock *vsk, struct vsock_sock *psk)
  
  	switch (sk->sk_type) {
  	case SOCK_DGRAM:
@@ -114,7 +114,7 @@ index 5a517638deed..afe28d3b0b74 100644
  		break;
  	case SOCK_STREAM:
  	case SOCK_SEQPACKET:
-@@ -693,6 +706,9 @@ static int __vsock_bind_connectible(struct vsock_sock *vsk,
+@@ -694,6 +707,9 @@ static int __vsock_bind_connectible(struct vsock_sock *vsk,
  static int __vsock_bind_dgram(struct vsock_sock *vsk,
  			      struct sockaddr_vm *addr)
  {
@@ -124,7 +124,7 @@ index 5a517638deed..afe28d3b0b74 100644
  	return vsk->transport->dgram_bind(vsk, addr);
  }
  
-@@ -1174,19 +1190,24 @@ static int vsock_dgram_sendmsg(struct socket *sock, struct msghdr *msg,
+@@ -1178,19 +1194,24 @@ static int vsock_dgram_sendmsg(struct socket *sock, struct msghdr *msg,
  
  	lock_sock(sk);
  
@@ -156,7 +156,7 @@ index 5a517638deed..afe28d3b0b74 100644
  		/* Ensure this address is of the right type and is a valid
  		 * destination.
  		 */
-@@ -1195,11 +1216,27 @@ static int vsock_dgram_sendmsg(struct socket *sock, struct msghdr *msg,
+@@ -1199,11 +1220,27 @@ static int vsock_dgram_sendmsg(struct socket *sock, struct msghdr *msg,
  			remote_addr->svm_cid = transport->get_local_cid();
  
  		if (!vsock_addr_bound(remote_addr)) {
@@ -184,7 +184,7 @@ index 5a517638deed..afe28d3b0b74 100644
  
  		if (remote_addr->svm_cid == VMADDR_CID_ANY)
  			remote_addr->svm_cid = transport->get_local_cid();
-@@ -1207,23 +1244,23 @@ static int vsock_dgram_sendmsg(struct socket *sock, struct msghdr *msg,
+@@ -1211,23 +1248,23 @@ static int vsock_dgram_sendmsg(struct socket *sock, struct msghdr *msg,
  		/* XXX Should connect() or this function ensure remote_addr is
  		 * bound?
  		 */
@@ -217,7 +217,7 @@ index 5a517638deed..afe28d3b0b74 100644
  out:
  	release_sock(sk);
  	return err;
-@@ -1257,13 +1294,18 @@ static int vsock_dgram_connect(struct socket *sock,
+@@ -1261,13 +1298,18 @@ static int vsock_dgram_connect(struct socket *sock,
  	if (err)
  		goto out;
  
@@ -262,10 +262,10 @@ index cc0a6c3401d3..4c6d705cc9e6 100644
  	.dgram_get_port		  = hvs_dgram_get_port,
  	.dgram_get_length	  = hvs_dgram_get_length,
 diff --git a/net/vmw_vsock/virtio_transport.c b/net/vmw_vsock/virtio_transport.c
-index 332d6d580cba..4e138ad3c113 100644
+index 48008d8341d7..f64281de9783 100644
 --- a/net/vmw_vsock/virtio_transport.c
 +++ b/net/vmw_vsock/virtio_transport.c
-@@ -429,7 +429,6 @@ static struct virtio_transport virtio_transport = {
+@@ -551,7 +551,6 @@ static struct virtio_transport virtio_transport = {
  		.shutdown                 = virtio_transport_shutdown,
  		.cancel_pkt               = virtio_transport_cancel_pkt,
  
@@ -274,10 +274,10 @@ index 332d6d580cba..4e138ad3c113 100644
  		.dgram_allow              = virtio_transport_dgram_allow,
  		.dgram_get_cid		  = virtio_transport_dgram_get_cid,
 diff --git a/net/vmw_vsock/virtio_transport_common.c b/net/vmw_vsock/virtio_transport_common.c
-index b566fc80f8db..456dfa74c642 100644
+index 13ae96f0d2ec..2a0f720e33d8 100644
 --- a/net/vmw_vsock/virtio_transport_common.c
 +++ b/net/vmw_vsock/virtio_transport_common.c
-@@ -853,13 +853,6 @@ bool virtio_transport_stream_allow(u32 cid, u32 port)
+@@ -1040,13 +1040,6 @@ bool virtio_transport_stream_allow(u32 cid, u32 port)
  }
  EXPORT_SYMBOL_GPL(virtio_transport_stream_allow);
  
@@ -292,10 +292,10 @@ index b566fc80f8db..456dfa74c642 100644
  {
  	return -EOPNOTSUPP;
 diff --git a/net/vmw_vsock/vsock_loopback.c b/net/vmw_vsock/vsock_loopback.c
-index 6b19e308a140..21a4debde550 100644
+index 3d5e05d8950f..9e9e124f8d2b 100644
 --- a/net/vmw_vsock/vsock_loopback.c
 +++ b/net/vmw_vsock/vsock_loopback.c
-@@ -61,7 +61,6 @@ static struct virtio_transport loopback_transport = {
+@@ -65,7 +65,6 @@ static struct virtio_transport loopback_transport = {
  		.shutdown                 = virtio_transport_shutdown,
  		.cancel_pkt               = vsock_loopback_cancel_pkt,
  
