@@ -1,7 +1,7 @@
-From 3ff89941eeaa749a5d26bdd2cfc31ca9201770fd Mon Sep 17 00:00:00 2001
+From c1fc9e5866174b3ec0330c94f2441d836f265008 Mon Sep 17 00:00:00 2001
 From: Bobby Eshleman <bobby.eshleman () bytedance ! com>
 Date: Sat, 10 Jun 2023 00:58:32 +0000
-Subject: [PATCH 07/20] virtio/vsock: add VIRTIO_VSOCK_F_DGRAM feature bit
+Subject: [PATCH 07/19] virtio/vsock: add VIRTIO_VSOCK_F_DGRAM feature bit
 
 This commit adds a feature bit for virtio vsock to support datagrams.
 

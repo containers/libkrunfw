@@ -1,7 +1,7 @@
-From a6442523102c4d482bf24f0f21a38ae29b3f0c8c Mon Sep 17 00:00:00 2001
+From 784c1bce5f1ca4c39d6c94dd1db220291cb26f9a Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@redhat.com>
 Date: Thu, 2 Mar 2023 07:34:49 +0100
-Subject: [PATCH 01/20] krunfw: Don't panic when init dies
+Subject: [PATCH 01/19] krunfw: Don't panic when init dies
 
 In libkrun, the isolated process runs as PID 1. When it exits,
 trigger an orderly reboot instead of panic'ing.
@@ -11,23 +11,24 @@ play with the printk levels instead.
 
 Signed-off-by: Sergio Lopez <slp@redhat.com>
 ---
- kernel/exit.c   | 5 +++++
+ kernel/exit.c   | 6 ++++++
  kernel/reboot.c | 2 ++
- 2 files changed, 7 insertions(+)
+ 2 files changed, 8 insertions(+)
 
 diff --git a/kernel/exit.c b/kernel/exit.c
-index 3540b2c9b1b6..8348e9825945 100644
+index 619f0014c33b..987bec96ebee 100644
 --- a/kernel/exit.c
 +++ b/kernel/exit.c
-@@ -69,6 +69,7 @@
+@@ -69,6 +69,8 @@
  #include <linux/rethook.h>
  #include <linux/sysfs.h>
  #include <linux/user_events.h>
 +#include <linux/reboot.h>
- 
++
  #include <linux/uaccess.h>
- #include <asm/unistd.h>
-@@ -840,8 +841,12 @@ void __noreturn do_exit(long code)
+ 
+ #include <uapi/linux/wait.h>
+@@ -905,8 +907,12 @@ void __noreturn do_exit(long code)
  		 * immediately to get a useable coredump.
  		 */
  		if (unlikely(is_global_init(tsk)))
@@ -41,10 +42,10 @@ index 3540b2c9b1b6..8348e9825945 100644
  #ifdef CONFIG_POSIX_TIMERS
  		hrtimer_cancel(&tsk->signal->real_timer);
 diff --git a/kernel/reboot.c b/kernel/reboot.c
-index 6ebef11c8876..4323caa5b871 100644
+index f05dbde2c93f..f047bde90c03 100644
 --- a/kernel/reboot.c
 +++ b/kernel/reboot.c
-@@ -269,10 +269,12 @@ void kernel_restart(char *cmd)
+@@ -278,10 +278,12 @@ void kernel_restart(char *cmd)
  	do_kernel_restart_prepare();
  	migrate_to_reboot_cpu();
  	syscore_shutdown();

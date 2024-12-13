@@ -1,7 +1,7 @@
-From ea172def827af9efb7b81ae19b0f2bde42c33b38 Mon Sep 17 00:00:00 2001
+From 5aa4b81b960a8cebb8365596a4253d5a2591d2ec Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@redhat.com>
 Date: Thu, 19 May 2022 22:38:26 +0200
-Subject: [PATCH 10/20] Transparent Socket Impersonation implementation
+Subject: [PATCH 09/19] Transparent Socket Impersonation implementation
 
 Transparent Socket Impersonation (AF_TSI) is an address family that
 provides sockets presenting two simultaneous personalities, AF_INET
@@ -31,18 +31,18 @@ Signed-off-by: Sergio Lopez <slp@redhat.com>
  net/tsi/af_tsi.c                    | 1280 +++++++++++++++++++++++++++
  net/tsi/af_tsi.h                    |  100 +++
  security/selinux/hooks.c            |    4 +-
- security/selinux/include/classmap.h |    4 +-
- 10 files changed, 1403 insertions(+), 3 deletions(-)
+ security/selinux/include/classmap.h |    3 +-
+ 10 files changed, 1402 insertions(+), 3 deletions(-)
  create mode 100644 net/tsi/Kconfig
  create mode 100644 net/tsi/Makefile
  create mode 100644 net/tsi/af_tsi.c
  create mode 100644 net/tsi/af_tsi.h
 
 diff --git a/include/linux/socket.h b/include/linux/socket.h
-index cfcb7e2c3813..b5891faf7996 100644
+index d18cc47e89bd..b408fc7f2062 100644
 --- a/include/linux/socket.h
 +++ b/include/linux/socket.h
-@@ -239,8 +239,9 @@ struct ucred {
+@@ -240,8 +240,9 @@ struct ucred {
  #define AF_MCTP		45	/* Management component
  				 * transport protocol
  				 */
@@ -53,7 +53,7 @@ index cfcb7e2c3813..b5891faf7996 100644
  
  /* Protocol families, same as address families. */
  #define PF_UNSPEC	AF_UNSPEC
-@@ -291,6 +292,7 @@ struct ucred {
+@@ -292,6 +293,7 @@ struct ucred {
  #define PF_SMC		AF_SMC
  #define PF_XDP		AF_XDP
  #define PF_MCTP		AF_MCTP
@@ -62,10 +62,10 @@ index cfcb7e2c3813..b5891faf7996 100644
  
  /* Maximum queue length specifiable by listen.  */
 diff --git a/net/Kconfig b/net/Kconfig
-index d532ec33f1fe..cce74ff2a107 100644
+index a629f92dc86b..91dfb9152b5b 100644
 --- a/net/Kconfig
 +++ b/net/Kconfig
-@@ -267,6 +267,7 @@ source "net/switchdev/Kconfig"
+@@ -274,6 +274,7 @@ source "net/switchdev/Kconfig"
  source "net/l3mdev/Kconfig"
  source "net/qrtr/Kconfig"
  source "net/ncsi/Kconfig"
@@ -74,19 +74,19 @@ index d532ec33f1fe..cce74ff2a107 100644
  config PCPU_DEV_REFCNT
  	bool "Use percpu variables to maintain network device refcount"
 diff --git a/net/Makefile b/net/Makefile
-index 4c4dc535453d..b07f65c0ef56 100644
+index 65bb8c72a35e..c1db937f3212 100644
 --- a/net/Makefile
 +++ b/net/Makefile
-@@ -80,3 +80,4 @@ obj-$(CONFIG_XDP_SOCKETS)	+= xdp/
+@@ -79,3 +79,4 @@ obj-$(CONFIG_XDP_SOCKETS)	+= xdp/
  obj-$(CONFIG_MPTCP)		+= mptcp/
  obj-$(CONFIG_MCTP)		+= mctp/
  obj-$(CONFIG_NET_HANDSHAKE)	+= handshake/
 +obj-$(CONFIG_TSI)		+= tsi/
 diff --git a/net/socket.c b/net/socket.c
-index bad58f23f307..9992976a67ff 100644
+index 042451f01c65..5ad75d15e1ad 100644
 --- a/net/socket.c
 +++ b/net/socket.c
-@@ -218,6 +218,7 @@ static const char * const pf_family_names[] = {
+@@ -217,6 +217,7 @@ static const char * const pf_family_names[] = {
  	[PF_SMC]	= "PF_SMC",
  	[PF_XDP]	= "PF_XDP",
  	[PF_MCTP]	= "PF_MCTP",
@@ -119,7 +119,7 @@ index 000000000000..8b3cf74116a5
 +tsi-y := af_tsi.o
 diff --git a/net/tsi/af_tsi.c b/net/tsi/af_tsi.c
 new file mode 100644
-index 000000000000..eda6c4ba7961
+index 000000000000..f43a17cff3a3
 --- /dev/null
 +++ b/net/tsi/af_tsi.c
 @@ -0,0 +1,1280 @@
@@ -505,7 +505,7 @@ index 000000000000..eda6c4ba7961
 +}
 +
 +static int tsi_accept_inet(struct tsi_sock *tsk, struct socket **newsock,
-+			   int flags, bool kern)
++			   struct proto_accept_arg *arg)
 +{
 +	struct socket *socket = tsk->isocket;
 +	struct socket *nsock;
@@ -518,7 +518,7 @@ index 000000000000..eda6c4ba7961
 +	nsock->type = socket->type;
 +	nsock->ops = socket->ops;
 +
-+	err = socket->ops->accept(socket, nsock, flags, kern);
++	err = socket->ops->accept(socket, nsock, arg);
 +
 +	if (err < 0) {
 +		pr_debug("%s: inet accept failed: %d\n", __func__, err);
@@ -532,7 +532,7 @@ index 000000000000..eda6c4ba7961
 +}
 +
 +static int tsi_accept_vsock(struct tsi_sock *tsk, struct socket **newsock,
-+			    int flags, bool kern)
++			    struct proto_accept_arg *arg)
 +{
 +	struct socket *socket = tsk->vsocket;
 +	struct socket *nsock;
@@ -541,7 +541,7 @@ index 000000000000..eda6c4ba7961
 +	int err;
 +
 +	ta_req.svm_port = tsk->svm_port;
-+	ta_req.flags = flags;
++	ta_req.flags = arg->flags;
 +
 +	pr_debug("%s: sending accept request id=%u\n", __func__,
 +		 ta_req.svm_port);
@@ -577,7 +577,7 @@ index 000000000000..eda6c4ba7961
 +	nsock->type = socket->type;
 +	nsock->ops = socket->ops;
 +
-+	err = socket->ops->accept(socket, nsock, flags, kern);
++	err = socket->ops->accept(socket, nsock, arg);
 +
 +	if (err < 0) {
 +		pr_debug("%s: vsock accept failed: %d\n", __func__, err);
@@ -590,8 +590,8 @@ index 000000000000..eda6c4ba7961
 +	return err;
 +}
 +
-+static int tsi_accept(struct socket *sock, struct socket *newsock, int flags,
-+		      bool kern)
++static int tsi_accept(struct socket *sock, struct socket *newsock,
++		      struct proto_accept_arg *arg)
 +{
 +	struct sock *listener = sock->sk;
 +	struct sockaddr_vm vm_addr;
@@ -621,14 +621,14 @@ index 000000000000..eda6c4ba7961
 +	newtsk = tsi_sk(newsock->sk);
 +
 +	if (tsk->status == S_INET) {
-+		err = tsi_accept_inet(tsk, &nsock, flags, kern);
++		err = tsi_accept_inet(tsk, &nsock, arg);
 +		if (err < 0) {
 +			goto error;
 +		}
 +		newtsk->status = S_INET;
 +		newtsk->isocket = nsock;
 +	} else {
-+		err = tsi_accept_vsock(tsk, &nsock, flags, kern);
++		err = tsi_accept_vsock(tsk, &nsock, arg);
 +		if (err < 0) {
 +			goto error;
 +		}
@@ -1510,10 +1510,10 @@ index 000000000000..cf381734bebe
 +
 +#endif
 diff --git a/security/selinux/hooks.c b/security/selinux/hooks.c
-index d4a99d98ec77..82fd1f975ef6 100644
+index fc926d3cac6e..486be0734a6c 100644
 --- a/security/selinux/hooks.c
 +++ b/security/selinux/hooks.c
-@@ -1295,7 +1295,9 @@ static inline u16 socket_type_to_security_class(int family, int type, int protoc
+@@ -1302,7 +1302,9 @@ static inline u16 socket_type_to_security_class(int family, int type, int protoc
  			return SECCLASS_XDP_SOCKET;
  		case PF_MCTP:
  			return SECCLASS_MCTP_SOCKET;
@@ -1525,21 +1525,20 @@ index d4a99d98ec77..82fd1f975ef6 100644
  #endif
  		}
 diff --git a/security/selinux/include/classmap.h b/security/selinux/include/classmap.h
-index a3c380775d41..4640eb408c06 100644
+index 7229c9bf6c27..065d9b85693f 100644
 --- a/security/selinux/include/classmap.h
 +++ b/security/selinux/include/classmap.h
-@@ -248,6 +248,8 @@ const struct security_class_mapping secclass_map[] = {
- 	  { COMMON_SOCK_PERMS, NULL } },
- 	{ "mctp_socket",
- 	  { COMMON_SOCK_PERMS, NULL } },
-+	{ "tsi_socket",
-+	  { COMMON_SOCK_PERMS, NULL } },
+@@ -173,6 +173,7 @@ const struct security_class_mapping secclass_map[] = {
+ 	    NULL } },
+ 	{ "xdp_socket", { COMMON_SOCK_PERMS, NULL } },
+ 	{ "mctp_socket", { COMMON_SOCK_PERMS, NULL } },
++	{ "tsi_socket", { COMMON_SOCK_PERMS, NULL } },
  	{ "perf_event",
  	  { "open", "cpu", "kernel", "tracepoint", "read", "write", NULL } },
- 	{ "anon_inode",
-@@ -259,6 +261,6 @@ const struct security_class_mapping secclass_map[] = {
+ 	{ "anon_inode", { COMMON_FILE_PERMS, NULL } },
+@@ -181,6 +182,6 @@ const struct security_class_mapping secclass_map[] = {
  	{ NULL }
-   };
+ };
  
 -#if PF_MAX > 46
 +#if PF_MAX > 47

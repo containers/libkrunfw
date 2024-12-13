@@ -1,7 +1,7 @@
-From b334e997e14d8245ad36fc00e65445cd747a360b Mon Sep 17 00:00:00 2001
+From 63e6b500aa921fbc6feb0a2dd6512f7c371b6db5 Mon Sep 17 00:00:00 2001
 From: Asahi Lina <lina@asahilina.net>
 Date: Mon, 21 Oct 2024 23:21:16 +0900
-Subject: [PATCH 20/20] mm: Fix __wp_page_copy_user fallback path for remote mm
+Subject: [PATCH 19/19] mm: Fix __wp_page_copy_user fallback path for remote mm
 
 If the source page is a PFN mapping, we copy back from userspace.
 However, if this fault is a remote access, we cannot use
@@ -58,10 +58,10 @@ Signed-off-by: Asahi Lina <lina@asahilina.net>
  1 file changed, 6 insertions(+), 1 deletion(-)
 
 diff --git a/mm/memory.c b/mm/memory.c
-index 742c2f65c2c8..90214200dc6e 100644
+index bdf77a3ec47b..8a846c7b1e70 100644
 --- a/mm/memory.c
 +++ b/mm/memory.c
-@@ -2871,13 +2871,18 @@ static inline int __wp_page_copy_user(struct page *dst, struct page *src,
+@@ -3081,13 +3081,18 @@ static inline int __wp_page_copy_user(struct page *dst, struct page *src,
  			update_mmu_cache_range(vmf, vma, addr, vmf->pte, 1);
  	}
  

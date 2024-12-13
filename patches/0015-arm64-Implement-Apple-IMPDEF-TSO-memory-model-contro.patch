@@ -1,7 +1,7 @@
-From 641b03f2e7b6bd1285de906f3aee976aef38b8ba Mon Sep 17 00:00:00 2001
+From d38c52ef771b223fa12af0e8a16015decc13566d Mon Sep 17 00:00:00 2001
 From: Hector Martin <marcan@marcan.st>
 Date: Thu, 11 Apr 2024 09:51:23 +0900
-Subject: [PATCH 16/20] arm64: Implement Apple IMPDEF TSO memory model control
+Subject: [PATCH 15/19] arm64: Implement Apple IMPDEF TSO memory model control
 
 Apple CPUs may implement the TSO memory model as an optional
 configurable mode. This allows x86 emulators to simplify their
@@ -20,17 +20,17 @@ Reviewed-by: Neal Gompa <neal@gompa.dev>
  arch/arm64/Kconfig                        |  2 +
  arch/arm64/include/asm/apple_cpufeature.h | 15 +++++++
  arch/arm64/include/asm/cpufeature.h       |  3 +-
- arch/arm64/kernel/cpufeature_impdef.c     | 52 +++++++++++++++++++++++
+ arch/arm64/kernel/cpufeature_impdef.c     | 53 +++++++++++++++++++++++
  arch/arm64/kernel/process.c               | 22 ++++++++++
  arch/arm64/tools/cpucaps                  |  1 +
- 6 files changed, 94 insertions(+), 1 deletion(-)
+ 6 files changed, 95 insertions(+), 1 deletion(-)
  create mode 100644 arch/arm64/include/asm/apple_cpufeature.h
 
 diff --git a/arch/arm64/Kconfig b/arch/arm64/Kconfig
-index 5f774ff0945a..4cd140d0d693 100644
+index 343a2abab42f..c30fc0652744 100644
 --- a/arch/arm64/Kconfig
 +++ b/arch/arm64/Kconfig
-@@ -2205,6 +2205,8 @@ endif # ARM64_PSEUDO_NMI
+@@ -2255,6 +2255,8 @@ endif # ARM64_PSEUDO_NMI
  
  config ARM64_MEMORY_MODEL_CONTROL
  	bool "Runtime memory model control"
@@ -61,10 +61,10 @@ index 000000000000..4370d91ffa3e
 +
 +#endif
 diff --git a/arch/arm64/include/asm/cpufeature.h b/arch/arm64/include/asm/cpufeature.h
-index 8c5d5a03b2af..fb2e732c407f 100644
+index 1775e210f04f..6343a192aba1 100644
 --- a/arch/arm64/include/asm/cpufeature.h
 +++ b/arch/arm64/include/asm/cpufeature.h
-@@ -910,7 +910,8 @@ static inline unsigned int get_vmid_bits(u64 mmfr1)
+@@ -917,7 +917,8 @@ static inline unsigned int get_vmid_bits(u64 mmfr1)
  
  static __always_inline bool system_has_actlr_state(void)
  {
@@ -75,7 +75,7 @@ index 8c5d5a03b2af..fb2e732c407f 100644
  
  s64 arm64_ftr_safe_value(const struct arm64_ftr_bits *ftrp, s64 new, s64 cur);
 diff --git a/arch/arm64/kernel/cpufeature_impdef.c b/arch/arm64/kernel/cpufeature_impdef.c
-index de784a1fb49b..d82ff2e80426 100644
+index de784a1fb49b..3b0807bf90cd 100644
 --- a/arch/arm64/kernel/cpufeature_impdef.c
 +++ b/arch/arm64/kernel/cpufeature_impdef.c
 @@ -3,9 +3,51 @@
@@ -130,7 +130,7 @@ index de784a1fb49b..d82ff2e80426 100644
  static bool has_tso_fixed(const struct arm64_cpu_capabilities *entry, int scope)
  {
  	/* List of CPUs that always use the TSO memory model */
-@@ -22,6 +64,16 @@ static bool has_tso_fixed(const struct arm64_cpu_capabilities *entry, int scope)
+@@ -22,6 +64,17 @@ static bool has_tso_fixed(const struct arm64_cpu_capabilities *entry, int scope)
  
  static const struct arm64_cpu_capabilities arm64_impdef_features[] = {
  #ifdef CONFIG_ARM64_MEMORY_MODEL_CONTROL
@@ -143,12 +143,13 @@ index de784a1fb49b..d82ff2e80426 100644
 +		.field_width = 1,
 +		.sign = FTR_UNSIGNED,
 +		.min_field_value = 1,
++		.max_field_value = 1,
 +	},
  	{
  		.desc = "TSO memory model (Fixed)",
  		.capability = ARM64_HAS_TSO_FIXED,
 diff --git a/arch/arm64/kernel/process.c b/arch/arm64/kernel/process.c
-index 235c965ebbc3..9cb54aa3b731 100644
+index 357e5dbf38cd..9bdf9ca9051e 100644
 --- a/arch/arm64/kernel/process.c
 +++ b/arch/arm64/kernel/process.c
 @@ -44,6 +44,7 @@
@@ -156,10 +157,10 @@ index 235c965ebbc3..9cb54aa3b731 100644
  
  #include <asm/alternative.h>
 +#include <asm/apple_cpufeature.h>
+ #include <asm/arch_timer.h>
  #include <asm/compat.h>
  #include <asm/cpufeature.h>
- #include <asm/cacheflush.h>
-@@ -525,6 +526,10 @@ void update_sctlr_el1(u64 sctlr)
+@@ -574,6 +575,10 @@ void update_sctlr_el1(u64 sctlr)
  #ifdef CONFIG_ARM64_MEMORY_MODEL_CONTROL
  int arch_prctl_mem_model_get(struct task_struct *t)
  {
@@ -170,7 +171,7 @@ index 235c965ebbc3..9cb54aa3b731 100644
  	return PR_SET_MEM_MODEL_DEFAULT;
  }
  
-@@ -534,6 +539,23 @@ int arch_prctl_mem_model_set(struct task_struct *t, unsigned long val)
+@@ -583,6 +588,23 @@ int arch_prctl_mem_model_set(struct task_struct *t, unsigned long val)
  	    val == PR_SET_MEM_MODEL_TSO)
  		return 0;
  
@@ -195,17 +196,17 @@ index 235c965ebbc3..9cb54aa3b731 100644
  		return 0;
  
 diff --git a/arch/arm64/tools/cpucaps b/arch/arm64/tools/cpucaps
-index cedae062dbdd..cee02bfc4633 100644
+index bca63481e0cf..8b809992a9ee 100644
 --- a/arch/arm64/tools/cpucaps
 +++ b/arch/arm64/tools/cpucaps
-@@ -50,6 +50,7 @@ HAS_STAGE2_FWB
+@@ -53,6 +53,7 @@ HAS_STAGE2_FWB
  HAS_TCR2
  HAS_TIDCP1
  HAS_TLB_RANGE
 +HAS_TSO_APPLE
  HAS_TSO_FIXED
+ HAS_VA52
  HAS_VIRT_HOST_EXTN
- HAS_WFXT
 -- 
 2.45.2
 

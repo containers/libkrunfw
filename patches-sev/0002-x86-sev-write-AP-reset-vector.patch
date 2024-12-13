@@ -1,4 +1,4 @@
-From 15cc4533c0e0bfa1b8a762ecffb5486ed258d87a Mon Sep 17 00:00:00 2001
+From 9da8c48cd0849c0c58b848c01f8cca7adf79ee70 Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@redhat.com>
 Date: Thu, 20 Oct 2022 10:23:16 +0200
 Subject: [PATCH 2/4] x86/sev: write AP reset vector
@@ -8,14 +8,14 @@ into the AP reset vector used by libkrun's qboot.
 
 Signed-off-by: Sergio Lopez <slp@redhat.com>
 ---
- arch/x86/kernel/sev.c | 25 ++++++++++++++++++++++++-
+ arch/x86/coco/sev/core.c | 25 ++++++++++++++++++++++++-
  1 file changed, 24 insertions(+), 1 deletion(-)
 
-diff --git a/arch/x86/kernel/sev.c b/arch/x86/kernel/sev.c
-index 9905dc0e0b09..38df85fd1324 100644
---- a/arch/x86/kernel/sev.c
-+++ b/arch/x86/kernel/sev.c
-@@ -1116,6 +1116,29 @@ void __init snp_set_wakeup_secondary_cpu(void)
+diff --git a/arch/x86/coco/sev/core.c b/arch/x86/coco/sev/core.c
+index de1df0cb45da..7ed486a790fb 100644
+--- a/arch/x86/coco/sev/core.c
++++ b/arch/x86/coco/sev/core.c
+@@ -1266,6 +1266,29 @@ void __init snp_set_wakeup_secondary_cpu(void)
  	apic_update_callback(wakeup_secondary_cpu, wakeup_cpu_via_vmgexit);
  }
  
@@ -45,7 +45,7 @@ index 9905dc0e0b09..38df85fd1324 100644
  int __init sev_es_setup_ap_jump_table(struct real_mode_header *rmh)
  {
  	u16 startup_cs, startup_ip;
-@@ -1127,7 +1150,7 @@ int __init sev_es_setup_ap_jump_table(struct real_mode_header *rmh)
+@@ -1277,7 +1300,7 @@ int __init sev_es_setup_ap_jump_table(struct real_mode_header *rmh)
  
  	/* On UP guests there is no jump table so this is not a failure */
  	if (!jump_table_addr)
