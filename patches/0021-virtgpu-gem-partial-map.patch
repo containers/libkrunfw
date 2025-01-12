@@ -1,0 +1,35 @@
+From: Sasha Finkelstein <fnkl.kernel@gmail.com>
+
+Those are useful to implement coherent cross-vm mmap.
+
+Signed-off-by: Sasha Finkelstein <fnkl.kernel@gmail.com>
+---
+ drivers/gpu/drm/virtio/virtgpu_vram.c | 5 ++---
+ 1 file changed, 2 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/gpu/drm/virtio/virtgpu_vram.c b/drivers/gpu/drm/virtio/virtgpu_vram.c
+index 25df81c027837c248a746e41856b5aa7e216b8d5..64e2c6dbdd678ac4c0da89fdd4c9dbf937c2c335 100644
+--- a/drivers/gpu/drm/virtio/virtgpu_vram.c
++++ b/drivers/gpu/drm/virtio/virtgpu_vram.c
+@@ -56,12 +56,11 @@ static int virtio_gpu_vram_mmap(struct drm_gem_object *obj,
+ 	else if (vram->map_info == VIRTIO_GPU_MAP_CACHE_UNCACHED)
+ 		vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);
+ 
+-	/* Partial mappings of GEM buffers don't happen much in practice. */
+-	if (vm_size != vram->vram_node.size)
++	if (vm_size > vram->vram_node.size)
+ 		return -EINVAL;
+ 
+ 	ret = io_remap_pfn_range(vma, vma->vm_start,
+-				 vram->vram_node.start >> PAGE_SHIFT,
++				 (vram->vram_node.start >> PAGE_SHIFT) + vma->vm_pgoff,
+ 				 vm_size, vma->vm_page_prot);
+ 	return ret;
+ }
+
+---
+base-commit: 643e2e259c2b25a2af0ae4c23c6e16586d9fd19c
+change-id: 20250109-virtgpu-gem-partial-map-335ec40656d1
+
+
+
