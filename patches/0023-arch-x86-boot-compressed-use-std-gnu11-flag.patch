@@ -1,0 +1,30 @@
+From e808b3d4737229c6b7b4beb4d71e9714a4399479 Mon Sep 17 00:00:00 2001
+From: Sergio Lopez <slp@redhat.com>
+Date: Mon, 20 Jan 2025 16:38:26 +0100
+Subject: [PATCH 23/27] arch/x86/boot/compressed: use -std=gnu11 flag
+
+GCC 15 defaults to gnu23, but the kernel is not compatible to that
+standard. Other parts of the kernel use -std=gnu11, so let's do the same
+in arch/x86/boot/compressed.
+
+Signed-off-by: Sergio Lopez <slp@redhat.com>
+---
+ arch/x86/boot/compressed/Makefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/arch/x86/boot/compressed/Makefile b/arch/x86/boot/compressed/Makefile
+index f2051644de94..5c8b86dfb1ea 100644
+--- a/arch/x86/boot/compressed/Makefile
++++ b/arch/x86/boot/compressed/Makefile
+@@ -24,7 +24,7 @@ targets := vmlinux vmlinux.bin vmlinux.bin.gz vmlinux.bin.bz2 vmlinux.bin.lzma \
+ # case of cross compiling, as it has the '--target=' flag, which is needed to
+ # avoid errors with '-march=i386', and future flags may depend on the target to
+ # be valid.
+-KBUILD_CFLAGS := -m$(BITS) -O2 $(CLANG_FLAGS)
++KBUILD_CFLAGS := -std=gnu11 -m$(BITS) -O2 $(CLANG_FLAGS)
+ KBUILD_CFLAGS += -fno-strict-aliasing -fPIE
+ KBUILD_CFLAGS += -Wundef
+ KBUILD_CFLAGS += -DDISABLE_BRANCH_PROFILING
+-- 
+2.45.2
+
