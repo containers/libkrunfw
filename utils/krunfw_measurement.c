@@ -301,28 +301,31 @@ int main(int argc, char **argv)
 	handle = dlopen(library, RTLD_NOW);
 	if (handle == NULL)
 	{
-		perror("Couldn't open library");
+		printf("Couldn't open library: %s", dlerror());
 		exit(-1);
 	}
 
 	krunfw_get_kernel = dlsym(handle, "krunfw_get_kernel");
 	if (krunfw_get_kernel == NULL)
 	{
-		perror("Couldn't find krunfw_get_kernel symbol");
+		printf("Couldn't find krunfw_get_kernel symbol: %s\n",
+		       dlerror());
 		exit(-1);
 	}
 
 	krunfw_get_initrd = dlsym(handle, "krunfw_get_initrd");
 	if (krunfw_get_initrd == NULL)
 	{
-		perror("Couldn't find krunfw_get_initrd symbol");
+		printf("Couldn't find krunfw_get_initrd symbol: %s\n",
+		       dlerror());
 		exit(-1);
 	}
 
 	krunfw_get_qboot = dlsym(handle, "krunfw_get_qboot");
 	if (krunfw_get_qboot == NULL)
 	{
-		perror("Couldn't find krunfw_get_qboot symbol");
+		printf("Couldn't find krunfw_get_qboot symbol: %s\n",
+		       dlerror());
 		exit(-1);
 	}
 
