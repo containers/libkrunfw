@@ -458,7 +458,7 @@ CONFIG_HOTPLUG_CPU=y
 CONFIG_LEGACY_VSYSCALL_XONLY=y
 # CONFIG_LEGACY_VSYSCALL_NONE is not set
 CONFIG_CMDLINE_BOOL=y
-CONFIG_CMDLINE="reboot=k panic=-1 panic_print=0 nomodules console=hvc0 quiet rootfstype=virtiofs rw no-kvmapf tsi_hijack init=/init.krun virtio_mmio.device=4K@0xd0000000:5 virtio_mmio.device=4K@0xd0001000:6 virtio_mmio.device=4K@0xd0002000:7 virtio_mmio.device=4K@0xd0003000:8 virtio_mmio.device=4K@0xd0004000:9"
+CONFIG_CMDLINE="reboot=k panic=-1 panic_print=0 nomodules console=hvc0 quiet rootfstype=virtiofs rw no-kvmapf tsi_hijack acpi=off init=/init.krun virtio_mmio.device=4K@0xd0000000:5 virtio_mmio.device=4K@0xd0001000:6 virtio_mmio.device=4K@0xd0002000:7 virtio_mmio.device=4K@0xd0003000:8 virtio_mmio.device=4K@0xd0004000:9"
 CONFIG_CMDLINE_OVERRIDE=y
 CONFIG_MODIFY_LDT_SYSCALL=y
 # CONFIG_STRICT_SIGALTSTACK_SIZE is not set
