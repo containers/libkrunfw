@@ -1,7 +1,7 @@
-From 448088b2a662ed19728b42e75c9a5f500d2c5359 Mon Sep 17 00:00:00 2001
+From 5d4877987ae261f78b4bba7030ed3d157af6e51e Mon Sep 17 00:00:00 2001
 From: Bobby Eshleman <bobby.eshleman () bytedance ! com>
 Date: Sat, 10 Jun 2023 00:58:30 +0000
-Subject: [PATCH 05/19] vsock: support multi-transport datagrams
+Subject: [PATCH 05/22] vsock: support multi-transport datagrams
 
 This patch adds support for multi-transport datagrams.
 
@@ -82,10 +82,10 @@ index 954c5d66f8e4..741d643534f4 100644
  int virtio_transport_dgram_get_cid(struct sk_buff *skb, unsigned int *cid);
  int virtio_transport_dgram_get_port(struct sk_buff *skb, unsigned int *port);
 diff --git a/net/vmw_vsock/af_vsock.c b/net/vmw_vsock/af_vsock.c
-index 5a45600002f5..2c4fda4215f1 100644
+index 48c38f4dd09f..2dcb36d85743 100644
 --- a/net/vmw_vsock/af_vsock.c
 +++ b/net/vmw_vsock/af_vsock.c
-@@ -441,6 +441,18 @@ vsock_connectible_lookup_transport(unsigned int cid, __u8 flags)
+@@ -443,6 +443,18 @@ vsock_connectible_lookup_transport(unsigned int cid, __u8 flags)
  	return transport;
  }
  
@@ -104,7 +104,7 @@ index 5a45600002f5..2c4fda4215f1 100644
  /* Assign a transport to a socket and call the .init transport callback.
   *
   * Note: for connection oriented socket this must be called when vsk->remote_addr
-@@ -477,7 +489,8 @@ int vsock_assign_transport(struct vsock_sock *vsk, struct vsock_sock *psk)
+@@ -479,7 +491,8 @@ int vsock_assign_transport(struct vsock_sock *vsk, struct vsock_sock *psk)
  
  	switch (sk->sk_type) {
  	case SOCK_DGRAM:
@@ -114,7 +114,7 @@ index 5a45600002f5..2c4fda4215f1 100644
  		break;
  	case SOCK_STREAM:
  	case SOCK_SEQPACKET:
-@@ -694,6 +707,9 @@ static int __vsock_bind_connectible(struct vsock_sock *vsk,
+@@ -705,6 +718,9 @@ static int __vsock_bind_connectible(struct vsock_sock *vsk,
  static int __vsock_bind_dgram(struct vsock_sock *vsk,
  			      struct sockaddr_vm *addr)
  {
@@ -124,7 +124,7 @@ index 5a45600002f5..2c4fda4215f1 100644
  	return vsk->transport->dgram_bind(vsk, addr);
  }
  
-@@ -1178,19 +1194,24 @@ static int vsock_dgram_sendmsg(struct socket *sock, struct msghdr *msg,
+@@ -1212,19 +1228,24 @@ static int vsock_dgram_sendmsg(struct socket *sock, struct msghdr *msg,
  
  	lock_sock(sk);
  
@@ -156,7 +156,7 @@ index 5a45600002f5..2c4fda4215f1 100644
  		/* Ensure this address is of the right type and is a valid
  		 * destination.
  		 */
-@@ -1199,11 +1220,27 @@ static int vsock_dgram_sendmsg(struct socket *sock, struct msghdr *msg,
+@@ -1233,11 +1254,27 @@ static int vsock_dgram_sendmsg(struct socket *sock, struct msghdr *msg,
  			remote_addr->svm_cid = transport->get_local_cid();
  
  		if (!vsock_addr_bound(remote_addr)) {
@@ -184,7 +184,7 @@ index 5a45600002f5..2c4fda4215f1 100644
  
  		if (remote_addr->svm_cid == VMADDR_CID_ANY)
  			remote_addr->svm_cid = transport->get_local_cid();
-@@ -1211,23 +1248,23 @@ static int vsock_dgram_sendmsg(struct socket *sock, struct msghdr *msg,
+@@ -1245,23 +1282,23 @@ static int vsock_dgram_sendmsg(struct socket *sock, struct msghdr *msg,
  		/* XXX Should connect() or this function ensure remote_addr is
  		 * bound?
  		 */
@@ -217,7 +217,7 @@ index 5a45600002f5..2c4fda4215f1 100644
  out:
  	release_sock(sk);
  	return err;
-@@ -1261,13 +1298,18 @@ static int vsock_dgram_connect(struct socket *sock,
+@@ -1295,13 +1332,18 @@ static int vsock_dgram_connect(struct socket *sock,
  	if (err)
  		goto out;
  
@@ -274,10 +274,10 @@ index 48008d8341d7..f64281de9783 100644
  		.dgram_allow              = virtio_transport_dgram_allow,
  		.dgram_get_cid		  = virtio_transport_dgram_get_cid,
 diff --git a/net/vmw_vsock/virtio_transport_common.c b/net/vmw_vsock/virtio_transport_common.c
-index 13ae96f0d2ec..2a0f720e33d8 100644
+index 17e8f2078e8d..0cebeeb1c94a 100644
 --- a/net/vmw_vsock/virtio_transport_common.c
 +++ b/net/vmw_vsock/virtio_transport_common.c
-@@ -1040,13 +1040,6 @@ bool virtio_transport_stream_allow(u32 cid, u32 port)
+@@ -1043,13 +1043,6 @@ bool virtio_transport_stream_allow(u32 cid, u32 port)
  }
  EXPORT_SYMBOL_GPL(virtio_transport_stream_allow);
  

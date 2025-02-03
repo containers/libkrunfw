@@ -1,7 +1,7 @@
-From d38c52ef771b223fa12af0e8a16015decc13566d Mon Sep 17 00:00:00 2001
+From de25ff20d16765cd1baffe243760123251f5acca Mon Sep 17 00:00:00 2001
 From: Hector Martin <marcan@marcan.st>
 Date: Thu, 11 Apr 2024 09:51:23 +0900
-Subject: [PATCH 15/19] arm64: Implement Apple IMPDEF TSO memory model control
+Subject: [PATCH 15/22] arm64: Implement Apple IMPDEF TSO memory model control
 
 Apple CPUs may implement the TSO memory model as an optional
 configurable mode. This allows x86 emulators to simplify their
@@ -27,10 +27,10 @@ Reviewed-by: Neal Gompa <neal@gompa.dev>
  create mode 100644 arch/arm64/include/asm/apple_cpufeature.h
 
 diff --git a/arch/arm64/Kconfig b/arch/arm64/Kconfig
-index 343a2abab42f..c30fc0652744 100644
+index 7023615aac6e..c90800ec7097 100644
 --- a/arch/arm64/Kconfig
 +++ b/arch/arm64/Kconfig
-@@ -2255,6 +2255,8 @@ endif # ARM64_PSEUDO_NMI
+@@ -2266,6 +2266,8 @@ endif # ARM64_PSEUDO_NMI
  
  config ARM64_MEMORY_MODEL_CONTROL
  	bool "Runtime memory model control"

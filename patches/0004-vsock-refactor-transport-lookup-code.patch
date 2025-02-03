@@ -1,7 +1,7 @@
-From 99a059c51f1d19be35e622e8297c4f5d9ee94b6e Mon Sep 17 00:00:00 2001
+From 1c7c134fb4f8b22cca987ec00ff14e57ffaecde1 Mon Sep 17 00:00:00 2001
 From: Bobby Eshleman <bobby.eshleman () bytedance ! com>
 Date: Sat, 10 Jun 2023 00:58:29 +0000
-Subject: [PATCH 04/19] vsock: refactor transport lookup code
+Subject: [PATCH 04/22] vsock: refactor transport lookup code
 
 Introduce new reusable function vsock_connectible_lookup_transport()
 that performs the transport lookup logic.
@@ -14,10 +14,10 @@ Signed-off-by: Bobby Eshleman <bobby.eshleman@bytedance.com>
  1 file changed, 18 insertions(+), 7 deletions(-)
 
 diff --git a/net/vmw_vsock/af_vsock.c b/net/vmw_vsock/af_vsock.c
-index 014b8414a7d6..5a45600002f5 100644
+index a94f7f4b6f5f..48c38f4dd09f 100644
 --- a/net/vmw_vsock/af_vsock.c
 +++ b/net/vmw_vsock/af_vsock.c
-@@ -425,6 +425,22 @@ static void vsock_deassign_transport(struct vsock_sock *vsk)
+@@ -427,6 +427,22 @@ static void vsock_deassign_transport(struct vsock_sock *vsk)
  	vsk->transport = NULL;
  }
  
@@ -40,7 +40,7 @@ index 014b8414a7d6..5a45600002f5 100644
  /* Assign a transport to a socket and call the .init transport callback.
   *
   * Note: for connection oriented socket this must be called when vsk->remote_addr
-@@ -465,13 +481,8 @@ int vsock_assign_transport(struct vsock_sock *vsk, struct vsock_sock *psk)
+@@ -467,13 +483,8 @@ int vsock_assign_transport(struct vsock_sock *vsk, struct vsock_sock *psk)
  		break;
  	case SOCK_STREAM:
  	case SOCK_SEQPACKET:

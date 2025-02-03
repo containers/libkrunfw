@@ -1,4 +1,4 @@
-From 459990b97e11b3be4272d06b4647bdab6bdf099e Mon Sep 17 00:00:00 2001
+From 5ed2eee642191331953448a3de62ddbea4189cdd Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@redhat.com>
 Date: Wed, 5 Jun 2024 16:20:08 +0200
 Subject: [PATCH 4/4] x86/sev: Avoid using native_cpuid

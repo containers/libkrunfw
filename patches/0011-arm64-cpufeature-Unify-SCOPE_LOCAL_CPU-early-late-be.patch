@@ -1,7 +1,7 @@
-From 74b584bdff56c762b881cd499f1cc14de83c2d5c Mon Sep 17 00:00:00 2001
+From 73ce060237f5afbefce548ac6e3d9571d3d0aaed Mon Sep 17 00:00:00 2001
 From: Asahi Lina <lina@asahilina.net>
 Date: Wed, 25 Sep 2024 16:35:34 +0200
-Subject: [PATCH 11/19] arm64: cpufeature: Unify SCOPE_LOCAL_CPU early & late
+Subject: [PATCH 11/22] arm64: cpufeature: Unify SCOPE_LOCAL_CPU early & late
  behavior
 
 SCOPE_LOCAL_CPU is mostly used for CPU errata. The early feature logic
