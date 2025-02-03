@@ -1,7 +1,9 @@
+From 8e0b7c16e860752d43baf79be11af648ad5abc76 Mon Sep 17 00:00:00 2001
 From: Sasha Finkelstein <fnkl.kernel@gmail.com>
+Date: Fri, 17 Jan 2025 12:34:28 +0100
+Subject: [PATCH 21/22] virtgpu: mixed page size
 
-This allows running different page sizes between host and guest on
-platforms that support mixed page sizes.
+This allows running different page sizes between host and guest on platforms that support mixed page sizes.
 
 Signed-off-by: Sasha Finkelstein <fnkl.kernel@gmail.com>
 ---
@@ -9,10 +11,10 @@ Signed-off-by: Sasha Finkelstein <fnkl.kernel@gmail.com>
  1 file changed, 8 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/gpu/drm/virtio/virtgpu_vram.c b/drivers/gpu/drm/virtio/virtgpu_vram.c
-index 25df81c027837c248a746e41856b5aa7e216b8d5..8a0577c2170ec9c12cad12be57f9a41c14f04660 100644
+index 64e2c6dbdd67..cbadcba2c773 100644
 --- a/drivers/gpu/drm/virtio/virtgpu_vram.c
 +++ b/drivers/gpu/drm/virtio/virtgpu_vram.c
-@@ -138,6 +138,12 @@ bool virtio_gpu_is_vram(struct virtio_gpu_object *bo)
+@@ -137,6 +137,12 @@ bool virtio_gpu_is_vram(struct virtio_gpu_object *bo)
  	return bo->base.base.funcs == &virtio_gpu_vram_funcs;
  }
  
@@ -25,7 +27,7 @@ index 25df81c027837c248a746e41856b5aa7e216b8d5..8a0577c2170ec9c12cad12be57f9a41c
  static int virtio_gpu_vram_map(struct virtio_gpu_object *bo)
  {
  	int ret;
-@@ -150,8 +156,8 @@ static int virtio_gpu_vram_map(struct virtio_gpu_object *bo)
+@@ -149,8 +155,8 @@ static int virtio_gpu_vram_map(struct virtio_gpu_object *bo)
  		return -EINVAL;
  
  	spin_lock(&vgdev->host_visible_lock);
@@ -36,10 +38,6 @@ index 25df81c027837c248a746e41856b5aa7e216b8d5..8a0577c2170ec9c12cad12be57f9a41c
  	spin_unlock(&vgdev->host_visible_lock);
  
  	if (ret)
-
----
-base-commit: 643e2e259c2b25a2af0ae4c23c6e16586d9fd19c
-change-id: 20250109-virtgpu-mixed-page-size-282b8f4a02fc
-
-
+-- 
+2.45.2
 

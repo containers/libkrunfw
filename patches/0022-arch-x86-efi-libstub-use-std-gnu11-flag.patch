@@ -1,7 +1,7 @@
-From ed8a28bfd78e90ae9fe27b6eafe1affd93a80f71 Mon Sep 17 00:00:00 2001
+From ba829a18ace81c1e1f06b1a93eb31b294f0ba729 Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@redhat.com>
 Date: Mon, 20 Jan 2025 16:38:26 +0100
-Subject: [PATCH 23/27] arch/x86,efi/libstub: use -std=gnu11 flag
+Subject: [PATCH 22/22] arch/x86,efi/libstub: use -std=gnu11 flag
 
 GCC 15 defaults to gnu23, but the kernel is not compatible to that
 standard. Other parts of the kernel use -std=gnu11, so let's do the same

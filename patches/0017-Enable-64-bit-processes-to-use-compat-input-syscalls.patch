@@ -1,7 +1,7 @@
-From bc4718794c6665a8c03b241378df16e22fba84d1 Mon Sep 17 00:00:00 2001
+From 812ea83ade5134c30e99538ad3d594e14b09fc80 Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@redhat.com>
 Date: Tue, 8 Oct 2024 11:24:25 +0200
-Subject: [PATCH 17/19] Enable 64 bit processes to use compat input syscalls
+Subject: [PATCH 17/22] Enable 64 bit processes to use compat input syscalls
 
 The compat variant of input syscalls is only enabled for 32 bit
 tasks, but in some cases, such as userspace emulation, it's useful to
@@ -64,10 +64,10 @@ index 3b7bb12b023b..e78c0492ce0d 100644
  }
  
 diff --git a/include/linux/sched.h b/include/linux/sched.h
-index bb343136ddd0..838147192986 100644
+index 02eaf84c8626..d5f5214e4ba3 100644
 --- a/include/linux/sched.h
 +++ b/include/linux/sched.h
-@@ -1591,6 +1591,11 @@ struct task_struct {
+@@ -1598,6 +1598,11 @@ struct task_struct {
  #ifdef CONFIG_USER_EVENTS
  	struct user_event_mm		*user_event_mm;
  #endif
