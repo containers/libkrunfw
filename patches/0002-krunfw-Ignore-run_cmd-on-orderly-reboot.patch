@@ -1,7 +1,7 @@
-From c843c27bf58ade43ae935391ade4908d980ba1a2 Mon Sep 17 00:00:00 2001
+From 74add18a2324033242375735a1a10583d0649bd1 Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@redhat.com>
 Date: Mon, 16 May 2022 16:04:27 +0200
-Subject: [PATCH 02/19] krunfw: Ignore run_cmd on orderly reboot
+Subject: [PATCH 02/22] krunfw: Ignore run_cmd on orderly reboot
 
 We don't really support restarting the conventional way, so ignore
 "run_cmd" so we can fall back to an emergency sync and reboot.
