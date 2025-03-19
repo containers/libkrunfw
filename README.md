@@ -46,6 +46,14 @@ This will create a lightweight Linux VM using ```krunvm``` with the current work
 make
 ```
 
+By default, the build environment is based on a Fedora image. There is also a Debian variant which can be selected by setting the `BUILDER` environment variable.
+
+```
+BUILDER=debian ./build_on_krunvm.sh
+```
+
+In general, `./build_on_krunvm.sh` will always delegate to `./build_on_krunvm_${BUILDER}.sh` so additional environments can be added like this if needed.
+
 ## Known limitations
 
 * To save memory, the embedded kernel is configured with ```CONFIG_NR_CPUS=8```, which limits the maximum number of supported CPUs to 8. If this kernel runs in a VM with more CPUs, only the first 8 will be initialized and used.
