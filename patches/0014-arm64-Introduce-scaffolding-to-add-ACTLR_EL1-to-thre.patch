@@ -1,7 +1,7 @@
-From cee8f7fa1ef6b3852bed3587ae9d888de34d4464 Mon Sep 17 00:00:00 2001
+From 4fefb67da29d15570cf319c9e8ea5e392af425a1 Mon Sep 17 00:00:00 2001
 From: Hector Martin <marcan@marcan.st>
 Date: Thu, 11 Apr 2024 09:51:22 +0900
-Subject: [PATCH 14/22] arm64: Introduce scaffolding to add ACTLR_EL1 to thread
+Subject: [PATCH 14/21] arm64: Introduce scaffolding to add ACTLR_EL1 to thread
  state
 
 Some CPUs expose IMPDEF features in ACTLR_EL1 that can be meaningfully
@@ -137,5 +137,5 @@ index 87f61fd6783c..8fb0c20959bf 100644
  	if (boot_args[1] || boot_args[2] || boot_args[3]) {
  		pr_err("WARNING: x1-x3 nonzero in violation of boot protocol:\n"
 -- 
-2.45.2
+2.47.1
 
