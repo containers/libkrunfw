@@ -1,7 +1,7 @@
-From c59d9f765e8e220b2d819323c89c6106853a977b Mon Sep 17 00:00:00 2001
+From fb7f60dde652bfc90b9e8b6656a9d0923c2c288b Mon Sep 17 00:00:00 2001
 From: Bobby Eshleman <bobby.eshleman () bytedance ! com>
 Date: Sat, 10 Jun 2023 00:58:28 +0000
-Subject: [PATCH 03/22] vsock/dgram: generalize recvmsg and drop
+Subject: [PATCH 03/21] vsock/dgram: generalize recvmsg and drop
  transport->dgram_dequeue
 
 This commit drops the transport->dgram_dequeue callback and makes
@@ -81,10 +81,10 @@ index 9e85424c8343..fe0fb5c01823 100644
  	/* STREAM. */
  	/* TODO: stream_bind() */
 diff --git a/net/vmw_vsock/af_vsock.c b/net/vmw_vsock/af_vsock.c
-index 15724f171b0f..a94f7f4b6f5f 100644
+index eb6ea26b390e..6dc98fab6888 100644
 --- a/net/vmw_vsock/af_vsock.c
 +++ b/net/vmw_vsock/af_vsock.c
-@@ -1311,10 +1311,62 @@ static int vsock_dgram_connect(struct socket *sock,
+@@ -1324,10 +1324,62 @@ static int vsock_dgram_connect(struct socket *sock,
  int __vsock_dgram_recvmsg(struct socket *sock, struct msghdr *msg,
  			  size_t len, int flags)
  {
@@ -186,7 +186,7 @@ index 56c232cf5b0f..cc0a6c3401d3 100644
  	.dgram_allow              = hvs_dgram_allow,
  
 diff --git a/net/vmw_vsock/virtio_transport.c b/net/vmw_vsock/virtio_transport.c
-index b58c3818f284..48008d8341d7 100644
+index f0e48e6911fc..c0d4f6e47cb7 100644
 --- a/net/vmw_vsock/virtio_transport.c
 +++ b/net/vmw_vsock/virtio_transport.c
 @@ -552,9 +552,11 @@ static struct virtio_transport virtio_transport = {
@@ -348,5 +348,5 @@ index 6e78927a598e..3d5e05d8950f 100644
  		.stream_dequeue           = virtio_transport_stream_dequeue,
  		.stream_enqueue           = virtio_transport_stream_enqueue,
 -- 
-2.45.2
+2.47.1
 
