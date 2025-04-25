@@ -15,7 +15,11 @@ KERNEL_FLAGS += KBUILD_BUILD_HOST=libkrunfw
 
 ifeq ($(SEV),1)
     VARIANT = -sev
-    KERNEL_PATCHES += $(shell find patches-sev/ -name "0*.patch" | sort)
+    KERNEL_PATCHES += $(shell find patches-tee/ -name "0*.patch" | sort)
+endif
+ifeq ($(TDX),1)
+    VARIANT = -tdx
+    KERNEL_PATCHES += $(shell find patches-tee/ -name "0*.patch" | sort)
 endif
 
 HOSTARCH = $(shell uname -m)
@@ -57,7 +61,13 @@ ifeq ($(PREFIX),)
 endif
 
 ifeq ($(SEV),1)
-    QBOOT_BINARY = qboot/bios.bin
+    QBOOT_BINARY = qboot/sev/bios.bin
+    QBOOT_C_BUNDLE = qboot.c
+    INITRD_BINARY = initrd/initrd.gz
+    INITRD_C_BUNDLE = initrd.c
+endif
+ifeq ($(TDX),1)
+    QBOOT_BINARY = qboot/tdx/bios.bin
     QBOOT_C_BUNDLE = qboot.c
     INITRD_BINARY = initrd/initrd.gz
     INITRD_C_BUNDLE = initrd.c
@@ -91,6 +101,16 @@ $(KERNEL_C_BUNDLE): $(KERNEL_BINARY_$(GUESTARCH))
 endif
 
 ifeq ($(SEV),1)
+$(QBOOT_C_BUNDLE): $(QBOOT_BINARY)
+	@echo "Generating $(QBOOT_C_BUNDLE) from $(QBOOT_BINARY)..."
+	@python3 bin2cbundle.py -t qboot $(QBOOT_BINARY) qboot.c
+
+$(INITRD_C_BUNDLE): $(INITRD_BINARY)
+	@echo "Generating $(INITRD_C_BUNDLE) from $(INITRD_BINARY)..."
+	@python3 bin2cbundle.py -t initrd $(INITRD_BINARY) initrd.c
+endif
+
+ifeq ($(TDX),1)
 $(QBOOT_C_BUNDLE): $(QBOOT_BINARY)
 	@echo "Generating $(QBOOT_C_BUNDLE) from $(QBOOT_BINARY)..."
 	@python3 bin2cbundle.py -t qboot $(QBOOT_BINARY) qboot.c
