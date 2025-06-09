@@ -35,9 +35,11 @@ endif
 
 KBUNDLE_TYPE_x86_64 = vmlinux
 KBUNDLE_TYPE_aarch64 = Image
+KBUNDLE_TYPE_riscv64 = Image
 
 KERNEL_BINARY_x86_64 = $(KERNEL_SOURCES)/vmlinux
 KERNEL_BINARY_aarch64 = $(KERNEL_SOURCES)/arch/arm64/boot/Image
+KERNEL_BINARY_riscv64 = $(KERNEL_SOURCES)/arch/riscv/boot/Image
 
 KRUNFW_BINARY_Linux = libkrunfw$(VARIANT).so.$(FULL_VERSION)
 KRUNFW_SONAME_Linux = libkrunfw$(VARIANT).so.$(ABI_VERSION)
