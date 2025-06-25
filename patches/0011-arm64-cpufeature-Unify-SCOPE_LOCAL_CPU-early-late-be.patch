@@ -1,4 +1,4 @@
-From ae378f0539b60aad8fd028377489fdc31d5d03c4 Mon Sep 17 00:00:00 2001
+From 6cd6813018d12ecf1da19b5101c041ea7d1cab34 Mon Sep 17 00:00:00 2001
 From: Asahi Lina <lina@asahilina.net>
 Date: Wed, 25 Sep 2024 16:35:34 +0200
 Subject: [PATCH 11/21] arm64: cpufeature: Unify SCOPE_LOCAL_CPU early & late
@@ -35,10 +35,10 @@ Signed-off-by: Asahi Lina <lina@asahilina.net>
  1 file changed, 31 insertions(+), 3 deletions(-)
 
 diff --git a/arch/arm64/kernel/cpufeature.c b/arch/arm64/kernel/cpufeature.c
-index 709f2b51be6d..da0fed77220f 100644
+index 05ccf4ec278f..ab0b8ab2e72b 100644
 --- a/arch/arm64/kernel/cpufeature.c
 +++ b/arch/arm64/kernel/cpufeature.c
-@@ -3169,10 +3169,38 @@ static void update_cpu_capabilities(u16 scope_mask)
+@@ -3176,10 +3176,38 @@ static void update_cpu_capabilities(u16 scope_mask)
  
  	scope_mask &= ARM64_CPUCAP_SCOPE_MASK;
  	for (i = 0; i < ARM64_NCAPS; i++) {
@@ -81,5 +81,5 @@ index 709f2b51be6d..da0fed77220f 100644
  
  		if (caps->desc && !caps->cpus)
 -- 
-2.47.1
+2.49.0
 

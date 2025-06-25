@@ -1,4 +1,4 @@
-From a5ac2bb45f25c15fd381af7930e3eb706125c8ff Mon Sep 17 00:00:00 2001
+From f4fa2d46824f4704ade2c6d1d42b8e1fa9eb8e4a Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@redhat.com>
 Date: Wed, 5 Jun 2024 16:20:08 +0200
 Subject: [PATCH 4/4] x86/sev: Avoid using native_cpuid
@@ -16,7 +16,7 @@ Signed-off-by: Sergio Lopez <slp@redhat.com>
  1 file changed, 3 insertions(+), 23 deletions(-)
 
 diff --git a/arch/x86/mm/mem_encrypt_identity.c b/arch/x86/mm/mem_encrypt_identity.c
-index ac33b2263a43..d894fdb89007 100644
+index b922b9fea6b6..c0de732b0121 100644
 --- a/arch/x86/mm/mem_encrypt_identity.c
 +++ b/arch/x86/mm/mem_encrypt_identity.c
 @@ -495,37 +495,17 @@ void __head sme_enable(struct boot_params *bp)
@@ -61,5 +61,5 @@ index ac33b2263a43..d894fdb89007 100644
  	/* Check the SEV MSR whether SEV or SME is enabled */
  	RIP_REL_REF(sev_status) = msr = __rdmsr(MSR_AMD64_SEV);
 -- 
-2.47.1
+2.49.0
 

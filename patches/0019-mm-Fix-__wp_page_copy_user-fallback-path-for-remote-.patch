@@ -1,4 +1,4 @@
-From f73098e15ee9aaf89403bd5a41c1dc79ddbdd85e Mon Sep 17 00:00:00 2001
+From e328dffff1c65e4483453e0300375a334f4a6f9c Mon Sep 17 00:00:00 2001
 From: Asahi Lina <lina@asahilina.net>
 Date: Mon, 21 Oct 2024 23:21:16 +0900
 Subject: [PATCH 19/21] mm: Fix __wp_page_copy_user fallback path for remote mm
@@ -58,10 +58,10 @@ Signed-off-by: Asahi Lina <lina@asahilina.net>
  1 file changed, 6 insertions(+), 1 deletion(-)
 
 diff --git a/mm/memory.c b/mm/memory.c
-index 525f96ad65b8..cfd73a1531a5 100644
+index b6daa0e673a5..52ce79cc238d 100644
 --- a/mm/memory.c
 +++ b/mm/memory.c
-@@ -3083,13 +3083,18 @@ static inline int __wp_page_copy_user(struct page *dst, struct page *src,
+@@ -3080,13 +3080,18 @@ static inline int __wp_page_copy_user(struct page *dst, struct page *src,
  			update_mmu_cache_range(vmf, vma, addr, vmf->pte, 1);
  	}
  
@@ -82,5 +82,5 @@ index 525f96ad65b8..cfd73a1531a5 100644
  			goto warn;
  
 -- 
-2.47.1
+2.49.0
 

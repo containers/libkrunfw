@@ -1,4 +1,4 @@
-From 78d9a1696fcb4f5798de6163c15ff73ee746ca1d Mon Sep 17 00:00:00 2001
+From 0516cf426ccdb7529eb1365ae6a4bad639ca10bf Mon Sep 17 00:00:00 2001
 From: Hector Martin <marcan@marcan.st>
 Date: Thu, 11 Apr 2024 09:51:23 +0900
 Subject: [PATCH 15/21] arm64: Implement Apple IMPDEF TSO memory model control
@@ -27,7 +27,7 @@ Reviewed-by: Neal Gompa <neal@gompa.dev>
  create mode 100644 arch/arm64/include/asm/apple_cpufeature.h
 
 diff --git a/arch/arm64/Kconfig b/arch/arm64/Kconfig
-index 7023615aac6e..c90800ec7097 100644
+index a30f30fd7e67..01a421166a0c 100644
 --- a/arch/arm64/Kconfig
 +++ b/arch/arm64/Kconfig
 @@ -2266,6 +2266,8 @@ endif # ARM64_PSEUDO_NMI
@@ -208,5 +208,5 @@ index bca63481e0cf..8b809992a9ee 100644
  HAS_VA52
  HAS_VIRT_HOST_EXTN
 -- 
-2.47.1
+2.49.0
 
