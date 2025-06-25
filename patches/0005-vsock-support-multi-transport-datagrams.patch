@@ -1,4 +1,4 @@
-From 764265f7d0ecc0c5077783058369ab1a1711fb42 Mon Sep 17 00:00:00 2001
+From 07e9d1bdd10dc2a484a5d3b421efe184d05b4ddb Mon Sep 17 00:00:00 2001
 From: Bobby Eshleman <bobby.eshleman () bytedance ! com>
 Date: Sat, 10 Jun 2023 00:58:30 +0000
 Subject: [PATCH 05/21] vsock: support multi-transport datagrams
@@ -69,10 +69,10 @@ index 1b3e6963335b..d58be350ddca 100644
  		.dgram_get_cid		  = virtio_transport_dgram_get_cid,
  		.dgram_get_port		  = virtio_transport_dgram_get_port,
 diff --git a/include/linux/virtio_vsock.h b/include/linux/virtio_vsock.h
-index 954c5d66f8e4..741d643534f4 100644
+index 44fb05e1ee75..efb028ea6463 100644
 --- a/include/linux/virtio_vsock.h
 +++ b/include/linux/virtio_vsock.h
-@@ -232,8 +232,6 @@ void virtio_transport_notify_buffer_size(struct vsock_sock *vsk, u64 *val);
+@@ -233,8 +233,6 @@ void virtio_transport_notify_buffer_size(struct vsock_sock *vsk, u64 *val);
  u64 virtio_transport_stream_rcvhiwat(struct vsock_sock *vsk);
  bool virtio_transport_stream_is_active(struct vsock_sock *vsk);
  bool virtio_transport_stream_allow(u32 cid, u32 port);
@@ -82,7 +82,7 @@ index 954c5d66f8e4..741d643534f4 100644
  int virtio_transport_dgram_get_cid(struct sk_buff *skb, unsigned int *cid);
  int virtio_transport_dgram_get_port(struct sk_buff *skb, unsigned int *port);
 diff --git a/net/vmw_vsock/af_vsock.c b/net/vmw_vsock/af_vsock.c
-index ef5ac5beca32..c017b62d0783 100644
+index 186e28329dd4..8112fd22218b 100644
 --- a/net/vmw_vsock/af_vsock.c
 +++ b/net/vmw_vsock/af_vsock.c
 @@ -446,6 +446,18 @@ vsock_connectible_lookup_transport(unsigned int cid, __u8 flags)
@@ -274,10 +274,10 @@ index c0d4f6e47cb7..a50c678ae1ae 100644
  		.dgram_allow              = virtio_transport_dgram_allow,
  		.dgram_get_cid		  = virtio_transport_dgram_get_cid,
 diff --git a/net/vmw_vsock/virtio_transport_common.c b/net/vmw_vsock/virtio_transport_common.c
-index 17e8f2078e8d..0cebeeb1c94a 100644
+index ad4dedcfa320..96b6303b24c2 100644
 --- a/net/vmw_vsock/virtio_transport_common.c
 +++ b/net/vmw_vsock/virtio_transport_common.c
-@@ -1043,13 +1043,6 @@ bool virtio_transport_stream_allow(u32 cid, u32 port)
+@@ -1047,13 +1047,6 @@ bool virtio_transport_stream_allow(u32 cid, u32 port)
  }
  EXPORT_SYMBOL_GPL(virtio_transport_stream_allow);
  
@@ -304,5 +304,5 @@ index 3d5e05d8950f..9e9e124f8d2b 100644
  		.dgram_allow              = virtio_transport_dgram_allow,
  		.dgram_get_cid		  = virtio_transport_dgram_get_cid,
 -- 
-2.47.1
+2.49.0
 

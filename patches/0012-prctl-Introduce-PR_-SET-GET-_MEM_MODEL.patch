@@ -1,4 +1,4 @@
-From ca9ab4175d5a9b6a7e781ffd871221ebb4c7c83f Mon Sep 17 00:00:00 2001
+From 0ee81bb453100f4d329846ef3205c7256da0fd1d Mon Sep 17 00:00:00 2001
 From: Hector Martin <marcan@marcan.st>
 Date: Thu, 11 Apr 2024 09:51:20 +0900
 Subject: [PATCH 12/21] prctl: Introduce PR_{SET,GET}_MEM_MODEL
@@ -119,5 +119,5 @@ index 4da31f28fda8..83da58930513 100644
  		error = -EINVAL;
  		break;
 -- 
-2.47.1
+2.49.0
 

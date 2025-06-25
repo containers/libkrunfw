@@ -1,4 +1,4 @@
-From 9259e6e9217c5dd64ba02e28145a5b6ee6cf74ca Mon Sep 17 00:00:00 2001
+From ca7e3bce7612e1eba6e16ee8a831c32764fc1ec3 Mon Sep 17 00:00:00 2001
 From: Bobby Eshleman <bobby.eshleman () bytedance ! com>
 Date: Sat, 10 Jun 2023 00:58:31 +0000
 Subject: [PATCH 06/21] vsock: make vsock bind reusable
@@ -12,7 +12,7 @@ Signed-off-by: Bobby Eshleman <bobby.eshleman@bytedance.com>
  1 file changed, 26 insertions(+), 7 deletions(-)
 
 diff --git a/net/vmw_vsock/af_vsock.c b/net/vmw_vsock/af_vsock.c
-index c017b62d0783..6d8d9a91c510 100644
+index 8112fd22218b..68f7bc0c771a 100644
 --- a/net/vmw_vsock/af_vsock.c
 +++ b/net/vmw_vsock/af_vsock.c
 @@ -235,11 +235,12 @@ static void __vsock_remove_connected(struct vsock_sock *vsk)
@@ -102,5 +102,5 @@ index c017b62d0783..6d8d9a91c510 100644
  			      struct sockaddr_vm *addr)
  {
 -- 
-2.47.1
+2.49.0
 

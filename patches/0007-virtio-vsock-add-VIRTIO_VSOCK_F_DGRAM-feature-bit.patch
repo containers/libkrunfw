@@ -1,4 +1,4 @@
-From c9a7d599109ccfbee9bea258fda3191f95820bd9 Mon Sep 17 00:00:00 2001
+From a12028232381a2ab434130526d20c99d1f13a8cc Mon Sep 17 00:00:00 2001
 From: Bobby Eshleman <bobby.eshleman () bytedance ! com>
 Date: Sat, 10 Jun 2023 00:58:32 +0000
 Subject: [PATCH 07/21] virtio/vsock: add VIRTIO_VSOCK_F_DGRAM feature bit
@@ -24,5 +24,5 @@ index 64738838bee5..9c25f267bbc0 100644
  struct virtio_vsock_config {
  	__le64 guest_cid;
 -- 
-2.47.1
+2.49.0
 

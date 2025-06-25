@@ -1,4 +1,4 @@
-From 4fefb67da29d15570cf319c9e8ea5e392af425a1 Mon Sep 17 00:00:00 2001
+From 53a222e5421780174a29fe6cb18d78e3a959d5d6 Mon Sep 17 00:00:00 2001
 From: Hector Martin <marcan@marcan.st>
 Date: Thu, 11 Apr 2024 09:51:22 +0900
 Subject: [PATCH 14/21] arm64: Introduce scaffolding to add ACTLR_EL1 to thread
@@ -24,7 +24,7 @@ Reviewed-by: Neal Gompa <neal@gompa.dev>
  5 files changed, 44 insertions(+)
 
 diff --git a/arch/arm64/Kconfig b/arch/arm64/Kconfig
-index dee1e752cf55..7023615aac6e 100644
+index ab6ecb52a73d..a30f30fd7e67 100644
 --- a/arch/arm64/Kconfig
 +++ b/arch/arm64/Kconfig
 @@ -428,6 +428,9 @@ config KASAN_SHADOW_OFFSET
@@ -137,5 +137,5 @@ index 87f61fd6783c..8fb0c20959bf 100644
  	if (boot_args[1] || boot_args[2] || boot_args[3]) {
  		pr_err("WARNING: x1-x3 nonzero in violation of boot protocol:\n"
 -- 
-2.47.1
+2.49.0
 
