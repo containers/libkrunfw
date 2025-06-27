@@ -1,7 +1,7 @@
 __pycache__
 *.pyc
 *~
-libkrunfw.so
+libkrunfw.so*
 kernel.c
 vmlinux
 /tarballs
