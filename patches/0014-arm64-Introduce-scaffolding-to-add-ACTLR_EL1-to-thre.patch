@@ -1,4 +1,4 @@
-From 53a222e5421780174a29fe6cb18d78e3a959d5d6 Mon Sep 17 00:00:00 2001
+From 149bf1c274f3bbe3676e2c5eaf374376934610d2 Mon Sep 17 00:00:00 2001
 From: Hector Martin <marcan@marcan.st>
 Date: Thu, 11 Apr 2024 09:51:22 +0900
 Subject: [PATCH 14/21] arm64: Introduce scaffolding to add ACTLR_EL1 to thread
@@ -68,7 +68,7 @@ index 1438424f0064..ea4e32467068 100644
  
  static inline unsigned int thread_get_vl(struct thread_struct *thread,
 diff --git a/arch/arm64/kernel/process.c b/arch/arm64/kernel/process.c
-index 20434392a222..357e5dbf38cd 100644
+index c753a0f6183b..f2bf5f7d6dbb 100644
 --- a/arch/arm64/kernel/process.c
 +++ b/arch/arm64/kernel/process.c
 @@ -385,6 +385,11 @@ int copy_thread(struct task_struct *p, const struct kernel_clone_args *args)
@@ -83,7 +83,7 @@ index 20434392a222..357e5dbf38cd 100644
  		if (stack_start) {
  			if (is_compat_thread(task_thread_info(p)))
  				childregs->compat_sp = stack_start;
-@@ -585,6 +590,25 @@ int arch_prctl_mem_model_set(struct task_struct *t, unsigned long val)
+@@ -590,6 +595,25 @@ int arch_prctl_mem_model_set(struct task_struct *t, unsigned long val)
  }
  #endif
  
@@ -109,7 +109,7 @@ index 20434392a222..357e5dbf38cd 100644
  /*
   * Thread switching.
   */
-@@ -603,6 +627,7 @@ struct task_struct *__switch_to(struct task_struct *prev,
+@@ -608,6 +632,7 @@ struct task_struct *__switch_to(struct task_struct *prev,
  	cntkctl_thread_switch(prev, next);
  	ptrauth_thread_switch_user(next);
  	permission_overlay_switch(next);
@@ -137,5 +137,5 @@ index 87f61fd6783c..8fb0c20959bf 100644
  	if (boot_args[1] || boot_args[2] || boot_args[3]) {
  		pr_err("WARNING: x1-x3 nonzero in violation of boot protocol:\n"
 -- 
-2.49.0
+2.50.0
 

@@ -1,4 +1,4 @@
-From c1c7696bb15ad96da859c15acc6ffe6d7b8d71ab Mon Sep 17 00:00:00 2001
+From ef2cfc3794002ecf53cdb4e1b90bc73d13d02064 Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@sinrega.org>
 Date: Fri, 10 Sep 2021 13:05:01 +0200
 Subject: [PATCH 1/4] virtio: enable DMA API if memory is restricted
@@ -32,7 +32,7 @@ index b9095751e43b..9e6420d5bc66 100644
  
  	if (!virtio_has_feature(dev, VIRTIO_F_VERSION_1))
 diff --git a/drivers/virtio/virtio_ring.c b/drivers/virtio/virtio_ring.c
-index 147926c8bae0..87fd943cafa3 100644
+index c0276979675d..1d5b988e4452 100644
 --- a/drivers/virtio/virtio_ring.c
 +++ b/drivers/virtio/virtio_ring.c
 @@ -6,6 +6,7 @@
@@ -54,5 +54,5 @@ index 147926c8bae0..87fd943cafa3 100644
  	/*
  	 * In theory, it's possible to have a buggy QEMU-supposed
 -- 
-2.49.0
+2.50.0
 

@@ -1,4 +1,4 @@
-From 0516cf426ccdb7529eb1365ae6a4bad639ca10bf Mon Sep 17 00:00:00 2001
+From fd5d74a42bdfa7a86ad0610b3f02f2878edd7328 Mon Sep 17 00:00:00 2001
 From: Hector Martin <marcan@marcan.st>
 Date: Thu, 11 Apr 2024 09:51:23 +0900
 Subject: [PATCH 15/21] arm64: Implement Apple IMPDEF TSO memory model control
@@ -149,7 +149,7 @@ index de784a1fb49b..3b0807bf90cd 100644
  		.desc = "TSO memory model (Fixed)",
  		.capability = ARM64_HAS_TSO_FIXED,
 diff --git a/arch/arm64/kernel/process.c b/arch/arm64/kernel/process.c
-index 357e5dbf38cd..9bdf9ca9051e 100644
+index f2bf5f7d6dbb..46f01d4e9fb7 100644
 --- a/arch/arm64/kernel/process.c
 +++ b/arch/arm64/kernel/process.c
 @@ -44,6 +44,7 @@
@@ -160,7 +160,7 @@ index 357e5dbf38cd..9bdf9ca9051e 100644
  #include <asm/arch_timer.h>
  #include <asm/compat.h>
  #include <asm/cpufeature.h>
-@@ -574,6 +575,10 @@ void update_sctlr_el1(u64 sctlr)
+@@ -579,6 +580,10 @@ void update_sctlr_el1(u64 sctlr)
  #ifdef CONFIG_ARM64_MEMORY_MODEL_CONTROL
  int arch_prctl_mem_model_get(struct task_struct *t)
  {
@@ -171,7 +171,7 @@ index 357e5dbf38cd..9bdf9ca9051e 100644
  	return PR_SET_MEM_MODEL_DEFAULT;
  }
  
-@@ -583,6 +588,23 @@ int arch_prctl_mem_model_set(struct task_struct *t, unsigned long val)
+@@ -588,6 +593,23 @@ int arch_prctl_mem_model_set(struct task_struct *t, unsigned long val)
  	    val == PR_SET_MEM_MODEL_TSO)
  		return 0;
  
@@ -208,5 +208,5 @@ index bca63481e0cf..8b809992a9ee 100644
  HAS_VA52
  HAS_VIRT_HOST_EXTN
 -- 
-2.49.0
+2.50.0
 

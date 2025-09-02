@@ -1,4 +1,4 @@
-From ca7e3bce7612e1eba6e16ee8a831c32764fc1ec3 Mon Sep 17 00:00:00 2001
+From d630fab95098c9125978d1043551a5f7b7dc6954 Mon Sep 17 00:00:00 2001
 From: Bobby Eshleman <bobby.eshleman () bytedance ! com>
 Date: Sat, 10 Jun 2023 00:58:31 +0000
 Subject: [PATCH 06/21] vsock: make vsock bind reusable
@@ -12,7 +12,7 @@ Signed-off-by: Bobby Eshleman <bobby.eshleman@bytedance.com>
  1 file changed, 26 insertions(+), 7 deletions(-)
 
 diff --git a/net/vmw_vsock/af_vsock.c b/net/vmw_vsock/af_vsock.c
-index 8112fd22218b..68f7bc0c771a 100644
+index 9d853e1c1824..b0bdb9d1f816 100644
 --- a/net/vmw_vsock/af_vsock.c
 +++ b/net/vmw_vsock/af_vsock.c
 @@ -235,11 +235,12 @@ static void __vsock_remove_connected(struct vsock_sock *vsk)
@@ -42,7 +42,7 @@ index 8112fd22218b..68f7bc0c771a 100644
  static struct sock *__vsock_find_connected_socket(struct sockaddr_vm *src,
  						  struct sockaddr_vm *dst)
  {
-@@ -663,12 +669,17 @@ static void vsock_pending_work(struct work_struct *work)
+@@ -697,12 +703,17 @@ static void vsock_pending_work(struct work_struct *work)
  
  /**** SOCKET OPERATIONS ****/
  
@@ -62,7 +62,7 @@ index 8112fd22218b..68f7bc0c771a 100644
  	if (!port)
  		port = get_random_u32_above(LAST_RESERVED_PORT);
  
-@@ -684,7 +695,8 @@ static int __vsock_bind_connectible(struct vsock_sock *vsk,
+@@ -719,7 +730,8 @@ static int __vsock_bind_connectible(struct vsock_sock *vsk,
  
  			new_addr.svm_port = port++;
  
@@ -72,7 +72,7 @@ index 8112fd22218b..68f7bc0c771a 100644
  				found = true;
  				break;
  			}
-@@ -701,7 +713,8 @@ static int __vsock_bind_connectible(struct vsock_sock *vsk,
+@@ -736,7 +748,8 @@ static int __vsock_bind_connectible(struct vsock_sock *vsk,
  			return -EACCES;
  		}
  
@@ -82,7 +82,7 @@ index 8112fd22218b..68f7bc0c771a 100644
  			return -EADDRINUSE;
  	}
  
-@@ -713,11 +726,17 @@ static int __vsock_bind_connectible(struct vsock_sock *vsk,
+@@ -748,11 +761,17 @@ static int __vsock_bind_connectible(struct vsock_sock *vsk,
  	 * by AF_UNIX.
  	 */
  	__vsock_remove_bound(vsk);
@@ -102,5 +102,5 @@ index 8112fd22218b..68f7bc0c771a 100644
  			      struct sockaddr_vm *addr)
  {
 -- 
-2.49.0
+2.50.0
 
