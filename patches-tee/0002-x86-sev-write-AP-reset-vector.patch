@@ -1,4 +1,4 @@
-From eb4f5e615e0a6e75515449253e4014812b8008cf Mon Sep 17 00:00:00 2001
+From 58bcedac702edc08536b1afd6063f39294088a8f Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@redhat.com>
 Date: Thu, 20 Oct 2022 10:23:16 +0200
 Subject: [PATCH 2/4] x86/sev: write AP reset vector
@@ -55,5 +55,5 @@ index de1df0cb45da..7ed486a790fb 100644
  	/* Check if AP Jump Table is page-aligned */
  	if (jump_table_addr & ~PAGE_MASK)
 -- 
-2.49.0
+2.50.0
 

@@ -1,4 +1,4 @@
-From f4fa2d46824f4704ade2c6d1d42b8e1fa9eb8e4a Mon Sep 17 00:00:00 2001
+From 0c4fbdf990f683a32d3be782c763e043c2f1799b Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@redhat.com>
 Date: Wed, 5 Jun 2024 16:20:08 +0200
 Subject: [PATCH 4/4] x86/sev: Avoid using native_cpuid
@@ -61,5 +61,5 @@ index b922b9fea6b6..c0de732b0121 100644
  	/* Check the SEV MSR whether SEV or SME is enabled */
  	RIP_REL_REF(sev_status) = msr = __rdmsr(MSR_AMD64_SEV);
 -- 
-2.49.0
+2.50.0
 

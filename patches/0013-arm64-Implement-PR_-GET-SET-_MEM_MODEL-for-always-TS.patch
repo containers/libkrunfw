@@ -1,4 +1,4 @@
-From 8d3fb19fd331e7d6032eedf3aea6f50ae145c253 Mon Sep 17 00:00:00 2001
+From a93aea056017c8d117a3e585cfcc47f68d8e4230 Mon Sep 17 00:00:00 2001
 From: Hector Martin <marcan@marcan.st>
 Date: Thu, 11 Apr 2024 09:51:21 +0900
 Subject: [PATCH 13/21] arm64: Implement PR_{GET,SET}_MEM_MODEL for always-TSO
@@ -76,7 +76,7 @@ index 2b112f3b7510..2a11cdefbe04 100644
  obj-$(CONFIG_COMPAT)			+= sys32.o signal32.o			\
  					   sys_compat.o
 diff --git a/arch/arm64/kernel/cpufeature.c b/arch/arm64/kernel/cpufeature.c
-index ab0b8ab2e72b..4bd0c9641f3a 100644
+index 0dace802bbdb..da4820d3d485 100644
 --- a/arch/arm64/kernel/cpufeature.c
 +++ b/arch/arm64/kernel/cpufeature.c
 @@ -1039,7 +1039,7 @@ static void init_cpu_ftr_reg(u32 sys_reg, u64 new)
@@ -116,7 +116,7 @@ index ab0b8ab2e72b..4bd0c9641f3a 100644
  }
  
  const struct cpumask *system_32bit_el0_cpumask(void)
-@@ -3555,6 +3555,7 @@ void __init setup_boot_cpu_features(void)
+@@ -3562,6 +3562,7 @@ void __init setup_boot_cpu_features(void)
  	 * handle the boot CPU.
  	 */
  	init_cpucap_indirect_list();
@@ -169,7 +169,7 @@ index 000000000000..de784a1fb49b
 +	init_cpucap_indirect_list_from_array(arm64_impdef_features);
 +}
 diff --git a/arch/arm64/kernel/process.c b/arch/arm64/kernel/process.c
-index 2bbcbb11d844..20434392a222 100644
+index 2edf88c1c695..c753a0f6183b 100644
 --- a/arch/arm64/kernel/process.c
 +++ b/arch/arm64/kernel/process.c
 @@ -41,6 +41,7 @@
@@ -180,7 +180,7 @@ index 2bbcbb11d844..20434392a222 100644
  
  #include <asm/alternative.h>
  #include <asm/arch_timer.h>
-@@ -565,6 +566,25 @@ void update_sctlr_el1(u64 sctlr)
+@@ -570,6 +571,25 @@ void update_sctlr_el1(u64 sctlr)
  	isb();
  }
  
@@ -206,7 +206,7 @@ index 2bbcbb11d844..20434392a222 100644
  /*
   * Thread switching.
   */
-@@ -704,6 +724,10 @@ void arch_setup_new_exec(void)
+@@ -709,6 +729,10 @@ void arch_setup_new_exec(void)
  		arch_prctl_spec_ctrl_set(current, PR_SPEC_STORE_BYPASS,
  					 PR_SPEC_ENABLE);
  	}
@@ -230,5 +230,5 @@ index eedb5acc21ed..bca63481e0cf 100644
  HAS_VIRT_HOST_EXTN
  HAS_WFXT
 -- 
-2.49.0
+2.50.0
 
