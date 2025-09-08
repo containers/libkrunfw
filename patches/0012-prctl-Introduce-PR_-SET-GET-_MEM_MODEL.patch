@@ -1,4 +1,4 @@
-From b81a57520d253fd95e3263326560bdc8d0b6979a Mon Sep 17 00:00:00 2001
+From 50e73e54bac3bd57fba7ee616ae06632b6c9c2da Mon Sep 17 00:00:00 2001
 From: Hector Martin <marcan@marcan.st>
 Date: Thu, 11 Apr 2024 09:51:20 +0900
 Subject: [PATCH 12/21] prctl: Introduce PR_{SET,GET}_MEM_MODEL
