@@ -1,7 +1,7 @@
-From 6aa8e2e8c2b7dafdf855f132707454b95444ce17 Mon Sep 17 00:00:00 2001
+From 9049f7ac0517657c4bac3d32b54eee1a423bac61 Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@redhat.com>
 Date: Thu, 19 May 2022 22:38:26 +0200
-Subject: [PATCH 1/2] Transparent Socket Impersonation implementation
+Subject: [PATCH 09/21] Transparent Socket Impersonation implementation
 
 Transparent Socket Impersonation (AF_TSI) is an address family that
 provides sockets presenting two simultaneous personalities, AF_INET
@@ -28,11 +28,11 @@ Signed-off-by: Sergio Lopez <slp@redhat.com>
  net/socket.c                        |    1 +
  net/tsi/Kconfig                     |    7 +
  net/tsi/Makefile                    |    4 +
- net/tsi/af_tsi.c                    | 1280 +++++++++++++++++++++++++++
+ net/tsi/af_tsi.c                    | 1271 +++++++++++++++++++++++++++
  net/tsi/af_tsi.h                    |  100 +++
  security/selinux/hooks.c            |    4 +-
  security/selinux/include/classmap.h |    3 +-
- 10 files changed, 1402 insertions(+), 3 deletions(-)
+ 10 files changed, 1393 insertions(+), 3 deletions(-)
  create mode 100644 net/tsi/Kconfig
  create mode 100644 net/tsi/Makefile
  create mode 100644 net/tsi/af_tsi.c
@@ -119,10 +119,10 @@ index 000000000000..8b3cf74116a5
 +tsi-y := af_tsi.o
 diff --git a/net/tsi/af_tsi.c b/net/tsi/af_tsi.c
 new file mode 100644
-index 000000000000..7c9e4dc1a114
+index 000000000000..4c862f395b83
 --- /dev/null
 +++ b/net/tsi/af_tsi.c
-@@ -0,0 +1,1280 @@
+@@ -0,0 +1,1271 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */
 +/*
 + * Transparent Socket Impersonation Driver
@@ -158,7 +158,7 @@ index 000000000000..7c9e4dc1a114
 +			    SOCK_DGRAM, 0, csocket, 1);
 +	if (err) {
 +		pr_debug("%s: error creating control socket\n", __func__);
-+		goto release;
++		return err;
 +	}
 +
 +	memset(&vm_addr, 0, sizeof(struct sockaddr_vm));
@@ -170,14 +170,11 @@ index 000000000000..7c9e4dc1a114
 +			  sizeof(struct sockaddr_vm));
 +	if (err) {
 +		pr_debug("%s: error binding port\n", __func__);
-+		goto release;
++		sock_release(*csocket);
++		return err;
 +	}
 +
 +	return 0;
-+
-+release:
-+	(*csocket)->ops->release(*csocket);
-+	return err;
 +}
 +
 +static int tsi_control_sendrecv_msg(struct socket *csocket, int port,
@@ -241,6 +238,8 @@ index 000000000000..7c9e4dc1a114
 +	vsocket = tsk->vsocket;
 +	sk = sock->sk;
 +
++	lock_sock(sk);
++
 +	pr_debug("%s: tsk=%p vsocket=%p isocket=%p\n", __func__, tsk, vsocket,
 +		 isocket);
 +
@@ -257,21 +256,13 @@ index 000000000000..7c9e4dc1a114
 +					  (void *)&tpr,
 +					  sizeof(struct tsi_proxy_release));
 +
-+		err = vsocket->ops->release(vsocket);
-+		if (err != 0) {
-+			pr_debug("%s: error releasing vsock socket\n",
-+				 __func__);
-+		}
++		sock_release(vsocket);
 +	}
 +
 +	if (!isocket) {
 +		pr_debug("%s: no isocket\n", __func__);
 +	} else {
-+		err = isocket->ops->release(isocket);
-+		if (err != 0) {
-+			pr_debug("%s: error releasing inner socket\n",
-+				 __func__);
-+		}
++		sock_release(isocket);
 +	}
 +
 +	sock_orphan(sk);
@@ -667,7 +658,7 @@ index 000000000000..7c9e4dc1a114
 +
 +error:
 +	if (nsock)
-+		nsock->ops->release(nsock);
++		sock_release(nsock);
 +	release_sock(listener);
 +	return err;
 +}
@@ -1328,14 +1319,14 @@ index 000000000000..7c9e4dc1a114
 +	if (err) {
 +		pr_debug("%s (%d): problem creating vsock socket\n",
 +		         __func__, task_pid_nr(current));
-+		goto release_isocket;
++		goto free_isocket;
 +	}
 +
 +	err = tsi_create_control_socket(&csocket);
 +	if (err) {
 +		pr_debug("%s (%d): problem creating control socket\n",
 +		         __func__, task_pid_nr(current));
-+		goto release_vsocket;
++		goto free_vsocket;
 +	}
 +
 +	pr_debug("isocket: %p\n", isocket);
@@ -1351,10 +1342,10 @@ index 000000000000..7c9e4dc1a114
 +
 +	return 0;
 +
-+release_vsocket:
-+	vsocket->ops->release(vsocket);
-+release_isocket:
-+	isocket->ops->release(isocket);
++free_vsocket:
++	sock_release(vsocket);
++free_isocket:
++	sock_release(isocket);
 +	return err;
 +}
 +
