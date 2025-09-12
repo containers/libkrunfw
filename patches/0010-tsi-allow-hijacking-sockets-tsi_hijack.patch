@@ -1,7 +1,7 @@
-From 0935e6b153ffeecfbe5509971805ad2bf5b53bb0 Mon Sep 17 00:00:00 2001
+From b29aa7ba63679784bef78139d00c96d7ef43b551 Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@redhat.com>
 Date: Thu, 19 May 2022 22:42:01 +0200
-Subject: [PATCH 10/21] tsi: allow hijacking sockets (tsi_hijack)
+Subject: [PATCH] tsi: allow hijacking sockets (tsi_hijack)
 
 Add a kernel command line option (tsi_hijack) enabling users to
 request the kernel to hijack AF_INET(SOCK_STREAM || SOCK_DGRAM)
@@ -56,7 +56,7 @@ index 5ad75d15e1ad..bf8818423454 100644
  	pf = rcu_dereference(net_families[family]);
  	err = -EAFNOSUPPORT;
 diff --git a/net/tsi/af_tsi.c b/net/tsi/af_tsi.c
-index f43a17cff3a3..ef1552862253 100644
+index 7c9e4dc1a114..a1d167a8787e 100644
 --- a/net/tsi/af_tsi.c
 +++ b/net/tsi/af_tsi.c
 @@ -474,7 +474,7 @@ static int tsi_accept(struct socket *sock, struct socket *newsock,
