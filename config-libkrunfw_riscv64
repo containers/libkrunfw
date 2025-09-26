@@ -1264,9 +1264,9 @@ CONFIG_NET_CORE=y
 # CONFIG_PFCP is not set
 # CONFIG_MACSEC is not set
 # CONFIG_NETCONSOLE is not set
-# CONFIG_TUN is not set
+CONFIG_TUN=y
 # CONFIG_TUN_VNET_CROSS_LE is not set
-# CONFIG_VETH is not set
+CONFIG_VETH=y
 CONFIG_VIRTIO_NET=y
 # CONFIG_NLMON is not set
 # CONFIG_NETKIT is not set
