@@ -1,4 +1,4 @@
-From d2188fdaa14de79b1185c3ae94fcec71a68115cc Mon Sep 17 00:00:00 2001
+From ac6d012e5db4c17af1babf6ae992fd26e82ee86b Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@redhat.com>
 Date: Tue, 8 Oct 2024 11:24:25 +0200
 Subject: [PATCH 17/21] Enable 64 bit processes to use compat input syscalls
@@ -120,5 +120,5 @@ index 83da58930513..24dd021a1592 100644
  		error = -EINVAL;
  		break;
 -- 
-2.50.0
+2.51.0
 
