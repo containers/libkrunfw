@@ -1,4 +1,4 @@
-From 0cacaf7a382f24704d9483e76c0aa6e5a145d628 Mon Sep 17 00:00:00 2001
+From 0fb4b713e9fbeba2a75faeb73f4334b95e9cc3dc Mon Sep 17 00:00:00 2001
 From: Hector Martin <marcan@marcan.st>
 Date: Thu, 11 Apr 2024 09:51:21 +0900
 Subject: [PATCH 13/21] arm64: Implement PR_{GET,SET}_MEM_MODEL for always-TSO
@@ -230,5 +230,5 @@ index eedb5acc21ed..bca63481e0cf 100644
  HAS_VIRT_HOST_EXTN
  HAS_WFXT
 -- 
-2.50.0
+2.51.0
 
