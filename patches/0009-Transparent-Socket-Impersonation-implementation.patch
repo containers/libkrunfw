@@ -1,4 +1,4 @@
-From 0b8e9adbefbdf73b25160e7fb5c47f3749136cca Mon Sep 17 00:00:00 2001
+From 6a834115751c2f63e2b7caa48021391646c2c387 Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@redhat.com>
 Date: Thu, 19 May 2022 22:38:26 +0200
 Subject: [PATCH 09/21] Transparent Socket Impersonation implementation
@@ -20,7 +20,10 @@ low overall footprint.
 
 TODO - implement remote [get|set]sockopt
 
+Co-authored-by: Matej Hrica <mhrica@redhat.com>
+
 Signed-off-by: Sergio Lopez <slp@redhat.com>
+Signed-off-by: Matej Hrica <mhrica@redhat.com>
 ---
  include/linux/socket.h              |    8 +-
  net/Kconfig                         |    1 +
@@ -28,18 +31,18 @@ Signed-off-by: Sergio Lopez <slp@redhat.com>
  net/socket.c                        |    3 +
  net/tsi/Kconfig                     |    7 +
  net/tsi/Makefile                    |    4 +
- net/tsi/af_tsi.c                    | 1451 +++++++++++++++++++++++++++
+ net/tsi/af_tsi.c                    | 1571 +++++++++++++++++++++++++++
  net/tsi/af_tsi.h                    |  107 ++
  security/selinux/hooks.c            |    8 +-
  security/selinux/include/classmap.h |    3 +-
- 10 files changed, 1590 insertions(+), 3 deletions(-)
+ 10 files changed, 1710 insertions(+), 3 deletions(-)
  create mode 100644 net/tsi/Kconfig
  create mode 100644 net/tsi/Makefile
  create mode 100644 net/tsi/af_tsi.c
  create mode 100644 net/tsi/af_tsi.h
 
 diff --git a/include/linux/socket.h b/include/linux/socket.h
-index c3322eb3d686..5ae7f94b3abc 100644
+index c3322eb3d..5ae7f94b3 100644
 --- a/include/linux/socket.h
 +++ b/include/linux/socket.h
 @@ -240,8 +240,11 @@ struct ucred {
@@ -66,7 +69,7 @@ index c3322eb3d686..5ae7f94b3abc 100644
  
  /* Maximum queue length specifiable by listen.  */
 diff --git a/net/Kconfig b/net/Kconfig
-index a629f92dc86b..91dfb9152b5b 100644
+index a629f92dc..91dfb9152 100644
 --- a/net/Kconfig
 +++ b/net/Kconfig
 @@ -274,6 +274,7 @@ source "net/switchdev/Kconfig"
@@ -78,7 +81,7 @@ index a629f92dc86b..91dfb9152b5b 100644
  config PCPU_DEV_REFCNT
  	bool "Use percpu variables to maintain network device refcount"
 diff --git a/net/Makefile b/net/Makefile
-index 65bb8c72a35e..c1db937f3212 100644
+index 65bb8c72a..c1db937f3 100644
 --- a/net/Makefile
 +++ b/net/Makefile
 @@ -79,3 +79,4 @@ obj-$(CONFIG_XDP_SOCKETS)	+= xdp/
@@ -87,7 +90,7 @@ index 65bb8c72a35e..c1db937f3212 100644
  obj-$(CONFIG_NET_HANDSHAKE)	+= handshake/
 +obj-$(CONFIG_TSI)		+= tsi/
 diff --git a/net/socket.c b/net/socket.c
-index 042451f01c65..4e1ec38c2434 100644
+index 042451f01..4e1ec38c2 100644
 --- a/net/socket.c
 +++ b/net/socket.c
 @@ -217,6 +217,9 @@ static const char * const pf_family_names[] = {
@@ -102,7 +105,7 @@ index 042451f01c65..4e1ec38c2434 100644
  /*
 diff --git a/net/tsi/Kconfig b/net/tsi/Kconfig
 new file mode 100644
-index 000000000000..0f52ac6c9fa1
+index 000000000..0f52ac6c9
 --- /dev/null
 +++ b/net/tsi/Kconfig
 @@ -0,0 +1,7 @@
@@ -115,7 +118,7 @@ index 000000000000..0f52ac6c9fa1
 +	  TSI (Transparent Socket Impersonation).
 diff --git a/net/tsi/Makefile b/net/tsi/Makefile
 new file mode 100644
-index 000000000000..8b3cf74116a5
+index 000000000..8b3cf7411
 --- /dev/null
 +++ b/net/tsi/Makefile
 @@ -0,0 +1,4 @@
@@ -125,10 +128,10 @@ index 000000000000..8b3cf74116a5
 +tsi-y := af_tsi.o
 diff --git a/net/tsi/af_tsi.c b/net/tsi/af_tsi.c
 new file mode 100644
-index 000000000000..07a3fd60321b
+index 000000000..e266f9684
 --- /dev/null
 +++ b/net/tsi/af_tsi.c
-@@ -0,0 +1,1451 @@
+@@ -0,0 +1,1571 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */
 +/*
 + * Transparent Socket Impersonation Driver
@@ -144,6 +147,11 @@ index 000000000000..07a3fd60321b
 +#include <net/sock.h>
 +#include <net/af_unix.h>
 +#include <net/af_vsock.h>
++#include <net/route.h>
++#include <net/udp.h>
++#include <net/inet_hashtables.h>
++#include <net/ipv6.h>
++#include <net/addrconf.h>
 +#include "af_tsi.h"
 +
 +/* TSI for IPv4 family. */
@@ -1066,9 +1074,11 @@ index 000000000000..07a3fd60321b
 +		if (level == SOL_SOCKET) {
 +			err = sock_setsockopt(isocket, level, optname, optval,
 +					      optlen);
-+		} else {
++		} else if (isocket->ops->setsockopt) {
 +			err = isocket->ops->setsockopt(isocket, level, optname,
 +						       optval, optlen);
++		} else {
++			err = -ENOPROTOOPT;
 +		}
 +		break;
 +	case S_VSOCK:
@@ -1099,8 +1109,15 @@ index 000000000000..07a3fd60321b
 +	switch (tsk->status) {
 +	case S_HYBRID:
 +	case S_INET:
-+		err = isocket->ops->setsockopt(isocket, level, optname, optval,
-+					       optlen);
++		if (level == SOL_SOCKET) {
++			err = sock_setsockopt(isocket, level, optname, optval,
++					      optlen);
++		} else if (isocket->ops->setsockopt) {
++			err = isocket->ops->setsockopt(isocket, level, optname,
++						       optval, optlen);
++		} else {
++			err = -ENOPROTOOPT;
++		}
 +		break;
 +	case S_VSOCK:
 +		// TODO implement remote setsockopt
@@ -1181,6 +1198,90 @@ index 000000000000..07a3fd60321b
 +	return err;
 +}
 +
++/*
++ * Check if there's a UDP listener for the given destination in the guest.
++ * Returns true if there's a UDP socket bound to the destination address:port.
++ * This works for any address (IPv4 or IPv6), including:
++ * - Localhost (127.0.0.1, ::1)
++ * - Regular local addresses
++ * - Custom-routed "remote" addresses (e.g., if 8.8.8.8 is routed locally)
++ */
++static bool tsi_has_udp_listener(struct sock *sk, struct sockaddr *addr,
++				 int addr_len)
++{
++	struct tsi_sock *tsk;
++	struct net *net;
++	struct sock *listener;
++
++	tsk = tsi_sk(sk);
++
++	if (WARN_ON_ONCE(sk->sk_type != SOCK_DGRAM))
++		return false;
++
++	if (!addr)
++		return false;
++
++	net = sock_net(sk);
++
++	if (tsk->family == PF_INET) {
++		struct sockaddr_in *sin;
++		__be32 daddr;
++		__be16 dport;
++
++		if (addr_len < sizeof(struct sockaddr_in))
++			return false;
++
++		sin = (struct sockaddr_in *)addr;
++		if (sin->sin_family != AF_INET)
++			return false;
++
++		daddr = sin->sin_addr.s_addr;
++		dport = sin->sin_port;
++
++		/* Check if anyone is listening on that destination address:port */
++		listener = __udp4_lib_lookup(net,
++					      0, 0,           /* source addr/port - don't care */
++					      daddr, dport,   /* dest addr/port */
++					      0, 0,           /* device indices */
++					      net->ipv4.udp_table,
++					      NULL);
++
++		if (listener) {
++			sock_put(listener);  /* Release the reference */
++			return true;
++		}
++	} else if (tsk->family == PF_INET6) {
++		struct sockaddr_in6 *sin6;
++		const struct in6_addr *daddr;
++		__be16 dport;
++
++		if (addr_len < sizeof(struct sockaddr_in6))
++			return false;
++
++		sin6 = (struct sockaddr_in6 *)addr;
++		if (sin6->sin6_family != AF_INET6)
++			return false;
++
++		daddr = &sin6->sin6_addr;
++		dport = sin6->sin6_port;
++
++		/* Check if anyone is listening on that destination address:port */
++		listener = __udp6_lib_lookup(net,
++					      NULL, 0,        /* source addr/port - don't care */
++					      daddr, dport,   /* dest addr/port */
++					      0, 0,           /* device indices */
++					      net->ipv4.udp_table,
++					      NULL);
++
++		if (listener) {
++			sock_put(listener);  /* Release the reference */
++			return true;
++		}
++	}
++
++	return false;
++}
++
 +static int tsi_dgram_sendmsg(struct socket *sock, struct msghdr *msg,
 +			     size_t len)
 +{
@@ -1197,27 +1298,51 @@ index 000000000000..07a3fd60321b
 +	isocket = tsk->isocket;
 +	vsocket = tsk->vsocket;
 +
-+	pr_debug("%s: s=%p vs=%p is=%p st=%d\n", __func__, sock, vsocket,
-+		 isocket, tsk->status);
++	pr_debug("%s: s=%p vs=%p is=%p st=%d family=%d\n", __func__, sock,
++		 vsocket, isocket, tsk->status, tsk->family);
 +
 +	switch (tsk->status) {
 +	case S_INET:
 +		err = isocket->ops->sendmsg(isocket, msg, len);
 +		break;
-+	case S_HYBRID:
-+		err = isocket->ops->sendmsg(isocket, msg, len);
-+		if (err == 0)
-+			goto release;
++	case S_HYBRID: {
++		bool has_local_listener;
++
++		/*
++		 * For datagram sockets, we need to decide whether to send via
++		 * the guest's inet stack or proxy via vsock to the host.
++		 *
++		 * Strategy: Check if there's a listener in the guest. If yes,
++		 * send via inet (guest priority). If no, proxy via vsock to
++		 * reach host.
++		 */
++		has_local_listener = tsi_has_udp_listener(sk, msg->msg_name,
++							  msg->msg_namelen);
++		if (has_local_listener) {
++			err = isocket->ops->sendmsg(isocket, msg, len);
++			if (err >= 0)
++				goto release;
++			/*
++			 * Genuine error (negative). Iterator might have been
++			 * consumed if this is a late error (Type B).
++			 * Fall through to vsock as last resort.
++			 */
++			iov_iter_revert(&msg->msg_iter, len);
++		}
++		/*
++		 * No local listener OR inet failed - proxy via vsock to host.
++		 * This is the common case when guest apps try to reach host
++		 * services.
++		 */
 +		fallthrough;
++	}
 +	case S_VSOCK:
 +		if (msg->msg_name) {
 +			pr_debug("%s: fixing msg_name for vsock proxy\n",
 +				 __func__);
-+
 +			err = tsi_check_addr_len(tsk, msg->msg_namelen);
-+			if (err != 0) {
++			if (err != 0)
 +				goto release;
-+			}
 +
 +			if (!tsk->sendto_addr) {
 +				tsk->sendto_addr =
@@ -1256,9 +1381,8 @@ index 000000000000..07a3fd60321b
 +		}
 +
 +		err = vsocket->ops->sendmsg(vsocket, msg, len);
-+		if (err == 0) {
++		if (err > 0)
 +			tsk->status = S_VSOCK;
-+		}
 +		break;
 +	}
 +
@@ -1314,13 +1438,11 @@ index 000000000000..07a3fd60321b
 +	isocket = tsk->isocket;
 +	vsocket = tsk->vsocket;
 +
-+	pr_debug("%s: s=%p vs=%p is=%p st=%d\n", __func__, sock, vsocket,
-+		 isocket, tsk->status);
++	pr_debug("%s: s=%p vs=%p is=%p st=%d family=%d\n", __func__, sock,
++		 vsocket, isocket, tsk->status, tsk->family);
 +
 +	switch (tsk->status) {
 +	case S_HYBRID:
-+		err = -ENOTCONN;
-+		break;
 +	case S_INET:
 +		err = isocket->ops->recvmsg(isocket, msg, len, flags);
 +		break;
@@ -1333,6 +1455,7 @@ index 000000000000..07a3fd60321b
 +				msg->msg_namelen, tsk->sendto_addr_len);
 +			memcpy(msg->msg_name, tsk->sendto_addr,
 +			       tsk->sendto_addr_len);
++			msg->msg_namelen = tsk->sendto_addr_len;
 +		}
 +		break;
 +	}
@@ -1582,7 +1705,7 @@ index 000000000000..07a3fd60321b
 +MODULE_LICENSE("GPL v2");
 diff --git a/net/tsi/af_tsi.h b/net/tsi/af_tsi.h
 new file mode 100644
-index 000000000000..b74966fd7ae3
+index 000000000..b74966fd7
 --- /dev/null
 +++ b/net/tsi/af_tsi.h
 @@ -0,0 +1,107 @@
@@ -1694,7 +1817,7 @@ index 000000000000..b74966fd7ae3
 +
 +#endif
 diff --git a/security/selinux/hooks.c b/security/selinux/hooks.c
-index fc926d3cac6e..6e81037192c8 100644
+index fc926d3ca..6e8103719 100644
 --- a/security/selinux/hooks.c
 +++ b/security/selinux/hooks.c
 @@ -1302,7 +1302,13 @@ static inline u16 socket_type_to_security_class(int family, int type, int protoc
@@ -1713,7 +1836,7 @@ index fc926d3cac6e..6e81037192c8 100644
  #endif
  		}
 diff --git a/security/selinux/include/classmap.h b/security/selinux/include/classmap.h
-index 7229c9bf6c27..f08d24321603 100644
+index 7229c9bf6..f08d24321 100644
 --- a/security/selinux/include/classmap.h
 +++ b/security/selinux/include/classmap.h
 @@ -173,6 +173,7 @@ const struct security_class_mapping secclass_map[] = {
@@ -1733,5 +1856,5 @@ index 7229c9bf6c27..f08d24321603 100644
  #error New address family defined, please update secclass_map.
  #endif
 -- 
-2.51.0
+2.51.1
 

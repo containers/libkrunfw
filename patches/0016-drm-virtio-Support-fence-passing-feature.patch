@@ -1,4 +1,4 @@
-From e716a42f42680964e392452eb1efa61d2c67453b Mon Sep 17 00:00:00 2001
+From cf9cf7b5ec7a8d79e245b5b911b44ae7406ab485 Mon Sep 17 00:00:00 2001
 From: Dmitry Osipenko <dmitry.osipenko@collabora.com>
 Date: Sat, 7 Oct 2023 22:47:47 +0300
 Subject: [PATCH 16/21] drm/virtio: Support fence-passing feature
@@ -36,7 +36,7 @@ Signed-off-by: Dmitry Osipenko <dmitry.osipenko@collabora.com>
  9 files changed, 152 insertions(+), 14 deletions(-)
 
 diff --git a/drivers/gpu/drm/virtio/virtgpu_drv.c b/drivers/gpu/drm/virtio/virtgpu_drv.c
-index e5a2665e50ea..33b471dfe098 100644
+index e5a2665e5..33b471dfe 100644
 --- a/drivers/gpu/drm/virtio/virtgpu_drv.c
 +++ b/drivers/gpu/drm/virtio/virtgpu_drv.c
 @@ -149,6 +149,7 @@ static unsigned int features[] = {
@@ -48,7 +48,7 @@ index e5a2665e50ea..33b471dfe098 100644
  static struct virtio_driver virtio_gpu_driver = {
  	.feature_table = features,
 diff --git a/drivers/gpu/drm/virtio/virtgpu_drv.h b/drivers/gpu/drm/virtio/virtgpu_drv.h
-index 5dc8eeaf7123..50d8bbd01bc4 100644
+index 5dc8eeaf7..50d8bbd01 100644
 --- a/drivers/gpu/drm/virtio/virtgpu_drv.h
 +++ b/drivers/gpu/drm/virtio/virtgpu_drv.h
 @@ -152,6 +152,7 @@ struct virtio_gpu_fence {
@@ -105,7 +105,7 @@ index 5dc8eeaf7123..50d8bbd01bc4 100644
  /* virtgpu_object.c */
  void virtio_gpu_cleanup_object(struct virtio_gpu_object *bo);
 diff --git a/drivers/gpu/drm/virtio/virtgpu_fence.c b/drivers/gpu/drm/virtio/virtgpu_fence.c
-index f28357dbde35..1fd3cfeca2f5 100644
+index f28357dbd..1fd3cfeca 100644
 --- a/drivers/gpu/drm/virtio/virtgpu_fence.c
 +++ b/drivers/gpu/drm/virtio/virtgpu_fence.c
 @@ -27,9 +27,6 @@
@@ -145,7 +145,7 @@ index f28357dbde35..1fd3cfeca2f5 100644
  
  void virtio_gpu_fence_event_process(struct virtio_gpu_device *vgdev,
 diff --git a/drivers/gpu/drm/virtio/virtgpu_ioctl.c b/drivers/gpu/drm/virtio/virtgpu_ioctl.c
-index e4f76f315550..894f3fd14c51 100644
+index e4f76f315..894f3fd14 100644
 --- a/drivers/gpu/drm/virtio/virtgpu_ioctl.c
 +++ b/drivers/gpu/drm/virtio/virtgpu_ioctl.c
 @@ -524,7 +524,8 @@ static int virtio_gpu_resource_create_blob_ioctl(struct drm_device *dev,
@@ -174,7 +174,7 @@ index e4f76f315550..894f3fd14c51 100644
  			ret = -EINVAL;
  			goto out_unlock;
 diff --git a/drivers/gpu/drm/virtio/virtgpu_kms.c b/drivers/gpu/drm/virtio/virtgpu_kms.c
-index 7dfb2006c561..fa4e5542fe5b 100644
+index 7dfb2006c..fa4e5542f 100644
 --- a/drivers/gpu/drm/virtio/virtgpu_kms.c
 +++ b/drivers/gpu/drm/virtio/virtgpu_kms.c
 @@ -196,12 +196,16 @@ int virtio_gpu_init(struct virtio_device *vdev, struct drm_device *dev)
@@ -197,7 +197,7 @@ index 7dfb2006c561..fa4e5542fe5b 100644
  	DRM_INFO("features: %ccontext_init\n",
  		 vgdev->has_context_init ? '+' : '-');
 diff --git a/drivers/gpu/drm/virtio/virtgpu_submit.c b/drivers/gpu/drm/virtio/virtgpu_submit.c
-index 7d34cf83f5f2..136ca6238ab0 100644
+index 7d34cf83f..136ca6238 100644
 --- a/drivers/gpu/drm/virtio/virtgpu_submit.c
 +++ b/drivers/gpu/drm/virtio/virtgpu_submit.c
 @@ -25,6 +25,11 @@ struct virtio_gpu_submit_post_dep {
@@ -364,7 +364,7 @@ index 7d34cf83f5f2..136ca6238ab0 100644
  	/*
  	 * Set up user-out data after submitting the job to optimize
 diff --git a/drivers/gpu/drm/virtio/virtgpu_vq.c b/drivers/gpu/drm/virtio/virtgpu_vq.c
-index 0d3d0d09f39b..96f0a42d313c 100644
+index 0d3d0d09f..96f0a42d3 100644
 --- a/drivers/gpu/drm/virtio/virtgpu_vq.c
 +++ b/drivers/gpu/drm/virtio/virtgpu_vq.c
 @@ -1079,7 +1079,9 @@ void virtio_gpu_cmd_submit(struct virtio_gpu_device *vgdev,
@@ -389,7 +389,7 @@ index 0d3d0d09f39b..96f0a42d313c 100644
  	virtio_gpu_queue_fenced_ctrl_buffer(vgdev, vbuf, fence);
  }
 diff --git a/include/uapi/drm/virtgpu_drm.h b/include/uapi/drm/virtgpu_drm.h
-index c2ce71987e9b..2bb2d3a0c7bd 100644
+index c2ce71987..2bb2d3a0c 100644
 --- a/include/uapi/drm/virtgpu_drm.h
 +++ b/include/uapi/drm/virtgpu_drm.h
 @@ -52,10 +52,12 @@ extern "C" {
@@ -414,7 +414,7 @@ index c2ce71987e9b..2bb2d3a0c7bd 100644
  	__u64 param;
  	__u64 value;
 diff --git a/include/uapi/linux/virtio_gpu.h b/include/uapi/linux/virtio_gpu.h
-index bf2c9cabd207..ceb656264aa0 100644
+index bf2c9cabd..ceb656264 100644
 --- a/include/uapi/linux/virtio_gpu.h
 +++ b/include/uapi/linux/virtio_gpu.h
 @@ -65,6 +65,11 @@
@@ -450,5 +450,5 @@ index bf2c9cabd207..ceb656264aa0 100644
  
  #define VIRTIO_GPU_CAPSET_VIRGL 1
 -- 
-2.51.0
+2.51.1
 
