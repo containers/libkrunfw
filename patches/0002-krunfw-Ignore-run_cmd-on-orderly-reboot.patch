@@ -1,4 +1,4 @@
-From 900e42cb0995e35e35aa0eae6ef6face0252b7f2 Mon Sep 17 00:00:00 2001
+From e27db39210041be7df82e69e697a9120f8c27363 Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@redhat.com>
 Date: Mon, 16 May 2022 16:04:27 +0200
 Subject: [PATCH 02/21] krunfw: Ignore run_cmd on orderly reboot
@@ -12,7 +12,7 @@ Signed-off-by: Sergio Lopez <slp@redhat.com>
  1 file changed, 4 insertions(+)
 
 diff --git a/kernel/reboot.c b/kernel/reboot.c
-index f6947c5bd671..5925d8fcfbfa 100644
+index f6947c5bd..5925d8fcf 100644
 --- a/kernel/reboot.c
 +++ b/kernel/reboot.c
 @@ -853,7 +853,11 @@ static int __orderly_reboot(void)
@@ -28,5 +28,5 @@ index f6947c5bd671..5925d8fcfbfa 100644
  	if (ret) {
  		pr_warn("Failed to start orderly reboot: forcing the issue\n");
 -- 
-2.51.0
+2.51.1
 

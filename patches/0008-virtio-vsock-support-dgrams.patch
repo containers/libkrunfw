@@ -1,4 +1,4 @@
-From 6c72954d95d84fbe85766ffeb5ba9070f52d7dbe Mon Sep 17 00:00:00 2001
+From f09829b75a7e47fa9fd0231c601e87b960103eb2 Mon Sep 17 00:00:00 2001
 From: Bobby Eshleman <bobby.eshleman () bytedance ! com>
 Date: Sat, 10 Jun 2023 00:58:33 +0000
 Subject: [PATCH 08/21] virtio/vsock: support dgrams
@@ -36,7 +36,7 @@ Signed-off-by: Bobby Eshleman <bobby.eshleman@bytedance.com>
  8 files changed, 229 insertions(+), 59 deletions(-)
 
 diff --git a/drivers/vhost/vsock.c b/drivers/vhost/vsock.c
-index 4659a74078bd..eb088aa1afc1 100644
+index 4659a7407..eb088aa1a 100644
 --- a/drivers/vhost/vsock.c
 +++ b/drivers/vhost/vsock.c
 @@ -32,7 +32,8 @@
@@ -112,7 +112,7 @@ index 4659a74078bd..eb088aa1afc1 100644
  		vq = &vsock->vqs[i];
  		mutex_lock(&vq->mutex);
 diff --git a/include/linux/virtio_vsock.h b/include/linux/virtio_vsock.h
-index 0a4369e01c4a..09188bbbfcc5 100644
+index 0a4369e01..09188bbbf 100644
 --- a/include/linux/virtio_vsock.h
 +++ b/include/linux/virtio_vsock.h
 @@ -238,7 +238,6 @@ void virtio_transport_notify_buffer_size(struct vsock_sock *vsk, u64 *val);
@@ -133,7 +133,7 @@ index 0a4369e01c4a..09188bbbfcc5 100644
 +int virtio_transport_dgram_get_length(struct sk_buff *skb, size_t *len);
  #endif /* _LINUX_VIRTIO_VSOCK_H */
 diff --git a/include/net/af_vsock.h b/include/net/af_vsock.h
-index 9ba6e2bcef94..5f93bb290a83 100644
+index 9ba6e2bce..5f93bb290 100644
 --- a/include/net/af_vsock.h
 +++ b/include/net/af_vsock.h
 @@ -230,6 +230,7 @@ void vsock_for_each_connected_socket(struct vsock_transport *transport,
@@ -145,7 +145,7 @@ index 9ba6e2bcef94..5f93bb290a83 100644
  /**** TAP ****/
  
 diff --git a/include/uapi/linux/virtio_vsock.h b/include/uapi/linux/virtio_vsock.h
-index 9c25f267bbc0..27b4b2b8bf13 100644
+index 9c25f267b..27b4b2b8b 100644
 --- a/include/uapi/linux/virtio_vsock.h
 +++ b/include/uapi/linux/virtio_vsock.h
 @@ -70,6 +70,7 @@ struct virtio_vsock_hdr {
@@ -157,7 +157,7 @@ index 9c25f267bbc0..27b4b2b8bf13 100644
  
  enum virtio_vsock_op {
 diff --git a/net/vmw_vsock/af_vsock.c b/net/vmw_vsock/af_vsock.c
-index b0bdb9d1f816..6418b8fa98c5 100644
+index b0bdb9d1f..6418b8fa9 100644
 --- a/net/vmw_vsock/af_vsock.c
 +++ b/net/vmw_vsock/af_vsock.c
 @@ -118,6 +118,7 @@ static int __vsock_bind(struct sock *sk, struct sockaddr_vm *addr);
@@ -267,7 +267,7 @@ index b0bdb9d1f816..6418b8fa98c5 100644
  
  	default:
 diff --git a/net/vmw_vsock/virtio_transport.c b/net/vmw_vsock/virtio_transport.c
-index 359775d55685..987f054690de 100644
+index 359775d55..987f05469 100644
 --- a/net/vmw_vsock/virtio_transport.c
 +++ b/net/vmw_vsock/virtio_transport.c
 @@ -74,6 +74,7 @@ struct virtio_vsock {
@@ -329,7 +329,7 @@ index 359775d55685..987f054690de 100644
  
  static struct virtio_driver virtio_vsock_driver = {
 diff --git a/net/vmw_vsock/virtio_transport_common.c b/net/vmw_vsock/virtio_transport_common.c
-index 96b6303b24c2..0cb9261e433d 100644
+index 96b6303b2..0cb9261e4 100644
 --- a/net/vmw_vsock/virtio_transport_common.c
 +++ b/net/vmw_vsock/virtio_transport_common.c
 @@ -136,6 +136,35 @@ static void virtio_transport_init_hdr(struct sk_buff *skb,
@@ -623,7 +623,7 @@ index 96b6303b24c2..0cb9261e433d 100644
  
  	/* Release refcnt obtained when we fetched this socket out of the
 diff --git a/net/vmw_vsock/vsock_loopback.c b/net/vmw_vsock/vsock_loopback.c
-index 9e9e124f8d2b..b3066c854bb9 100644
+index 9e9e124f8..b3066c854 100644
 --- a/net/vmw_vsock/vsock_loopback.c
 +++ b/net/vmw_vsock/vsock_loopback.c
 @@ -46,6 +46,7 @@ static int vsock_loopback_cancel_pkt(struct vsock_sock *vsk)
@@ -656,5 +656,5 @@ index 9e9e124f8d2b..b3066c854bb9 100644
  {
  	return true;
 -- 
-2.51.0
+2.51.1
 
