@@ -17,7 +17,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Install dependencies
-        run: sudo apt-get install -y make gcc bc bison flex elfutils python3-pyelftools curl patch libelf-dev
+        run: sudo apt-get update && sudo apt-get install -y make gcc bc bison flex elfutils python3-pyelftools curl patch libelf-dev
 
       - name: Build TDX kernel
         run: make TDX=1
