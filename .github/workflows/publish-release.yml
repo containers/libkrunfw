@@ -1,0 +1,70 @@
+name: Publish binaries on release
+on:
+  release:
+    types: [published]
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build binaries
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        rust:
+          - stable
+        target:
+          - x86_64-unknown-linux-gnu
+    steps:
+      - name: Code checkout
+        uses: actions/checkout@v2
+
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y make gcc bc bison flex elfutils python3-pyelftools curl patch libelf-dev gcc-aarch64-linux-gnu gcc-riscv64-linux-gnu
+
+      - name: Build x86_64 package
+        run: |
+          make
+          make PREFIX=tmp install
+          cd tmp
+          tar czf ../libkrunfw-x86_64.tgz lib64
+          cd ..
+          rm -fr tmp
+          gh release upload ${{github.event.release.tag_name}} libkrunfw-x86_64.tgz
+          make clean
+        env:
+          GITHUB_TOKEN: ${{ github.TOKEN }}
+        shell: bash
+
+      - name: Build aarch64 package
+        run: |
+          make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu-
+          make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- PREFIX=tmp install
+          mkdir libkrunfw
+          cp Makefile LICENSE-* kernel.c bin2cbundle.py libkrunfw
+          tar czf libkrunfw-prebuilt-aarch64.tgz libkrunfw
+          rm -fr libkrunfw
+          cd tmp
+          tar czf ../libkrunfw-aarch64.tgz lib64
+          cd ..
+          rm -fr tmp
+          gh release upload ${{github.event.release.tag_name}} libkrunfw-prebuilt-aarch64.tgz
+          gh release upload ${{github.event.release.tag_name}} libkrunfw-aarch64.tgz
+          make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- clean
+        env:
+          GITHUB_TOKEN: ${{ github.TOKEN }}
+        shell: bash
+
+      - name: Build riscv64 package
+        run: |
+          make ARCH=riscv CROSS_COMPILE=riscv64-linux-gnu-
+          make ARCH=riscv CROSS_COMPILE=riscv64-linux-gnu- PREFIX=tmp install
+          cd tmp
+          tar czf ../libkrunfw-riscv64.tgz lib64
+          cd ..
+          rm -fr tmp
+          gh release upload ${{github.event.release.tag_name}} libkrunfw-riscv64.tgz
+          make ARCH=riscv CROSS_COMPILE=riscv64-linux-gnu- clean
+        env:
+          GITHUB_TOKEN: ${{ github.TOKEN }}
+        shell: bash
