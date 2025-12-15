@@ -1,4 +1,4 @@
-From 51ac8eb2450d40b725c1d080d08545a6da312df8 Mon Sep 17 00:00:00 2001
+From afa3b833bf7cbedd712af1a0f66433cd1546eb12 Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@redhat.com>
 Date: Tue, 8 Oct 2024 11:24:25 +0200
 Subject: [PATCH 17/21] Enable 64 bit processes to use compat input syscalls
@@ -20,7 +20,7 @@ Signed-off-by: Sergio Lopez <slp@redhat.com>
  5 files changed, 29 insertions(+), 4 deletions(-)
 
 diff --git a/drivers/input/input-compat.c b/drivers/input/input-compat.c
-index 2ccd3eedb..abb8cfb99 100644
+index 2ccd3eedbd67..abb8cfb99d6c 100644
 --- a/drivers/input/input-compat.c
 +++ b/drivers/input/input-compat.c
 @@ -14,7 +14,7 @@
@@ -51,7 +51,7 @@ index 2ccd3eedb..abb8cfb99 100644
  
  		if (size != sizeof(struct ff_effect_compat))
 diff --git a/drivers/input/input-compat.h b/drivers/input/input-compat.h
-index 3b7bb12b0..e78c0492c 100644
+index 3b7bb12b023b..e78c0492ce0d 100644
 --- a/drivers/input/input-compat.h
 +++ b/drivers/input/input-compat.h
 @@ -53,7 +53,7 @@ struct ff_effect_compat {
@@ -64,7 +64,7 @@ index 3b7bb12b0..e78c0492c 100644
  }
  
 diff --git a/include/linux/sched.h b/include/linux/sched.h
-index 0d1d70ade..eb86e4778 100644
+index 0d1d70aded38..eb86e4778b27 100644
 --- a/include/linux/sched.h
 +++ b/include/linux/sched.h
 @@ -1599,6 +1599,11 @@ struct task_struct {
@@ -80,7 +80,7 @@ index 0d1d70ade..eb86e4778 100644
  	/*
  	 * New fields for task_struct should be added above here, so that
 diff --git a/include/uapi/linux/prctl.h b/include/uapi/linux/prctl.h
-index 36c278683..c2027aa99 100644
+index 36c278683cd6..c2027aa99409 100644
 --- a/include/uapi/linux/prctl.h
 +++ b/include/uapi/linux/prctl.h
 @@ -333,4 +333,9 @@ struct prctl_mm_map {
@@ -94,10 +94,10 @@ index 36c278683..c2027aa99 100644
 +
  #endif /* _LINUX_PRCTL_H */
 diff --git a/kernel/sys.c b/kernel/sys.c
-index 83da58930..24dd021a1 100644
+index 3cb05c88a4b7..3a5c9553236a 100644
 --- a/kernel/sys.c
 +++ b/kernel/sys.c
-@@ -2805,6 +2805,21 @@ SYSCALL_DEFINE5(prctl, int, option, unsigned long, arg2, unsigned long, arg3,
+@@ -2823,6 +2823,21 @@ SYSCALL_DEFINE5(prctl, int, option, unsigned long, arg2, unsigned long, arg3,
  			return -EINVAL;
  		error = arch_prctl_mem_model_set(me, arg2);
  		break;
@@ -120,5 +120,5 @@ index 83da58930..24dd021a1 100644
  		error = -EINVAL;
  		break;
 -- 
-2.51.1
+2.51.0
 

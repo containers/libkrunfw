@@ -1,4 +1,4 @@
-From 24ab4073da15564fcffdd41136766a08627982da Mon Sep 17 00:00:00 2001
+From ed330e620a9a7af2cc99422297295acecac00b9f Mon Sep 17 00:00:00 2001
 From: Hector Martin <marcan@marcan.st>
 Date: Thu, 11 Apr 2024 09:51:20 +0900
 Subject: [PATCH 12/21] prctl: Introduce PR_{SET,GET}_MEM_MODEL
@@ -43,7 +43,7 @@ Reviewed-by: Neal Gompa <neal@gompa.dev>
 
 diff --git a/include/linux/memory_ordering_model.h b/include/linux/memory_ordering_model.h
 new file mode 100644
-index 000000000..267a12ca6
+index 000000000000..267a12ca6630
 --- /dev/null
 +++ b/include/linux/memory_ordering_model.h
 @@ -0,0 +1,11 @@
@@ -59,7 +59,7 @@ index 000000000..267a12ca6
 +
 +#endif
 diff --git a/include/uapi/linux/prctl.h b/include/uapi/linux/prctl.h
-index 35791791a..36c278683 100644
+index 35791791a879..36c278683cd6 100644
 --- a/include/uapi/linux/prctl.h
 +++ b/include/uapi/linux/prctl.h
 @@ -328,4 +328,9 @@ struct prctl_mm_map {
@@ -73,7 +73,7 @@ index 35791791a..36c278683 100644
 +
  #endif /* _LINUX_PRCTL_H */
 diff --git a/kernel/sys.c b/kernel/sys.c
-index 4da31f28f..83da58930 100644
+index 35990f0796bc..3cb05c88a4b7 100644
 --- a/kernel/sys.c
 +++ b/kernel/sys.c
 @@ -45,6 +45,7 @@
@@ -84,7 +84,7 @@ index 4da31f28f..83da58930 100644
  
  #include <linux/compat.h>
  #include <linux/syscalls.h>
-@@ -2454,6 +2455,16 @@ static int prctl_get_auxv(void __user *addr, unsigned long len)
+@@ -2472,6 +2473,16 @@ static int prctl_get_auxv(void __user *addr, unsigned long len)
  	return sizeof(mm->saved_auxv);
  }
  
@@ -101,7 +101,7 @@ index 4da31f28f..83da58930 100644
  SYSCALL_DEFINE5(prctl, int, option, unsigned long, arg2, unsigned long, arg3,
  		unsigned long, arg4, unsigned long, arg5)
  {
-@@ -2784,6 +2795,16 @@ SYSCALL_DEFINE5(prctl, int, option, unsigned long, arg2, unsigned long, arg3,
+@@ -2802,6 +2813,16 @@ SYSCALL_DEFINE5(prctl, int, option, unsigned long, arg2, unsigned long, arg3,
  	case PR_RISCV_SET_ICACHE_FLUSH_CTX:
  		error = RISCV_SET_ICACHE_FLUSH_CTX(arg2, arg3);
  		break;
@@ -119,5 +119,5 @@ index 4da31f28f..83da58930 100644
  		error = -EINVAL;
  		break;
 -- 
-2.51.1
+2.51.0
 

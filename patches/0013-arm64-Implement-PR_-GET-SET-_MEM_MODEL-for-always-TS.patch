@@ -1,4 +1,4 @@
-From be85e88ac0dcd5cb2693d3ba209a4216086845f0 Mon Sep 17 00:00:00 2001
+From 4461e9353ea92133a7e3b6b96bc951638931ee14 Mon Sep 17 00:00:00 2001
 From: Hector Martin <marcan@marcan.st>
 Date: Thu, 11 Apr 2024 09:51:21 +0900
 Subject: [PATCH 13/21] arm64: Implement PR_{GET,SET}_MEM_MODEL for always-TSO
@@ -27,10 +27,10 @@ Reviewed-by: Neal Gompa <neal@gompa.dev>
  create mode 100644 arch/arm64/kernel/cpufeature_impdef.c
 
 diff --git a/arch/arm64/Kconfig b/arch/arm64/Kconfig
-index 7887d18cc..ab6ecb52a 100644
+index 40ae4dd961b1..54f10dc3e404 100644
 --- a/arch/arm64/Kconfig
 +++ b/arch/arm64/Kconfig
-@@ -2261,6 +2261,15 @@ config ARM64_DEBUG_PRIORITY_MASKING
+@@ -2262,6 +2262,15 @@ config ARM64_DEBUG_PRIORITY_MASKING
  	  If unsure, say N
  endif # ARM64_PSEUDO_NMI
  
@@ -47,7 +47,7 @@ index 7887d18cc..ab6ecb52a 100644
  	bool "Build a relocatable kernel image" if EXPERT
  	select ARCH_HAS_RELR
 diff --git a/arch/arm64/include/asm/cpufeature.h b/arch/arm64/include/asm/cpufeature.h
-index 3d261cc12..c4379bde9 100644
+index 3d261cc123c1..c4379bde9a26 100644
 --- a/arch/arm64/include/asm/cpufeature.h
 +++ b/arch/arm64/include/asm/cpufeature.h
 @@ -1038,6 +1038,10 @@ static inline bool cpu_has_lpa2(void)
@@ -62,7 +62,7 @@ index 3d261cc12..c4379bde9 100644
  
  #endif
 diff --git a/arch/arm64/kernel/Makefile b/arch/arm64/kernel/Makefile
-index 2b112f3b7..2a11cdefb 100644
+index 2b112f3b7510..2a11cdefbe04 100644
 --- a/arch/arm64/kernel/Makefile
 +++ b/arch/arm64/kernel/Makefile
 @@ -33,7 +33,8 @@ obj-y			:= debug-monitors.o entry.o irq.o fpsimd.o		\
@@ -76,7 +76,7 @@ index 2b112f3b7..2a11cdefb 100644
  obj-$(CONFIG_COMPAT)			+= sys32.o signal32.o			\
  					   sys_compat.o
 diff --git a/arch/arm64/kernel/cpufeature.c b/arch/arm64/kernel/cpufeature.c
-index 0dace802b..da4820d3d 100644
+index 06ee74cc3dd9..e851e901bdaa 100644
 --- a/arch/arm64/kernel/cpufeature.c
 +++ b/arch/arm64/kernel/cpufeature.c
 @@ -1039,7 +1039,7 @@ static void init_cpu_ftr_reg(u32 sys_reg, u64 new)
@@ -116,7 +116,7 @@ index 0dace802b..da4820d3d 100644
  }
  
  const struct cpumask *system_32bit_el0_cpumask(void)
-@@ -3562,6 +3562,7 @@ void __init setup_boot_cpu_features(void)
+@@ -3566,6 +3566,7 @@ void __init setup_boot_cpu_features(void)
  	 * handle the boot CPU.
  	 */
  	init_cpucap_indirect_list();
@@ -126,7 +126,7 @@ index 0dace802b..da4820d3d 100644
  	 * Detect broken pseudo-NMI. Must be called _before_ the call to
 diff --git a/arch/arm64/kernel/cpufeature_impdef.c b/arch/arm64/kernel/cpufeature_impdef.c
 new file mode 100644
-index 000000000..de784a1fb
+index 000000000000..de784a1fb49b
 --- /dev/null
 +++ b/arch/arm64/kernel/cpufeature_impdef.c
 @@ -0,0 +1,38 @@
@@ -169,7 +169,7 @@ index 000000000..de784a1fb
 +	init_cpucap_indirect_list_from_array(arm64_impdef_features);
 +}
 diff --git a/arch/arm64/kernel/process.c b/arch/arm64/kernel/process.c
-index 2edf88c1c..c753a0f61 100644
+index 2edf88c1c695..c753a0f6183b 100644
 --- a/arch/arm64/kernel/process.c
 +++ b/arch/arm64/kernel/process.c
 @@ -41,6 +41,7 @@
@@ -218,7 +218,7 @@ index 2edf88c1c..c753a0f61 100644
  
  #ifdef CONFIG_ARM64_TAGGED_ADDR_ABI
 diff --git a/arch/arm64/tools/cpucaps b/arch/arm64/tools/cpucaps
-index eedb5acc2..bca63481e 100644
+index eedb5acc21ed..bca63481e0cf 100644
 --- a/arch/arm64/tools/cpucaps
 +++ b/arch/arm64/tools/cpucaps
 @@ -53,6 +53,7 @@ HAS_STAGE2_FWB
@@ -230,5 +230,5 @@ index eedb5acc2..bca63481e 100644
  HAS_VIRT_HOST_EXTN
  HAS_WFXT
 -- 
-2.51.1
+2.51.0
 

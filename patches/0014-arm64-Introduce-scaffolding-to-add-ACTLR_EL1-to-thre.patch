@@ -1,4 +1,4 @@
-From 08ec9c806944c7ea425d1f683e7eda8a9951b98b Mon Sep 17 00:00:00 2001
+From 63e849d190f8eb258add1174a3a33af83ad84089 Mon Sep 17 00:00:00 2001
 From: Hector Martin <marcan@marcan.st>
 Date: Thu, 11 Apr 2024 09:51:22 +0900
 Subject: [PATCH 14/21] arm64: Introduce scaffolding to add ACTLR_EL1 to thread
@@ -24,7 +24,7 @@ Reviewed-by: Neal Gompa <neal@gompa.dev>
  5 files changed, 44 insertions(+)
 
 diff --git a/arch/arm64/Kconfig b/arch/arm64/Kconfig
-index ab6ecb52a..a30f30fd7 100644
+index 54f10dc3e404..287e67575e75 100644
 --- a/arch/arm64/Kconfig
 +++ b/arch/arm64/Kconfig
 @@ -428,6 +428,9 @@ config KASAN_SHADOW_OFFSET
@@ -38,7 +38,7 @@ index ab6ecb52a..a30f30fd7 100644
  
  menu "Kernel Features"
 diff --git a/arch/arm64/include/asm/cpufeature.h b/arch/arm64/include/asm/cpufeature.h
-index c4379bde9..1775e210f 100644
+index c4379bde9a26..1775e210f04f 100644
 --- a/arch/arm64/include/asm/cpufeature.h
 +++ b/arch/arm64/include/asm/cpufeature.h
 @@ -915,6 +915,11 @@ static inline unsigned int get_vmid_bits(u64 mmfr1)
@@ -54,7 +54,7 @@ index c4379bde9..1775e210f 100644
  struct arm64_ftr_reg *get_arm64_ftr_reg(u32 sys_id);
  
 diff --git a/arch/arm64/include/asm/processor.h b/arch/arm64/include/asm/processor.h
-index 1438424f0..ea4e32467 100644
+index 1438424f0064..ea4e32467068 100644
 --- a/arch/arm64/include/asm/processor.h
 +++ b/arch/arm64/include/asm/processor.h
 @@ -185,6 +185,9 @@ struct thread_struct {
@@ -68,7 +68,7 @@ index 1438424f0..ea4e32467 100644
  
  static inline unsigned int thread_get_vl(struct thread_struct *thread,
 diff --git a/arch/arm64/kernel/process.c b/arch/arm64/kernel/process.c
-index c753a0f61..f2bf5f7d6 100644
+index c753a0f6183b..f2bf5f7d6dbb 100644
 --- a/arch/arm64/kernel/process.c
 +++ b/arch/arm64/kernel/process.c
 @@ -385,6 +385,11 @@ int copy_thread(struct task_struct *p, const struct kernel_clone_args *args)
@@ -118,7 +118,7 @@ index c753a0f61..f2bf5f7d6 100644
  	/*
  	 * Complete any pending TLB or cache maintenance on this CPU in case
 diff --git a/arch/arm64/kernel/setup.c b/arch/arm64/kernel/setup.c
-index 87f61fd67..8fb0c2095 100644
+index 8185979f0f11..4fcaaf9c7d2b 100644
 --- a/arch/arm64/kernel/setup.c
 +++ b/arch/arm64/kernel/setup.c
 @@ -367,6 +367,14 @@ void __init __no_sanitize_address setup_arch(char **cmdline_p)
@@ -137,5 +137,5 @@ index 87f61fd67..8fb0c2095 100644
  	if (boot_args[1] || boot_args[2] || boot_args[3]) {
  		pr_err("WARNING: x1-x3 nonzero in violation of boot protocol:\n"
 -- 
-2.51.1
+2.51.0
 

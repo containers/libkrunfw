@@ -1,4 +1,4 @@
-From 25a3b4eb7b3e8c7fbb2b1c9d16debe02551bc5b1 Mon Sep 17 00:00:00 2001
+From c9da069a2939f6fe9222277b4c536c462cac43da Mon Sep 17 00:00:00 2001
 From: Bobby Eshleman <bobby.eshleman () bytedance ! com>
 Date: Sat, 10 Jun 2023 00:58:29 +0000
 Subject: [PATCH 04/21] vsock: refactor transport lookup code
@@ -14,7 +14,7 @@ Signed-off-by: Bobby Eshleman <bobby.eshleman@bytedance.com>
  1 file changed, 18 insertions(+), 7 deletions(-)
 
 diff --git a/net/vmw_vsock/af_vsock.c b/net/vmw_vsock/af_vsock.c
-index 784139c27..e6222a505 100644
+index 4c53748ab9a6..e428073518c7 100644
 --- a/net/vmw_vsock/af_vsock.c
 +++ b/net/vmw_vsock/af_vsock.c
 @@ -432,6 +432,22 @@ static void vsock_deassign_transport(struct vsock_sock *vsk)
@@ -57,5 +57,5 @@ index 784139c27..e6222a505 100644
  	default:
  		ret = -ESOCKTNOSUPPORT;
 -- 
-2.51.1
+2.51.0
 

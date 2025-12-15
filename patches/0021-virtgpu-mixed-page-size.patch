@@ -1,4 +1,4 @@
-From 27dfc9d29b3535335afba7aba9233b9b3a403616 Mon Sep 17 00:00:00 2001
+From 1345ec7a8e17f7671f07282183d21389316e7e27 Mon Sep 17 00:00:00 2001
 From: Sasha Finkelstein <fnkl.kernel@gmail.com>
 Date: Fri, 17 Jan 2025 12:34:28 +0100
 Subject: [PATCH 21/21] virtgpu: mixed page size
@@ -12,7 +12,7 @@ Signed-off-by: Sasha Finkelstein <fnkl.kernel@gmail.com>
  1 file changed, 8 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/gpu/drm/virtio/virtgpu_vram.c b/drivers/gpu/drm/virtio/virtgpu_vram.c
-index 64e2c6dbd..cbadcba2c 100644
+index 64e2c6dbdd67..cbadcba2c773 100644
 --- a/drivers/gpu/drm/virtio/virtgpu_vram.c
 +++ b/drivers/gpu/drm/virtio/virtgpu_vram.c
 @@ -137,6 +137,12 @@ bool virtio_gpu_is_vram(struct virtio_gpu_object *bo)
@@ -40,5 +40,5 @@ index 64e2c6dbd..cbadcba2c 100644
  
  	if (ret)
 -- 
-2.51.1
+2.51.0
 

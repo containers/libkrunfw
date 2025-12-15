@@ -1,4 +1,4 @@
-From 6a834115751c2f63e2b7caa48021391646c2c387 Mon Sep 17 00:00:00 2001
+From 8b4ee16333d54554c7ba02424a5d27d04022b40b Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@redhat.com>
 Date: Thu, 19 May 2022 22:38:26 +0200
 Subject: [PATCH 09/21] Transparent Socket Impersonation implementation
@@ -42,7 +42,7 @@ Signed-off-by: Matej Hrica <mhrica@redhat.com>
  create mode 100644 net/tsi/af_tsi.h
 
 diff --git a/include/linux/socket.h b/include/linux/socket.h
-index c3322eb3d..5ae7f94b3 100644
+index c3322eb3d686..5ae7f94b3abc 100644
 --- a/include/linux/socket.h
 +++ b/include/linux/socket.h
 @@ -240,8 +240,11 @@ struct ucred {
@@ -69,7 +69,7 @@ index c3322eb3d..5ae7f94b3 100644
  
  /* Maximum queue length specifiable by listen.  */
 diff --git a/net/Kconfig b/net/Kconfig
-index a629f92dc..91dfb9152 100644
+index a629f92dc86b..91dfb9152b5b 100644
 --- a/net/Kconfig
 +++ b/net/Kconfig
 @@ -274,6 +274,7 @@ source "net/switchdev/Kconfig"
@@ -81,7 +81,7 @@ index a629f92dc..91dfb9152 100644
  config PCPU_DEV_REFCNT
  	bool "Use percpu variables to maintain network device refcount"
 diff --git a/net/Makefile b/net/Makefile
-index 65bb8c72a..c1db937f3 100644
+index 65bb8c72a35e..c1db937f3212 100644
 --- a/net/Makefile
 +++ b/net/Makefile
 @@ -79,3 +79,4 @@ obj-$(CONFIG_XDP_SOCKETS)	+= xdp/
@@ -90,7 +90,7 @@ index 65bb8c72a..c1db937f3 100644
  obj-$(CONFIG_NET_HANDSHAKE)	+= handshake/
 +obj-$(CONFIG_TSI)		+= tsi/
 diff --git a/net/socket.c b/net/socket.c
-index 042451f01..4e1ec38c2 100644
+index 042451f01c65..4e1ec38c2434 100644
 --- a/net/socket.c
 +++ b/net/socket.c
 @@ -217,6 +217,9 @@ static const char * const pf_family_names[] = {
@@ -105,7 +105,7 @@ index 042451f01..4e1ec38c2 100644
  /*
 diff --git a/net/tsi/Kconfig b/net/tsi/Kconfig
 new file mode 100644
-index 000000000..0f52ac6c9
+index 000000000000..0f52ac6c9fa1
 --- /dev/null
 +++ b/net/tsi/Kconfig
 @@ -0,0 +1,7 @@
@@ -118,7 +118,7 @@ index 000000000..0f52ac6c9
 +	  TSI (Transparent Socket Impersonation).
 diff --git a/net/tsi/Makefile b/net/tsi/Makefile
 new file mode 100644
-index 000000000..8b3cf7411
+index 000000000000..8b3cf74116a5
 --- /dev/null
 +++ b/net/tsi/Makefile
 @@ -0,0 +1,4 @@
@@ -128,7 +128,7 @@ index 000000000..8b3cf7411
 +tsi-y := af_tsi.o
 diff --git a/net/tsi/af_tsi.c b/net/tsi/af_tsi.c
 new file mode 100644
-index 000000000..e266f9684
+index 000000000000..e266f968405b
 --- /dev/null
 +++ b/net/tsi/af_tsi.c
 @@ -0,0 +1,1571 @@
@@ -1705,7 +1705,7 @@ index 000000000..e266f9684
 +MODULE_LICENSE("GPL v2");
 diff --git a/net/tsi/af_tsi.h b/net/tsi/af_tsi.h
 new file mode 100644
-index 000000000..b74966fd7
+index 000000000000..b74966fd7ae3
 --- /dev/null
 +++ b/net/tsi/af_tsi.h
 @@ -0,0 +1,107 @@
@@ -1817,7 +1817,7 @@ index 000000000..b74966fd7
 +
 +#endif
 diff --git a/security/selinux/hooks.c b/security/selinux/hooks.c
-index fc926d3ca..6e8103719 100644
+index fc926d3cac6e..6e81037192c8 100644
 --- a/security/selinux/hooks.c
 +++ b/security/selinux/hooks.c
 @@ -1302,7 +1302,13 @@ static inline u16 socket_type_to_security_class(int family, int type, int protoc
@@ -1836,7 +1836,7 @@ index fc926d3ca..6e8103719 100644
  #endif
  		}
 diff --git a/security/selinux/include/classmap.h b/security/selinux/include/classmap.h
-index 7229c9bf6..f08d24321 100644
+index 7229c9bf6c27..f08d24321603 100644
 --- a/security/selinux/include/classmap.h
 +++ b/security/selinux/include/classmap.h
 @@ -173,6 +173,7 @@ const struct security_class_mapping secclass_map[] = {
@@ -1856,5 +1856,5 @@ index 7229c9bf6..f08d24321 100644
  #error New address family defined, please update secclass_map.
  #endif
 -- 
-2.51.1
+2.51.0
 
