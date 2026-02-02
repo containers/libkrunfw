@@ -1,4 +1,4 @@
-From 63e849d190f8eb258add1174a3a33af83ad84089 Mon Sep 17 00:00:00 2001
+From 6cfd22e2c52688ed1b86bf31369b2e2f1844a8f4 Mon Sep 17 00:00:00 2001
 From: Hector Martin <marcan@marcan.st>
 Date: Thu, 11 Apr 2024 09:51:22 +0900
 Subject: [PATCH 14/21] arm64: Introduce scaffolding to add ACTLR_EL1 to thread
@@ -137,5 +137,5 @@ index 8185979f0f11..4fcaaf9c7d2b 100644
  	if (boot_args[1] || boot_args[2] || boot_args[3]) {
  		pr_err("WARNING: x1-x3 nonzero in violation of boot protocol:\n"
 -- 
-2.51.0
+2.52.0
 

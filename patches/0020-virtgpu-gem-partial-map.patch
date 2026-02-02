@@ -1,4 +1,4 @@
-From 3c15fd71f63a78b1f762903f367332a5553f535a Mon Sep 17 00:00:00 2001
+From d034b7e317ab68d956a260ade8bed025967eb3cf Mon Sep 17 00:00:00 2001
 From: Sasha Finkelstein <fnkl.kernel@gmail.com>
 Date: Fri, 17 Jan 2025 12:34:23 +0100
 Subject: [PATCH 20/21] virtgpu: gem partial map
@@ -30,5 +30,5 @@ index 25df81c02783..64e2c6dbdd67 100644
  	return ret;
  }
 -- 
-2.51.0
+2.52.0
 

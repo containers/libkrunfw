@@ -1,4 +1,4 @@
-From 61d85b7f880618f8b1bea4ef6f41d385623b77c9 Mon Sep 17 00:00:00 2001
+From c65c789690dfb531781ca150c053c3136868f1f2 Mon Sep 17 00:00:00 2001
 From: Asahi Lina <lina@asahilina.net>
 Date: Wed, 25 Sep 2024 16:35:34 +0200
 Subject: [PATCH 11/21] arm64: cpufeature: Unify SCOPE_LOCAL_CPU early & late
@@ -81,5 +81,5 @@ index 5e68d65e675e..06ee74cc3dd9 100644
  
  		if (caps->desc && !caps->cpus)
 -- 
-2.51.0
+2.52.0
 
