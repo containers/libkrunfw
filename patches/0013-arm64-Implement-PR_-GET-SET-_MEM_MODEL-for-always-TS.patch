@@ -1,7 +1,7 @@
 From 969cc6ca6ea39ece386f968694199d4ab6b558f8 Mon Sep 17 00:00:00 2001
 From: Hector Martin <marcan@marcan.st>
 Date: Thu, 11 Apr 2024 09:51:21 +0900
-Subject: [PATCH 13/21] arm64: Implement PR_{GET,SET}_MEM_MODEL for always-TSO
+Subject: [PATCH 13/22] arm64: Implement PR_{GET,SET}_MEM_MODEL for always-TSO
  CPUs
 
 Some ARM64 implementations are known to always use the TSO memory model.

@@ -1,7 +1,7 @@
 From bf68cd730c769f73a2a6da9ed0b928c03c53bfac Mon Sep 17 00:00:00 2001
 From: Bobby Eshleman <bobby.eshleman () bytedance ! com>
 Date: Sat, 10 Jun 2023 00:58:28 +0000
-Subject: [PATCH 03/21] vsock/dgram: generalize recvmsg and drop
+Subject: [PATCH 03/22] vsock/dgram: generalize recvmsg and drop
  transport->dgram_dequeue
 
 This commit drops the transport->dgram_dequeue callback and makes
