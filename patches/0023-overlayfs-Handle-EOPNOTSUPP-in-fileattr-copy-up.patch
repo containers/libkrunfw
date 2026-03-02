@@ -1,0 +1,39 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: smolvm <smolvm@users.noreply.github.com>
+Date: Sun, 2 Mar 2026 00:00:00 +0000
+Subject: [PATCH 23/23] ovl: translate EOPNOTSUPP to ENOTTY in
+ ovl_real_fileattr_get
+
+FUSE servers (including virtiofs) that do not implement
+FS_IOC_GETFLAGS / FS_IOC_FSGETXATTR return -EOPNOTSUPP from their
+ioctl handler.  vfs_fileattr_get() propagates this unchanged, but
+ovl_real_fileattr_get() only translates -ENOIOCTLCMD to -ENOTTY.
+The callers in copy_up.c treat -ENOTTY as "no fileattr support" and
+continue, while -EOPNOTSUPP falls through to pr_warn + error return,
+which makes every overlayfs copy-up over a virtiofs lower layer fail.
+
+Translate -EOPNOTSUPP alongside -ENOIOCTLCMD in the single
+chokepoint (ovl_real_fileattr_get) so all callers benefit.
+
+Fixes: 72db82115d2b ("ovl: copy up sync/noatime fileattr flags")
+Signed-off-by: smolvm <smolvm@users.noreply.github.com>
+---
+ fs/overlayfs/inode.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/fs/overlayfs/inode.c b/fs/overlayfs/inode.c
+index 4e2cfb05b767..5e1867a0c213 100644
+--- a/fs/overlayfs/inode.c
++++ b/fs/overlayfs/inode.c
+@@ -721,7 +721,7 @@ int ovl_real_fileattr_get(const struct path *realpath, struct fileattr *fa)
+ 		return err;
+
+ 	err = vfs_fileattr_get(realpath->dentry, fa);
+-	if (err == -ENOIOCTLCMD)
++	if (err == -ENOIOCTLCMD || err == -EOPNOTSUPP)
+ 		err = -ENOTTY;
+ 	return err;
+ }
+--
+2.52.0
+
