@@ -1,7 +1,7 @@
 From 5b2548b89b041ae10a33cc5a19d87a2cb71647be Mon Sep 17 00:00:00 2001
 From: Asahi Lina <lina@asahilina.net>
 Date: Mon, 21 Oct 2024 23:21:16 +0900
-Subject: [PATCH 19/25] mm: Fix __wp_page_copy_user fallback path for remote mm
+Subject: [PATCH 19/26] mm: Fix __wp_page_copy_user fallback path for remote mm
 
 If the source page is a PFN mapping, we copy back from userspace.
 However, if this fault is a remote access, we cannot use

@@ -1,7 +1,7 @@
 From 6e47c66e5e9c4278cb27e501d3ad2824092445fe Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@redhat.com>
 Date: Tue, 10 Mar 2026 13:33:11 +0100
-Subject: [PATCH 24/25] Revert "vsock/virtio: Allocate nonlinear SKBs for
+Subject: [PATCH 24/26] Revert "vsock/virtio: Allocate nonlinear SKBs for
  handling large transmit buffers"
 
 This reverts commit 69c5bf306115e6047e0d902f8c6551fff74a71ff.
