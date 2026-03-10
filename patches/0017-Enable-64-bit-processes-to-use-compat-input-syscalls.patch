@@ -1,4 +1,4 @@
-From 8b166f2a17abfc7ef6ae76fda5b5201ed4e9b604 Mon Sep 17 00:00:00 2001
+From 8932f5b0d9d9923a2ac2b09f8b17d3255d04ce09 Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@redhat.com>
 Date: Tue, 8 Oct 2024 11:24:25 +0200
 Subject: [PATCH 17/22] Enable 64 bit processes to use compat input syscalls
@@ -64,7 +64,7 @@ index 3b7bb12b023b..e78c0492ce0d 100644
  }
  
 diff --git a/include/linux/sched.h b/include/linux/sched.h
-index 0d1d70aded38..eb86e4778b27 100644
+index af143d3af85f..085d2ffe8f48 100644
 --- a/include/linux/sched.h
 +++ b/include/linux/sched.h
 @@ -1599,6 +1599,11 @@ struct task_struct {
