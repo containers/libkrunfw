@@ -1,0 +1,53 @@
+From 7eeeb4e671c6812258937a9662b29d4dfc45a260 Mon Sep 17 00:00:00 2001
+From: Sergio Lopez <slp@redhat.com>
+Date: Tue, 10 Mar 2026 16:00:26 +0100
+Subject: [PATCH 26/26] Revert "vsock/virtio: cap TX credit to local buffer
+ size"
+
+This reverts commit c0e42fb0e054c2b2ec4ee80f48ccd256ae0227ce.
+---
+ net/vmw_vsock/virtio_transport_common.c | 14 ++------------
+ 1 file changed, 2 insertions(+), 12 deletions(-)
+
+diff --git a/net/vmw_vsock/virtio_transport_common.c b/net/vmw_vsock/virtio_transport_common.c
+index 4733c1d234d5..bed7fe5a7203 100644
+--- a/net/vmw_vsock/virtio_transport_common.c
++++ b/net/vmw_vsock/virtio_transport_common.c
+@@ -850,15 +850,6 @@ virtio_transport_seqpacket_dequeue(struct vsock_sock *vsk,
+ }
+ EXPORT_SYMBOL_GPL(virtio_transport_seqpacket_dequeue);
+ 
+-static u32 virtio_transport_tx_buf_size(struct virtio_vsock_sock *vvs)
+-{
+-	/* The peer advertises its receive buffer via peer_buf_alloc, but we
+-	 * cap it to our local buf_alloc so a remote peer cannot force us to
+-	 * queue more data than our own buffer configuration allows.
+-	 */
+-	return min(vvs->peer_buf_alloc, vvs->buf_alloc);
+-}
+-
+ int
+ virtio_transport_seqpacket_enqueue(struct vsock_sock *vsk,
+ 				   struct msghdr *msg,
+@@ -868,7 +859,7 @@ virtio_transport_seqpacket_enqueue(struct vsock_sock *vsk,
+ 
+ 	spin_lock_bh(&vvs->tx_lock);
+ 
+-	if (len > virtio_transport_tx_buf_size(vvs)) {
++	if (len > vvs->peer_buf_alloc) {
+ 		spin_unlock_bh(&vvs->tx_lock);
+ 		return -EMSGSIZE;
+ 	}
+@@ -938,8 +929,7 @@ static s64 virtio_transport_has_space(struct virtio_vsock_sock *vvs)
+ 	 * we have bytes in flight (tx_cnt - peer_fwd_cnt), the subtraction
+ 	 * does not underflow.
+ 	 */
+-	bytes = (s64)virtio_transport_tx_buf_size(vvs) -
+-		(vvs->tx_cnt - vvs->peer_fwd_cnt);
++	bytes = (s64)vvs->peer_buf_alloc - (vvs->tx_cnt - vvs->peer_fwd_cnt);
+ 	if (bytes < 0)
+ 		bytes = 0;
+ 
+-- 
+2.52.0
+

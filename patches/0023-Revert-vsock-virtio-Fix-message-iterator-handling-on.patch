@@ -1,7 +1,7 @@
 From f1ce09fd1d1ee16731ae8809d019ec4caba9d896 Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@redhat.com>
 Date: Tue, 10 Mar 2026 13:33:02 +0100
-Subject: [PATCH 23/25] Revert "vsock/virtio: Fix message iterator handling on
+Subject: [PATCH 23/26] Revert "vsock/virtio: Fix message iterator handling on
  transmit path"
 
 This reverts commit e6cee5d4a122ca9d6b7bb8fa09e498c60b9f208c.

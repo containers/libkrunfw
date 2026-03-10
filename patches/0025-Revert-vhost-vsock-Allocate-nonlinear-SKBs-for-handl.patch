@@ -1,7 +1,7 @@
 From a5d4bbafb75eba1205fb00b4ba8073f7461954de Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@redhat.com>
 Date: Tue, 10 Mar 2026 13:33:20 +0100
-Subject: [PATCH 25/25] Revert "vhost/vsock: Allocate nonlinear SKBs for
+Subject: [PATCH 25/26] Revert "vhost/vsock: Allocate nonlinear SKBs for
  handling large receive buffers"
 
 This reverts commit 65e808a6023f883f298db734444a9c38e45af740.
