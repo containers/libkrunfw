@@ -1,4 +1,4 @@
-From 3bfc38f2afde71218eb2a30f9113dc2b13409790 Mon Sep 17 00:00:00 2001
+From 96fb35fd5e6840e1563bf9f56c488af396020c8a Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@redhat.com>
 Date: Sun, 18 Jan 2026 23:37:30 +0100
 Subject: [PATCH 22/22] fuse: mark DAX inode releases as blocking
