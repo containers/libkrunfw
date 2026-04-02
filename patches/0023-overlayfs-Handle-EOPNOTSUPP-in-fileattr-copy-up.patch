@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: smolvm <smolvm@users.noreply.github.com>
 Date: Sun, 2 Mar 2026 00:00:00 +0000
-Subject: [PATCH 23/23] ovl: translate EOPNOTSUPP to ENOTTY in
+Subject: [PATCH] ovl: translate EOPNOTSUPP to ENOTTY in
  ovl_real_fileattr_get
 
 FUSE servers (including virtiofs) that do not implement
@@ -22,7 +22,7 @@ Signed-off-by: smolvm <smolvm@users.noreply.github.com>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/fs/overlayfs/inode.c b/fs/overlayfs/inode.c
-index 4e2cfb05b767..5e1867a0c213 100644
+index abc1234..def5678 100644
 --- a/fs/overlayfs/inode.c
 +++ b/fs/overlayfs/inode.c
 @@ -721,7 +721,7 @@ int ovl_real_fileattr_get(const struct path *realpath, struct fileattr *fa)
@@ -36,4 +36,3 @@ index 4e2cfb05b767..5e1867a0c213 100644
  }
 --
 2.52.0
-
