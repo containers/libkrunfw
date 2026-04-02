@@ -1,0 +1,37 @@
+From 6e47c66e5e9c4278cb27e501d3ad2824092445fe Mon Sep 17 00:00:00 2001
+From: Sergio Lopez <slp@redhat.com>
+Date: Tue, 10 Mar 2026 13:33:11 +0100
+Subject: [PATCH 24/26] Revert "vsock/virtio: Allocate nonlinear SKBs for
+ handling large transmit buffers"
+
+This reverts commit 69c5bf306115e6047e0d902f8c6551fff74a71ff.
+---
+ net/vmw_vsock/virtio_transport_common.c | 5 ++---
+ 1 file changed, 2 insertions(+), 3 deletions(-)
+
+diff --git a/net/vmw_vsock/virtio_transport_common.c b/net/vmw_vsock/virtio_transport_common.c
+index f274cde784f7..4733c1d234d5 100644
+--- a/net/vmw_vsock/virtio_transport_common.c
++++ b/net/vmw_vsock/virtio_transport_common.c
+@@ -111,8 +111,7 @@ static int virtio_transport_fill_skb(struct sk_buff *skb,
+ 					       &info->msg->msg_iter,
+ 					       len);
+ 
+-	virtio_vsock_skb_put(skb, len);
+-	return skb_copy_datagram_from_iter(skb, 0, &info->msg->msg_iter, len);
++	return memcpy_from_msg(skb_put(skb, len), info->msg, len);
+ }
+ 
+ static void virtio_transport_init_hdr(struct sk_buff *skb,
+@@ -295,7 +294,7 @@ static struct sk_buff *virtio_transport_alloc_skb(struct virtio_vsock_pkt_info *
+ 	if (!zcopy)
+ 		skb_len += payload_len;
+ 
+-	skb = virtio_vsock_alloc_skb(skb_len, GFP_KERNEL);
++	skb = virtio_vsock_alloc_linear_skb(skb_len, GFP_KERNEL);
+ 	if (!skb)
+ 		return NULL;
+ 
+-- 
+2.52.0
+

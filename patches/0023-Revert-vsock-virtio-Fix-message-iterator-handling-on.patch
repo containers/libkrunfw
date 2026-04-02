@@ -1,0 +1,37 @@
+From f1ce09fd1d1ee16731ae8809d019ec4caba9d896 Mon Sep 17 00:00:00 2001
+From: Sergio Lopez <slp@redhat.com>
+Date: Tue, 10 Mar 2026 13:33:02 +0100
+Subject: [PATCH 23/26] Revert "vsock/virtio: Fix message iterator handling on
+ transmit path"
+
+This reverts commit e6cee5d4a122ca9d6b7bb8fa09e498c60b9f208c.
+---
+ net/vmw_vsock/virtio_transport_common.c | 8 +++-----
+ 1 file changed, 3 insertions(+), 5 deletions(-)
+
+diff --git a/net/vmw_vsock/virtio_transport_common.c b/net/vmw_vsock/virtio_transport_common.c
+index b3ee9ce90b5d..f274cde784f7 100644
+--- a/net/vmw_vsock/virtio_transport_common.c
++++ b/net/vmw_vsock/virtio_transport_common.c
+@@ -106,15 +106,13 @@ static int virtio_transport_fill_skb(struct sk_buff *skb,
+ 				     size_t len,
+ 				     bool zcopy)
+ {
+-	struct msghdr *msg = info->msg;
+-
+ 	if (zcopy)
+-		return __zerocopy_sg_from_iter(msg, NULL, skb,
+-					       &msg->msg_iter,
++		return __zerocopy_sg_from_iter(info->msg, NULL, skb,
++					       &info->msg->msg_iter,
+ 					       len);
+ 
+ 	virtio_vsock_skb_put(skb, len);
+-	return skb_copy_datagram_from_iter_full(skb, 0, &msg->msg_iter, len);
++	return skb_copy_datagram_from_iter(skb, 0, &info->msg->msg_iter, len);
+ }
+ 
+ static void virtio_transport_init_hdr(struct sk_buff *skb,
+-- 
+2.52.0
+

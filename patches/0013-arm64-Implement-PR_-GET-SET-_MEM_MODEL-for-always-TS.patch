@@ -1,7 +1,7 @@
-From 969cc6ca6ea39ece386f968694199d4ab6b558f8 Mon Sep 17 00:00:00 2001
+From 0d269370cdb6cb89f683528f6b28e08a5c9da7cf Mon Sep 17 00:00:00 2001
 From: Hector Martin <marcan@marcan.st>
 Date: Thu, 11 Apr 2024 09:51:21 +0900
-Subject: [PATCH 13/22] arm64: Implement PR_{GET,SET}_MEM_MODEL for always-TSO
+Subject: [PATCH 13/26] arm64: Implement PR_{GET,SET}_MEM_MODEL for always-TSO
  CPUs
 
 Some ARM64 implementations are known to always use the TSO memory model.
@@ -27,10 +27,10 @@ Reviewed-by: Neal Gompa <neal@gompa.dev>
  create mode 100644 arch/arm64/kernel/cpufeature_impdef.c
 
 diff --git a/arch/arm64/Kconfig b/arch/arm64/Kconfig
-index 40ae4dd961b1..54f10dc3e404 100644
+index 0e2902f38e70..8d77fef0ae68 100644
 --- a/arch/arm64/Kconfig
 +++ b/arch/arm64/Kconfig
-@@ -2262,6 +2262,15 @@ config ARM64_DEBUG_PRIORITY_MASKING
+@@ -2263,6 +2263,15 @@ config ARM64_DEBUG_PRIORITY_MASKING
  	  If unsure, say N
  endif # ARM64_PSEUDO_NMI
  

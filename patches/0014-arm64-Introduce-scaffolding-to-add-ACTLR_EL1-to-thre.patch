@@ -1,7 +1,7 @@
-From 6cfd22e2c52688ed1b86bf31369b2e2f1844a8f4 Mon Sep 17 00:00:00 2001
+From 2cd2b566c238c1c120cc17a1c20bcfa17a8b69b8 Mon Sep 17 00:00:00 2001
 From: Hector Martin <marcan@marcan.st>
 Date: Thu, 11 Apr 2024 09:51:22 +0900
-Subject: [PATCH 14/22] arm64: Introduce scaffolding to add ACTLR_EL1 to thread
+Subject: [PATCH 14/26] arm64: Introduce scaffolding to add ACTLR_EL1 to thread
  state
 
 Some CPUs expose IMPDEF features in ACTLR_EL1 that can be meaningfully
@@ -24,10 +24,10 @@ Reviewed-by: Neal Gompa <neal@gompa.dev>
  5 files changed, 44 insertions(+)
 
 diff --git a/arch/arm64/Kconfig b/arch/arm64/Kconfig
-index 54f10dc3e404..287e67575e75 100644
+index 8d77fef0ae68..cf75e6b64ffa 100644
 --- a/arch/arm64/Kconfig
 +++ b/arch/arm64/Kconfig
-@@ -428,6 +428,9 @@ config KASAN_SHADOW_OFFSET
+@@ -429,6 +429,9 @@ config KASAN_SHADOW_OFFSET
  config UNWIND_TABLES
  	bool
  
