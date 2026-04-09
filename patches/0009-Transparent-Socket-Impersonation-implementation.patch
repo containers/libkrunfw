@@ -31,11 +31,11 @@ Signed-off-by: Matej Hrica <mhrica@redhat.com>
  net/socket.c                        |    3 +
  net/tsi/Kconfig                     |    7 +
  net/tsi/Makefile                    |    4 +
- net/tsi/af_tsi.c                    | 1571 +++++++++++++++++++++++++++
+ net/tsi/af_tsi.c                    | 1656 +++++++++++++++++++++++++++
  net/tsi/af_tsi.h                    |  107 ++
  security/selinux/hooks.c            |    8 +-
  security/selinux/include/classmap.h |    3 +-
- 10 files changed, 1710 insertions(+), 3 deletions(-)
+ 10 files changed, 1795 insertions(+), 3 deletions(-)
  create mode 100644 net/tsi/Kconfig
  create mode 100644 net/tsi/Makefile
  create mode 100644 net/tsi/af_tsi.c
@@ -131,7 +131,7 @@ new file mode 100644
 index 000000000000..e266f968405b
 --- /dev/null
 +++ b/net/tsi/af_tsi.c
-@@ -0,0 +1,1571 @@
+@@ -0,0 +1,1656 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */
 +/*
 + * Transparent Socket Impersonation Driver
