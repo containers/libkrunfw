@@ -1,0 +1,17 @@
+name: Cross-build loongarch64 kernel
+on: [pull_request, create]
+
+jobs:
+  build:
+    if: github.event_name == 'pull_request'
+    name: Cross-build loongarch64 kernel
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Code checkout
+        uses: actions/checkout@v2
+
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y make gcc bc bison flex elfutils python3-pyelftools curl patch libelf-dev gcc-loongarch64-linux-gnu
+
+      - name: Build loongarch64 kernel
+        run: make ARCH=loongarch CROSS_COMPILE=loongarch64-linux-gnu-

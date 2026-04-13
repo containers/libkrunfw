@@ -6,6 +6,13 @@ from elftools.elf.elffile import ELFFile
 # Use 64k page size for rounding. This should cover 4k/16k/64k kernels
 PAGE_SIZE = 65536
 AARCH64_LOAD_ADDR = '0x80000000'
+LINUX_PE_HEADER_SIZE = 64
+LINUX_PE_MAGIC = 0x818223cd
+LINUX_PE_KERNEL_ENTRY_OFFSET = 8
+LINUX_PE_LOAD_OFFSET_OFFSET = 24
+LINUX_PE_MAGIC_OFFSET = 56
+LOONGARCH_DRAM_START = 0x40000000
+LOONGARCH_VMLINUX_LOAD_ADDRESS = 0x9000000000200000
 
 def write_header(ofile, bundle_name):
     ofile.write('#include <stddef.h>\n')
@@ -69,11 +76,27 @@ def write_elf_cbundle(ifile, ofile) -> int:
 
     
 def write_raw_cbundle(ifile, ofile) -> int:
+    data = ifile.read()
+    write_data_cbundle(data, ofile)
+    
+def write_linux_pe_cbundle(ifile, ofile) -> int:
+    data = ifile.read()
+    assert(len(data) >= LINUX_PE_HEADER_SIZE)
+    kernel_entry = data[LINUX_PE_KERNEL_ENTRY_OFFSET:LINUX_PE_KERNEL_ENTRY_OFFSET + 8]
+    load_offset = data[LINUX_PE_LOAD_OFFSET_OFFSET:LINUX_PE_LOAD_OFFSET_OFFSET + 8]
+    magic = data[LINUX_PE_MAGIC_OFFSET:LINUX_PE_MAGIC_OFFSET + 4]
+    assert(int.from_bytes(magic, 'little') == LINUX_PE_MAGIC)
+    image_load_addr = LOONGARCH_DRAM_START + int.from_bytes(load_offset, 'little')
+    entry_offset = int.from_bytes(kernel_entry, 'little') - LOONGARCH_VMLINUX_LOAD_ADDRESS
+    entry_addr = image_load_addr + entry_offset
+    write_data_cbundle(data, ofile)
+    return hex(image_load_addr), hex(entry_addr)
+
+def write_data_cbundle(data, ofile):
     col = 0
     total_size = 0
-    byte = ifile.read(1)
-    while byte:
-        ofile.write('\\x{:x}'.format(byte[0]))
+    for byte in data:
+        ofile.write('\\x{:x}'.format(byte))
             
         if col == 15:
             ofile.write('"\n"')
@@ -82,13 +105,10 @@ def write_raw_cbundle(ifile, ofile) -> int:
             col = col + 1
         
         total_size = total_size + 1
-        byte = ifile.read(1)
-
     rounded_size = int((total_size + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE
     padding = rounded_size - total_size    
     write_padding(ofile, padding, col)
 
-    
 def write_footer_generic(ofile, bundle_name):
     footer = """
 char * krunfw_get_{}(size_t *size)
@@ -145,6 +165,9 @@ def main() -> int:
     elif args.t == 'initrd':
         bundle_name = 'INITRD'
         ifmt = 'raw'
+    elif args.t == 'linux_pe':
+        bundle_name = 'KERNEL'
+        ifmt = 'linux_pe'
     else:
         print('Invalid bundle type')
         return -1
@@ -158,6 +181,8 @@ def main() -> int:
         load_addr, entry_addr = write_elf_cbundle(ifile, ofile)
     elif ifmt == 'raw':
         write_raw_cbundle(ifile, ofile)
+    elif ifmt == 'linux_pe': 
+        load_addr, entry_addr = write_linux_pe_cbundle(ifile, ofile)
 
     if bundle_name == 'KERNEL':
         if ifmt == 'raw':
