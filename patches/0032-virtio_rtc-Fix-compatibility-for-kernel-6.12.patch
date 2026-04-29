@@ -1,0 +1,41 @@
+From: Dorinda Bassey <dbassey@redhat.com>
+Date: Tue, 29 Apr 2026 11:35:00 +0200
+Subject: [PATCH] virtio_rtc: Fix compatibility for kernel 6.12
+
+Backport virtio_rtc driver to kernel 6.12 by fixing API differences:
+
+1. secs_to_jiffies() doesn't exist in 6.12, use msecs_to_jiffies()
+2. devm_device_init_wakeup() doesn't exist in 6.12, use device_init_wakeup()
+
+These functions were introduced in later kernels. The replacements
+provide equivalent functionality.
+
+Signed-off-by: Dorinda Bassey <dbassey@redhat.com>
+---
+ drivers/virtio/virtio_rtc_driver.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/virtio/virtio_rtc_driver.c b/drivers/virtio/virtio_rtc_driver.c
+index bc303c39d568..e7a9c4f6b2e5 100644
+--- a/drivers/virtio/virtio_rtc_driver.c
++++ b/drivers/virtio/virtio_rtc_driver.c
+@@ -575,7 +575,7 @@ int viortc_cross_cap(struct viortc_dev *viortc, u16 vio_clk_id, u8 hw_counter,
+  */
+
+ /** timeout for clock readings, where timeouts are considered non-fatal */
+-#define VIORTC_MSG_READ_TIMEOUT secs_to_jiffies(60)
++#define VIORTC_MSG_READ_TIMEOUT msecs_to_jiffies(60 * 1000)
+
+ /**
+  * viortc_read() - VIRTIO_RTC_REQ_READ wrapper
+@@ -961,7 +961,7 @@ static int viortc_class_try_init(struct viortc_dev *viortc, bool have_alarm)
+ 	viortc->viortc_class = viortc_class;
+
+ 	if (have_alarm)
+-		devm_device_init_wakeup(dev);
++		device_init_wakeup(dev, true);
+
+ 	return viortc_class_register(viortc_class) ?: 1;
+ }
+--
+2.43.0
