@@ -1,0 +1,84 @@
+From e2ef16757bbe1d4566093179944e9ebe730b2701 Mon Sep 17 00:00:00 2001
+From: Peter Hilber <quic_philber@quicinc.com>
+Date: Fri, 9 May 2025 18:07:24 +0200
+Subject: [PATCH] virtio_rtc: Add Arm Generic Timer cross-timestamping
+
+For platforms using the Arm Generic Timer, add precise cross-timestamping
+support to virtio_rtc.
+
+Always report the CP15 virtual counter as the HW counter in use by
+arm_arch_timer, since the Linux kernel's usage of the Arm Generic Timer
+should always be compatible with this.
+
+Signed-off-by: Peter Hilber <quic_philber@quicinc.com>
+Message-Id: <20250509160734.1772-4-quic_philber@quicinc.com>
+Signed-off-by: Michael S. Tsirkin <mst@redhat.com>
+---
+ drivers/virtio/Kconfig          | 13 +++++++++++++
+ drivers/virtio/Makefile         |  1 +
+ drivers/virtio/virtio_rtc_arm.c | 23 +++++++++++++++++++++++
+ 3 files changed, 37 insertions(+)
+ create mode 100644 drivers/virtio/virtio_rtc_arm.c
+
+diff --git a/drivers/virtio/Kconfig b/drivers/virtio/Kconfig
+index a14a2b77e1424d..3d8b366c06250d 100644
+--- a/drivers/virtio/Kconfig
++++ b/drivers/virtio/Kconfig
+@@ -221,6 +221,19 @@ config VIRTIO_RTC_PTP
+ 
+ 	 If unsure, say Y.
+ 
++config VIRTIO_RTC_ARM
++	bool "Virtio RTC cross-timestamping using Arm Generic Timer"
++	default y
++	depends on VIRTIO_RTC_PTP && ARM_ARCH_TIMER
++	help
++	 This enables Virtio RTC cross-timestamping using the Arm Generic Timer.
++	 It only has an effect if the Virtio RTC device also supports this. The
++	 cross-timestamp is available through the PTP clock driver precise
++	 cross-timestamp ioctl (PTP_SYS_OFFSET_PRECISE2 aka
++	 PTP_SYS_OFFSET_PRECISE).
++
++	 If unsure, say Y.
++
+ endif # VIRTIO_RTC
+ 
+ endif # VIRTIO_MENU
+diff --git a/drivers/virtio/Makefile b/drivers/virtio/Makefile
+index 88d6fb8d47315e..dbd77f124ba945 100644
+--- a/drivers/virtio/Makefile
++++ b/drivers/virtio/Makefile
+@@ -17,3 +17,4 @@ obj-$(CONFIG_VIRTIO_DEBUG) += virtio_debug.o
+ obj-$(CONFIG_VIRTIO_RTC) += virtio_rtc.o
+ virtio_rtc-y := virtio_rtc_driver.o
+ virtio_rtc-$(CONFIG_VIRTIO_RTC_PTP) += virtio_rtc_ptp.o
++virtio_rtc-$(CONFIG_VIRTIO_RTC_ARM) += virtio_rtc_arm.o
+diff --git a/drivers/virtio/virtio_rtc_arm.c b/drivers/virtio/virtio_rtc_arm.c
+new file mode 100644
+index 00000000000000..211299d7287010
+--- /dev/null
++++ b/drivers/virtio/virtio_rtc_arm.c
+@@ -0,0 +1,23 @@
++// SPDX-License-Identifier: GPL-2.0-or-later
++/*
++ * Provides cross-timestamp params for Arm.
++ *
++ * Copyright (C) 2022-2023 OpenSynergy GmbH
++ * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
++ */
++
++#include <linux/clocksource_ids.h>
++
++#include <uapi/linux/virtio_rtc.h>
++
++#include "virtio_rtc_internal.h"
++
++/* see header for doc */
++
++int viortc_hw_xtstamp_params(u8 *hw_counter, enum clocksource_ids *cs_id)
++{
++	*hw_counter = VIRTIO_RTC_COUNTER_ARM_VCT;
++	*cs_id = CSID_ARM_ARCH_COUNTER;
++
++	return 0;
++}
