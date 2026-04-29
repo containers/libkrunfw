@@ -23,7 +23,11 @@ ifeq ($(TDX),1)
 endif
 
 HOSTARCH = $(shell uname -m)
-OS = $(shell uname -s)
+ifeq ($(origin OS),command line)
+    # Use the explicit OS value from command line (e.g. make OS=Windows)
+else
+    OS := $(shell uname -s)
+endif
 ifeq ($(ARCH),)
 	GUESTARCH := $(HOSTARCH)
 	STRIP := strip
@@ -39,6 +43,11 @@ else
 	GUESTARCH := $(ARCH)
 	CC := $(CROSS_COMPILE)gcc
 	STRIP := $(CROSS_COMPILE)strip
+endif
+
+ifeq ($(OS),Windows)
+    CC := x86_64-w64-mingw32-gcc
+    VARIANT := -windows
 endif
 
 KBUNDLE_TYPE_x86_64 = vmlinux
@@ -59,8 +68,14 @@ KRUNFW_SONAME_Darwin = libkrunfw.$(ABI_VERSION).dylib
 KRUNFW_BASE_Darwin = libkrunfw.dylib
 SONAME_Darwin =
 
+KRUNFW_BINARY_Windows = libkrunfw.dll
+KRUNFW_SONAME_Windows = libkrunfw.dll
+KRUNFW_BASE_Windows = libkrunfw.dll
+SONAME_Windows =
+
 LIBDIR_Linux = lib64
 LIBDIR_Darwin = lib
+LIBDIR_Windows = bin
 
 ifeq ($(PREFIX),)
     PREFIX := /usr/local
@@ -103,7 +118,7 @@ $(KERNEL_C_BUNDLE):
 else
 $(KERNEL_C_BUNDLE): $(KERNEL_BINARY_$(GUESTARCH))
 	@echo "Generating $(KERNEL_C_BUNDLE) from $(KERNEL_BINARY_$(GUESTARCH))..."
-	@python3 bin2cbundle.py -t $(KBUNDLE_TYPE_$(GUESTARCH)) $(KERNEL_BINARY_$(GUESTARCH)) kernel.c
+	@python3 bin2cbundle.py --os $(OS) -t $(KBUNDLE_TYPE_$(GUESTARCH)) $(KERNEL_BINARY_$(GUESTARCH)) kernel.c
 endif
 
 ifeq ($(SEV),1)
@@ -127,9 +142,13 @@ $(INITRD_C_BUNDLE): $(INITRD_BINARY)
 endif
 
 $(KRUNFW_BINARY_$(OS)): $(KERNEL_C_BUNDLE) $(QBOOT_C_BUNDLE) $(INITRD_C_BUNDLE)
+ifeq ($(OS),Windows)
+	$(CC) -shared -DABI_VERSION=$(ABI_VERSION) -O2 -o $@ $(KERNEL_C_BUNDLE) $(QBOOT_C_BUNDLE) $(INITRD_C_BUNDLE) -Wl,--kill-at -Wl,--nxcompat
+else
 	$(CC) -fPIC -DABI_VERSION=$(ABI_VERSION) -shared $(SONAME_$(OS)) -o $@ $(KERNEL_C_BUNDLE) $(QBOOT_C_BUNDLE) $(INITRD_C_BUNDLE)
 ifeq ($(OS),Linux)
 	$(STRIP) $(KRUNFW_BINARY_$(OS))
+endif
 endif
 
 install:
@@ -137,6 +156,8 @@ install:
 	install -m 755 $(KRUNFW_BINARY_$(OS)) $(DESTDIR)$(PREFIX)/$(LIBDIR_$(OS))/
 ifeq ($(OS),Darwin)
 	cd $(DESTDIR)$(PREFIX)/$(LIBDIR_$(OS))/ ; ln -sf $(KRUNFW_BINARY_$(OS)) $(KRUNFW_BASE_$(OS))
+else ifeq ($(OS),Windows)
+	# Windows doesn't need soname symlinks
 else
 	cd $(DESTDIR)$(PREFIX)/$(LIBDIR_$(OS))/ ; ln -sf $(KRUNFW_BINARY_$(OS)) $(KRUNFW_SONAME_$(OS)) ; ln -sf $(KRUNFW_SONAME_$(OS)) $(KRUNFW_BASE_$(OS))
 endif
