@@ -54,6 +54,33 @@ BUILDER=debian ./build_on_krunvm.sh
 
 In general, `./build_on_krunvm.sh` will always delegate to `./build_on_krunvm_${BUILDER}.sh` so additional environments can be added like this if needed.
 
+### Windows (cross-compilation from Linux)
+
+#### Requirements
+* A Linux host with the toolchain needed to build a Linux kernel.
+* The MinGW-w64 cross-compiler (`x86_64-w64-mingw32-gcc`), available as `mingw-w64-gcc` (Fedora) or `gcc-mingw-w64-x86-64` (Debian/Ubuntu).
+* Python 3
+* ```pyelftools``` (package ```python3-pyelftools``` in Fedora and Ubuntu)
+
+#### How it works
+
+The Windows build uses a dedicated kernel configuration (`config-libkrunfw-windows_x86_64`) that enables Hyper-V guest enlightenments (`CONFIG_HYPERV`, `CONFIG_HYPERV_TIMER`, `CONFIG_HYPERV_UTILS`), allowing the guest kernel to take advantage of the Windows Hypervisor Platform (WHP).
+
+The kernel bundle is aligned to 4K pages (instead of 64K on Linux) to match the page granularity used by x86_64 Windows and WHP, avoiding alignment mismatches when the VMM maps the kernel into guest memory.
+
+The resulting `libkrunfw.dll` is produced using the MinGW-w64 toolchain and can be consumed by the Windows build of [libkrun](https://github.com/containers/libkrun).
+
+#### Building the library
+```
+make OS=Windows
+```
+
+This will:
+1. Download and patch the kernel sources.
+2. Build the kernel using the Windows-specific configuration.
+3. Generate the C bundle with 4K page alignment.
+4. Cross-compile `libkrunfw.dll` using `x86_64-w64-mingw32-gcc`.
+
 ## Known limitations
 
 * To save memory, the embedded kernel is configured with ```CONFIG_NR_CPUS=8```, which limits the maximum number of supported CPUs to 8. If this kernel runs in a VM with more CPUs, only the first 8 will be initialized and used.

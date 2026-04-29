@@ -3,13 +3,13 @@ import sys
 
 from elftools.elf.elffile import ELFFile
 
-# Use 64k page size for rounding. This should cover 4k/16k/64k kernels
-PAGE_SIZE = 65536
+PAGE_SIZE_DEFAULT = 65536  # 64k covers 4k/16k/64k Linux kernels
+PAGE_SIZE_WINDOWS = 4096   # x86_64 Windows / WHP uses 4k pages
 AARCH64_LOAD_ADDR = '0x80000000'
 
-def write_header(ofile, bundle_name):
+def write_header(ofile, bundle_name, page_size):
     ofile.write('#include <stddef.h>\n')
-    ofile.write('__attribute__ ((aligned ({}))) char {}_BUNDLE[] = \n"'.format(PAGE_SIZE, bundle_name))
+    ofile.write('__attribute__ ((aligned ({}))) char {}_BUNDLE[] = \n"'.format(page_size, bundle_name))
 
 
 def write_padding(ofile, padding, col):
@@ -25,7 +25,7 @@ def write_padding(ofile, padding, col):
         padding = padding - 1
         
         
-def write_elf_cbundle(ifile, ofile) -> int:
+def write_elf_cbundle(ifile, ofile, page_size) -> int:
     elffile = ELFFile(ifile)
     entry_addr = elffile['e_entry']
 
@@ -61,14 +61,14 @@ def write_elf_cbundle(ifile, ofile) -> int:
         prev_filesz = segment['p_filesz']
         total_size = total_size + prev_filesz
 
-    rounded_size = int((total_size + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE
+    rounded_size = int((total_size + page_size - 1) / page_size) * page_size
     padding = rounded_size - total_size    
     write_padding(ofile, padding, col)
 
     return load_addr, entry_addr
 
     
-def write_raw_cbundle(ifile, ofile) -> int:
+def write_raw_cbundle(ifile, ofile, page_size) -> int:
     col = 0
     total_size = 0
     byte = ifile.read(1)
@@ -84,7 +84,7 @@ def write_raw_cbundle(ifile, ofile) -> int:
         total_size = total_size + 1
         byte = ifile.read(1)
 
-    rounded_size = int((total_size + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE
+    rounded_size = int((total_size + page_size - 1) / page_size) * page_size
     padding = rounded_size - total_size    
     write_padding(ofile, padding, col)
 
@@ -128,8 +128,12 @@ def main() -> int:
     parser.add_argument('output_file', type=str,
                         help='Output file')
     parser.add_argument('-t', type=str, help='Bundle type (vmlinux, Image, qboot, initrd)')
+    parser.add_argument('--os', type=str, default='Linux',
+                        help='Target OS (Linux, Darwin, Windows)')
     
     args = parser.parse_args()
+
+    page_size = PAGE_SIZE_WINDOWS if args.os == 'Windows' else PAGE_SIZE_DEFAULT
 
     bundle_name = None
     ifmt = None
@@ -152,12 +156,12 @@ def main() -> int:
     ifile = open(args.input_file, 'rb')
     ofile = open(args.output_file, 'w')
 
-    write_header(ofile, bundle_name)
+    write_header(ofile, bundle_name, page_size)
 
     if ifmt == 'elf':
-        load_addr, entry_addr = write_elf_cbundle(ifile, ofile)
+        load_addr, entry_addr = write_elf_cbundle(ifile, ofile, page_size)
     elif ifmt == 'raw':
-        write_raw_cbundle(ifile, ofile)
+        write_raw_cbundle(ifile, ofile, page_size)
 
     if bundle_name == 'KERNEL':
         if ifmt == 'raw':
