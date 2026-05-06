@@ -1,0 +1,150 @@
+# Builds the kernel + libkrunfw shared library on Linux (x86_64, aarch64),
+# then compiles macOS dylibs from the linux kernel.c output. Uploads all
+# four artifacts plus sha256 sidecars to the GitHub Release that triggered
+# this workflow.
+#
+# Adapted from superradcompany/libkrunfw (Apache-2.0).
+name: Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Stage 1: Build kernel and .so on Linux (each arch produces its kernel.c
+  # which Stage 2 compiles into the matching macOS dylib).
+  # ---------------------------------------------------------------------------
+  build-linux-x86_64:
+    name: Build Linux x86_64
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build deps
+        run: sudo apt-get update && sudo apt-get install -y make gcc bc bison flex elfutils python3-pyelftools curl patch libelf-dev
+
+      - id: version
+        run: |
+          echo "abi=$(grep '^ABI_VERSION' Makefile | awk '{print $3}')" >> "$GITHUB_OUTPUT"
+          echo "full=$(grep '^FULL_VERSION' Makefile | awk '{print $3}')" >> "$GITHUB_OUTPUT"
+
+      - name: Build kernel + shared library
+        run: make -j"$(nproc)"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: kernel-c-x86_64
+          path: kernel.c
+          retention-days: 1
+
+      - name: Stage + checksum + upload .so
+        run: |
+          FULL="${{ steps.version.outputs.full }}"
+          asset="libkrunfw-linux-x86_64.so.${FULL}"
+          cp "libkrunfw.so.${FULL}" "${asset}"
+          sha256sum "${asset}" > "${asset}.sha256"
+          gh release upload "${{ github.event.release.tag_name }}" "${asset}" "${asset}.sha256"
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+  build-linux-aarch64:
+    name: Build Linux aarch64
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build deps
+        run: sudo apt-get update && sudo apt-get install -y make gcc bc bison flex elfutils python3-pyelftools curl patch libelf-dev
+
+      - id: version
+        run: |
+          echo "abi=$(grep '^ABI_VERSION' Makefile | awk '{print $3}')" >> "$GITHUB_OUTPUT"
+          echo "full=$(grep '^FULL_VERSION' Makefile | awk '{print $3}')" >> "$GITHUB_OUTPUT"
+
+      - name: Build kernel + shared library
+        run: make -j"$(nproc)"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: kernel-c-aarch64
+          path: kernel.c
+          retention-days: 1
+
+      - name: Stage + checksum + upload .so
+        run: |
+          FULL="${{ steps.version.outputs.full }}"
+          asset="libkrunfw-linux-aarch64.so.${FULL}"
+          cp "libkrunfw.so.${FULL}" "${asset}"
+          sha256sum "${asset}" > "${asset}.sha256"
+          gh release upload "${{ github.event.release.tag_name }}" "${asset}" "${asset}.sha256"
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+  # ---------------------------------------------------------------------------
+  # Stage 2: Compile macOS dylibs from the linux kernel.c artifacts. The
+  # kernel image is already byte-for-byte built; only the wrapper compiles
+  # again for darwin. This is why we pull kernel.c across stages.
+  # ---------------------------------------------------------------------------
+  build-macos-aarch64:
+    name: Build macOS aarch64
+    runs-on: macos-latest
+    needs: build-linux-aarch64
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: version
+        run: |
+          echo "abi=$(grep '^ABI_VERSION' Makefile | awk '{print $3}')" >> "$GITHUB_OUTPUT"
+          echo "full=$(grep '^FULL_VERSION' Makefile | awk '{print $3}')" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: kernel-c-aarch64
+
+      - name: Compile dylib
+        run: |
+          ABI="${{ steps.version.outputs.abi }}"
+          cc -fPIC -DABI_VERSION="${ABI}" -shared -o "libkrunfw-darwin-aarch64.${ABI}.dylib" kernel.c
+
+      - name: Checksum + upload .dylib
+        run: |
+          ABI="${{ steps.version.outputs.abi }}"
+          asset="libkrunfw-darwin-aarch64.${ABI}.dylib"
+          shasum -a 256 "${asset}" > "${asset}.sha256"
+          gh release upload "${{ github.event.release.tag_name }}" "${asset}" "${asset}.sha256"
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+  build-macos-x86_64:
+    name: Build macOS x86_64
+    runs-on: macos-15-large
+    needs: build-linux-x86_64
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: version
+        run: |
+          echo "abi=$(grep '^ABI_VERSION' Makefile | awk '{print $3}')" >> "$GITHUB_OUTPUT"
+          echo "full=$(grep '^FULL_VERSION' Makefile | awk '{print $3}')" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: kernel-c-x86_64
+
+      - name: Compile dylib
+        run: |
+          ABI="${{ steps.version.outputs.abi }}"
+          cc -fPIC -DABI_VERSION="${ABI}" -shared -o "libkrunfw-darwin-x86_64.${ABI}.dylib" kernel.c
+
+      - name: Checksum + upload .dylib
+        run: |
+          ABI="${{ steps.version.outputs.abi }}"
+          asset="libkrunfw-darwin-x86_64.${ABI}.dylib"
+          shasum -a 256 "${asset}" > "${asset}.sha256"
+          gh release upload "${{ github.event.release.tag_name }}" "${asset}" "${asset}.sha256"
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
