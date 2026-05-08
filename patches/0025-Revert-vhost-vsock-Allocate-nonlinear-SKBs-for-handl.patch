@@ -1,7 +1,7 @@
-From a5d4bbafb75eba1205fb00b4ba8073f7461954de Mon Sep 17 00:00:00 2001
+From 8c59c976fb5a6c89af9474b347c90141f103ee3e Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@redhat.com>
 Date: Tue, 10 Mar 2026 13:33:20 +0100
-Subject: [PATCH 25/26] Revert "vhost/vsock: Allocate nonlinear SKBs for
+Subject: [PATCH 25/32] Revert "vhost/vsock: Allocate nonlinear SKBs for
  handling large receive buffers"
 
 This reverts commit 65e808a6023f883f298db734444a9c38e45af740.
@@ -93,5 +93,5 @@ index e3d7afa29894..1ff7389ed244 100644
  virtio_vsock_skb_queue_head(struct sk_buff_head *list, struct sk_buff *skb)
  {
 -- 
-2.52.0
+2.54.0
 

@@ -1,7 +1,7 @@
-From 9a17125a18f9ae1e1233a8e2d919059445b9d6fd Mon Sep 17 00:00:00 2001
+From fb9be033bb51cff396159c297c344e69288dfee2 Mon Sep 17 00:00:00 2001
 From: Peter Hilber <quic_philber@quicinc.com>
 Date: Fri, 9 May 2025 18:07:23 +0200
-Subject: [PATCH] virtio_rtc: Add PTP clocks
+Subject: [PATCH 29/32] virtio_rtc: Add PTP clocks
 
 Expose the virtio_rtc clocks as PTP clocks to userspace, similar to
 ptp_kvm. virtio_rtc can expose multiple clocks, e.g. a UTC clock and a
@@ -57,7 +57,7 @@ Signed-off-by: Michael S. Tsirkin <mst@redhat.com>
  create mode 100644 drivers/virtio/virtio_rtc_ptp.c
 
 diff --git a/drivers/virtio/Kconfig b/drivers/virtio/Kconfig
-index 83bcb06acb6c61..a14a2b77e1424d 100644
+index fd6b826af19a..c98e43a1ee95 100644
 --- a/drivers/virtio/Kconfig
 +++ b/drivers/virtio/Kconfig
 @@ -194,11 +194,33 @@ config VIRTIO_RTC
@@ -96,7 +96,7 @@ index 83bcb06acb6c61..a14a2b77e1424d 100644
 +
  endif # VIRTIO_MENU
 diff --git a/drivers/virtio/Makefile b/drivers/virtio/Makefile
-index c41c4c0f926489..88d6fb8d47315e 100644
+index c41c4c0f9264..88d6fb8d4731 100644
 --- a/drivers/virtio/Makefile
 +++ b/drivers/virtio/Makefile
 @@ -16,3 +16,4 @@ obj-$(CONFIG_VIRTIO_DMA_SHARED_BUFFER) += virtio_dma_buf.o
@@ -105,7 +105,7 @@ index c41c4c0f926489..88d6fb8d47315e 100644
  virtio_rtc-y := virtio_rtc_driver.o
 +virtio_rtc-$(CONFIG_VIRTIO_RTC_PTP) += virtio_rtc_ptp.o
 diff --git a/drivers/virtio/virtio_rtc_driver.c b/drivers/virtio/virtio_rtc_driver.c
-index c87ee4e6342454..7499908ee34c39 100644
+index c87ee4e63424..7499908ee34c 100644
 --- a/drivers/virtio/virtio_rtc_driver.c
 +++ b/drivers/virtio/virtio_rtc_driver.c
 @@ -38,11 +38,16 @@ struct viortc_vq {
@@ -270,7 +270,7 @@ index c87ee4e6342454..7499908ee34c39 100644
  	virtio_reset_device(vdev);
  	vdev->config->del_vqs(vdev);
 diff --git a/drivers/virtio/virtio_rtc_internal.h b/drivers/virtio/virtio_rtc_internal.h
-index 9c249c15b68f92..2e589903d04f29 100644
+index 9c249c15b68f..2e589903d04f 100644
 --- a/drivers/virtio/virtio_rtc_internal.h
 +++ b/drivers/virtio/virtio_rtc_internal.h
 @@ -9,6 +9,7 @@
@@ -333,7 +333,7 @@ index 9c249c15b68f92..2e589903d04f29 100644
  #endif /* _VIRTIO_RTC_INTERNAL_H_ */
 diff --git a/drivers/virtio/virtio_rtc_ptp.c b/drivers/virtio/virtio_rtc_ptp.c
 new file mode 100644
-index 00000000000000..f84599950cd4d4
+index 000000000000..f84599950cd4
 --- /dev/null
 +++ b/drivers/virtio/virtio_rtc_ptp.c
 @@ -0,0 +1,347 @@
@@ -684,3 +684,6 @@ index 00000000000000..f84599950cd4d4
 +	devm_kfree(parent_dev, vio_ptp);
 +	return ERR_PTR(ret);
 +}
+-- 
+2.54.0
+

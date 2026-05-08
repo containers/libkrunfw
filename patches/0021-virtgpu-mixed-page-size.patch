@@ -1,7 +1,7 @@
-From 0d62c564ec641c16079f6a2bfccf2ea983cad594 Mon Sep 17 00:00:00 2001
+From f7e3016d46bf6c4fa63e610c193372a965155e9c Mon Sep 17 00:00:00 2001
 From: Sasha Finkelstein <fnkl.kernel@gmail.com>
 Date: Fri, 17 Jan 2025 12:34:28 +0100
-Subject: [PATCH 21/26] virtgpu: mixed page size
+Subject: [PATCH 21/32] virtgpu: mixed page size
 
 This allows running different page sizes between host and guest on
 platforms that support mixed page sizes.
@@ -40,5 +40,5 @@ index 64e2c6dbdd67..cbadcba2c773 100644
  
  	if (ret)
 -- 
-2.52.0
+2.54.0
 
