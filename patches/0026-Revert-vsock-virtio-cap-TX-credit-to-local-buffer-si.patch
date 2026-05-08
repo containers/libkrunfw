@@ -1,7 +1,7 @@
-From 7eeeb4e671c6812258937a9662b29d4dfc45a260 Mon Sep 17 00:00:00 2001
+From 55f776caa30a3c78e799e407cc78c765dd0fce66 Mon Sep 17 00:00:00 2001
 From: Sergio Lopez <slp@redhat.com>
 Date: Tue, 10 Mar 2026 16:00:26 +0100
-Subject: [PATCH 26/26] Revert "vsock/virtio: cap TX credit to local buffer
+Subject: [PATCH 26/32] Revert "vsock/virtio: cap TX credit to local buffer
  size"
 
 This reverts commit c0e42fb0e054c2b2ec4ee80f48ccd256ae0227ce.
@@ -49,5 +49,5 @@ index 4733c1d234d5..bed7fe5a7203 100644
  		bytes = 0;
  
 -- 
-2.52.0
+2.54.0
 

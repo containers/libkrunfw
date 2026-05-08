@@ -1,6 +1,7 @@
+From 61f88b799c18ac2f5a3814e19388309e19c821ff Mon Sep 17 00:00:00 2001
 From: Dorinda Bassey <dbassey@redhat.com>
-Date: Tue, 29 Apr 2026 11:35:00 +0200
-Subject: [PATCH] virtio_rtc: Fix compatibility for kernel 6.12
+Date: Wed, 29 Apr 2026 11:35:00 +0200
+Subject: [PATCH 32/32] virtio_rtc: Fix compatibility for kernel 6.12
 
 Backport virtio_rtc driver to kernel 6.12 by fixing API differences:
 
@@ -16,26 +17,27 @@ Signed-off-by: Dorinda Bassey <dbassey@redhat.com>
  1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/virtio/virtio_rtc_driver.c b/drivers/virtio/virtio_rtc_driver.c
-index bc303c39d568..e7a9c4f6b2e5 100644
+index a57d5e06e19d..bc303c32dab3 100644
 --- a/drivers/virtio/virtio_rtc_driver.c
 +++ b/drivers/virtio/virtio_rtc_driver.c
-@@ -575,7 +575,7 @@ int viortc_cross_cap(struct viortc_dev *viortc, u16 vio_clk_id, u8 hw_counter,
+@@ -575,7 +575,7 @@ static int viortc_msg_xfer(struct viortc_vq *vq, struct viortc_msg *msg,
   */
-
+ 
  /** timeout for clock readings, where timeouts are considered non-fatal */
 -#define VIORTC_MSG_READ_TIMEOUT secs_to_jiffies(60)
 +#define VIORTC_MSG_READ_TIMEOUT msecs_to_jiffies(60 * 1000)
-
+ 
  /**
   * viortc_read() - VIRTIO_RTC_REQ_READ wrapper
-@@ -961,7 +961,7 @@ static int viortc_class_try_init(struct viortc_dev *viortc, bool have_alarm)
+@@ -961,7 +961,7 @@ static int viortc_init_rtc_class_clock(struct viortc_dev *viortc,
  	viortc->viortc_class = viortc_class;
-
+ 
  	if (have_alarm)
 -		devm_device_init_wakeup(dev);
 +		device_init_wakeup(dev, true);
-
+ 
  	return viortc_class_register(viortc_class) ?: 1;
  }
---
-2.43.0
+-- 
+2.54.0
+

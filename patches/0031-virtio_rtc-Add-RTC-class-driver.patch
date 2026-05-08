@@ -1,7 +1,7 @@
-From 9d4f22fd563e0cd02e8448e84d057e7c0132a586 Mon Sep 17 00:00:00 2001
+From 2afb9a58200ff74af3ad3df97609016d7a0993de Mon Sep 17 00:00:00 2001
 From: Peter Hilber <quic_philber@quicinc.com>
 Date: Fri, 9 May 2025 18:07:25 +0200
-Subject: [PATCH] virtio_rtc: Add RTC class driver
+Subject: [PATCH 31/32] virtio_rtc: Add RTC class driver
 
 Expose the virtio-rtc UTC-like clock as an RTC clock to userspace - if it
 is present, and if it does not step on leap seconds. The RTC class enables
@@ -55,7 +55,7 @@ Signed-off-by: Michael S. Tsirkin <mst@redhat.com>
  create mode 100644 drivers/virtio/virtio_rtc_class.c
 
 diff --git a/drivers/virtio/Kconfig b/drivers/virtio/Kconfig
-index 3d8b366c06250d..6db5235a7693d6 100644
+index 57beef80dcc5..8279d6d5a1f1 100644
 --- a/drivers/virtio/Kconfig
 +++ b/drivers/virtio/Kconfig
 @@ -195,7 +195,8 @@ config VIRTIO_RTC
@@ -102,7 +102,7 @@ index 3d8b366c06250d..6db5235a7693d6 100644
  
  endif # VIRTIO_MENU
 diff --git a/drivers/virtio/Makefile b/drivers/virtio/Makefile
-index dbd77f124ba945..eefcfe90d6b8b0 100644
+index dbd77f124ba9..eefcfe90d6b8 100644
 --- a/drivers/virtio/Makefile
 +++ b/drivers/virtio/Makefile
 @@ -18,3 +18,4 @@ obj-$(CONFIG_VIRTIO_RTC) += virtio_rtc.o
@@ -112,7 +112,7 @@ index dbd77f124ba945..eefcfe90d6b8b0 100644
 +virtio_rtc-$(CONFIG_VIRTIO_RTC_CLASS) += virtio_rtc_class.o
 diff --git a/drivers/virtio/virtio_rtc_class.c b/drivers/virtio/virtio_rtc_class.c
 new file mode 100644
-index 00000000000000..05d6d28255cf3d
+index 000000000000..05d6d28255cf
 --- /dev/null
 +++ b/drivers/virtio/virtio_rtc_class.c
 @@ -0,0 +1,262 @@
@@ -379,7 +379,7 @@ index 00000000000000..05d6d28255cf3d
 +	return viortc_class;
 +}
 diff --git a/drivers/virtio/virtio_rtc_driver.c b/drivers/virtio/virtio_rtc_driver.c
-index 7499908ee34c39..a57d5e06e19d2d 100644
+index 7499908ee34c..a57d5e06e19d 100644
 --- a/drivers/virtio/virtio_rtc_driver.c
 +++ b/drivers/virtio/virtio_rtc_driver.c
 @@ -18,9 +18,12 @@
@@ -1068,7 +1068,7 @@ index 7499908ee34c39..a57d5e06e19d2d 100644
  	.probe = viortc_probe,
  	.remove = viortc_remove,
 diff --git a/drivers/virtio/virtio_rtc_internal.h b/drivers/virtio/virtio_rtc_internal.h
-index 2e589903d04f29..296afee6719b32 100644
+index 2e589903d04f..296afee6719b 100644
 --- a/drivers/virtio/virtio_rtc_internal.h
 +++ b/drivers/virtio/virtio_rtc_internal.h
 @@ -9,6 +9,8 @@
@@ -1143,7 +1143,7 @@ index 2e589903d04f29..296afee6719b32 100644
 +
  #endif /* _VIRTIO_RTC_INTERNAL_H_ */
 diff --git a/include/uapi/linux/virtio_rtc.h b/include/uapi/linux/virtio_rtc.h
-index 6b3af4e9bbfb06..85ee8f0136613d 100644
+index 6b3af4e9bbfb..85ee8f013661 100644
 --- a/include/uapi/linux/virtio_rtc.h
 +++ b/include/uapi/linux/virtio_rtc.h
 @@ -9,6 +9,9 @@
@@ -1283,3 +1283,6 @@ index 6b3af4e9bbfb06..85ee8f0136613d 100644
  };
  
  #endif /* _LINUX_VIRTIO_RTC_H */
+-- 
+2.54.0
+

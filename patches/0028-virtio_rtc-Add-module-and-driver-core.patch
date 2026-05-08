@@ -1,7 +1,7 @@
-From 0623c759276885c3ae88197ba6fb5c9c6ba8612f Mon Sep 17 00:00:00 2001
+From d24ea54a0709d75d0d68d43ac98c13616e804d05 Mon Sep 17 00:00:00 2001
 From: Peter Hilber <quic_philber@quicinc.com>
 Date: Fri, 9 May 2025 18:07:22 +0200
-Subject: [PATCH] virtio_rtc: Add module and driver core
+Subject: [PATCH 28/32] virtio_rtc: Add module and driver core
 
 Add the virtio_rtc module and driver core. The virtio_rtc module implements
 a driver compatible with the proposed Virtio RTC device specification.
@@ -34,10 +34,10 @@ Signed-off-by: Michael S. Tsirkin <mst@redhat.com>
  create mode 100644 include/uapi/linux/virtio_rtc.h
 
 diff --git a/MAINTAINERS b/MAINTAINERS
-index d48dd6726fe6bd..56c487bbea9c02 100644
+index 9ecb818f7ddb..ebf1a598394c 100644
 --- a/MAINTAINERS
 +++ b/MAINTAINERS
-@@ -25827,6 +25827,13 @@ S:	Maintained
+@@ -24620,6 +24620,13 @@ S:	Maintained
  F:	drivers/nvdimm/nd_virtio.c
  F:	drivers/nvdimm/virtio_pmem.c
  
@@ -52,7 +52,7 @@ index d48dd6726fe6bd..56c487bbea9c02 100644
  M:	Anton Yakovlev <anton.yakovlev@opensynergy.com>
  M:	"Michael S. Tsirkin" <mst@redhat.com>
 diff --git a/drivers/virtio/Kconfig b/drivers/virtio/Kconfig
-index 2eb747311bfd9c..83bcb06acb6c61 100644
+index 42a48ac763ee..fd6b826af19a 100644
 --- a/drivers/virtio/Kconfig
 +++ b/drivers/virtio/Kconfig
 @@ -188,4 +188,17 @@ config VIRTIO_DEBUG
@@ -74,7 +74,7 @@ index 2eb747311bfd9c..83bcb06acb6c61 100644
 +
  endif # VIRTIO_MENU
 diff --git a/drivers/virtio/Makefile b/drivers/virtio/Makefile
-index 58b2b0489fc9d7..c41c4c0f926489 100644
+index 58b2b0489fc9..c41c4c0f9264 100644
 --- a/drivers/virtio/Makefile
 +++ b/drivers/virtio/Makefile
 @@ -14,3 +14,5 @@ obj-$(CONFIG_VIRTIO_VDPA) += virtio_vdpa.o
@@ -85,7 +85,7 @@ index 58b2b0489fc9d7..c41c4c0f926489 100644
 +virtio_rtc-y := virtio_rtc_driver.o
 diff --git a/drivers/virtio/virtio_rtc_driver.c b/drivers/virtio/virtio_rtc_driver.c
 new file mode 100644
-index 00000000000000..c87ee4e6342454
+index 000000000000..c87ee4e63424
 --- /dev/null
 +++ b/drivers/virtio/virtio_rtc_driver.c
 @@ -0,0 +1,786 @@
@@ -877,7 +877,7 @@ index 00000000000000..c87ee4e6342454
 +MODULE_LICENSE("GPL");
 diff --git a/drivers/virtio/virtio_rtc_internal.h b/drivers/virtio/virtio_rtc_internal.h
 new file mode 100644
-index 00000000000000..9c249c15b68f92
+index 000000000000..9c249c15b68f
 --- /dev/null
 +++ b/drivers/virtio/virtio_rtc_internal.h
 @@ -0,0 +1,24 @@
@@ -907,7 +907,7 @@ index 00000000000000..9c249c15b68f92
 +#endif /* _VIRTIO_RTC_INTERNAL_H_ */
 diff --git a/include/uapi/linux/virtio_rtc.h b/include/uapi/linux/virtio_rtc.h
 new file mode 100644
-index 00000000000000..6b3af4e9bbfb06
+index 000000000000..6b3af4e9bbfb
 --- /dev/null
 +++ b/include/uapi/linux/virtio_rtc.h
 @@ -0,0 +1,151 @@
@@ -1062,3 +1062,6 @@ index 00000000000000..6b3af4e9bbfb06
 +};
 +
 +#endif /* _LINUX_VIRTIO_RTC_H */
+-- 
+2.54.0
+

@@ -1,7 +1,7 @@
-From 56ef3652b6666b91c1c66fa94aedac70a934bfb2 Mon Sep 17 00:00:00 2001
+From 8ca8db16da5001752ca7d782a60d9af85e7899b7 Mon Sep 17 00:00:00 2001
 From: Bobby Eshleman <bobby.eshleman () bytedance ! com>
 Date: Sat, 10 Jun 2023 00:58:28 +0000
-Subject: [PATCH 03/26] vsock/dgram: generalize recvmsg and drop
+Subject: [PATCH 03/32] vsock/dgram: generalize recvmsg and drop
  transport->dgram_dequeue
 
 This commit drops the transport->dgram_dequeue callback and makes
@@ -348,5 +348,5 @@ index 6e78927a598e..3d5e05d8950f 100644
  		.stream_dequeue           = virtio_transport_stream_dequeue,
  		.stream_enqueue           = virtio_transport_stream_enqueue,
 -- 
-2.52.0
+2.54.0
 
