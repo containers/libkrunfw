@@ -31,11 +31,11 @@ Signed-off-by: Matej Hrica <mhrica@redhat.com>
  net/socket.c                        |    3 +
  net/tsi/Kconfig                     |    7 +
  net/tsi/Makefile                    |    4 +
- net/tsi/af_tsi.c                    | 1577 +++++++++++++++++++++++++++
+ net/tsi/af_tsi.c                    | 1591 +++++++++++++++++++++++++++
  net/tsi/af_tsi.h                    |  107 ++
  security/selinux/hooks.c            |    8 +-
  security/selinux/include/classmap.h |    3 +-
- 10 files changed, 1716 insertions(+), 3 deletions(-)
+ 10 files changed, 1730 insertions(+), 3 deletions(-)
  create mode 100644 net/tsi/Kconfig
  create mode 100644 net/tsi/Makefile
  create mode 100644 net/tsi/af_tsi.c
@@ -128,10 +128,10 @@ index 000000000000..8b3cf74116a5
 +tsi-y := af_tsi.o
 diff --git a/net/tsi/af_tsi.c b/net/tsi/af_tsi.c
 new file mode 100644
-index 000000000000..3d2bcd8d2ba4
+index 000000000000..25309b3310c0
 --- /dev/null
 +++ b/net/tsi/af_tsi.c
-@@ -0,0 +1,1577 @@
+@@ -0,0 +1,1591 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */
 +/*
 + * Transparent Socket Impersonation Driver
@@ -1152,16 +1152,30 @@ index 000000000000..3d2bcd8d2ba4
 +	pr_debug("%s: s=%p vs=%p is=%p st=%d\n", __func__, sock, vsocket,
 +		 isocket, tsk->status);
 +
++	/*
++	 * Not every underlying socket implements getsockopt (vsock_dgram_ops
++	 * and the AF_UNIX ops don't). Return what do_sock_getsockopt() returns
++	 * for such a socket instead of calling through a NULL pointer.
++	 */
 +	switch (tsk->status) {
 +	case S_HYBRID:
 +	case S_INET:
-+		err = isocket->ops->getsockopt(isocket, level, optname, optval,
-+					       optlen);
++		if (isocket->ops->getsockopt)
++			err = isocket->ops->getsockopt(isocket, level, optname,
++						       optval, optlen);
++		else
++			err = -EOPNOTSUPP;
 +		break;
 +	case S_VSOCK:
-+		// TODO implement remote setsockopt
-+		err = vsocket->ops->getsockopt(vsocket, level, optname, optval,
-+					       optlen);
++		// TODO implement remote getsockopt
++		if (vsocket->ops->getsockopt)
++			err = vsocket->ops->getsockopt(vsocket, level, optname,
++						       optval, optlen);
++		else
++			err = -EOPNOTSUPP;
++		break;
++	default:
++		err = -EINVAL;
 +		break;
 +	}
 +
